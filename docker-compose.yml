@@ -1,0 +1,33 @@
+# Banco de dados de desenvolvimento do projeto integrador.
+#
+# ESTE ARQUIVO E OPCIONAL. Ele e o caminho mais rapido para ter um PostgreSQL 18
+# no ar, mas o projeto so exige que exista um banco acessivel pela DATABASE_URL.
+# Grupos que preferirem instalar o PostgreSQL na maquina, ou usar um servico
+# hospedado, podem apagar este arquivo — veja as opcoes no README.
+#
+# Sobe com:  docker compose up -d
+#
+# As credenciais abaixo servem apenas para desenvolvimento local e por isso
+# podem ser versionadas. Nenhuma outra credencial do projeto entra no Git.
+
+services:
+  db:
+    image: postgres:18
+    container_name: projeto-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - dados-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d appdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  dados-postgres:
