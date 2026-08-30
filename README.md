@@ -425,4 +425,9 @@ Cada componente versiona um `.env.example` com as chaves esperadas e valores fic
 
 ## Onde está o resto
 
-Temas disponíveis, escopo esperado, etapas, prazos, critérios de avaliação e dúvidas frequentes estão na **página do trabalho, na disciplina**. Em caso de divergência entre este README e aquela página, a página vale.
+9. Comanda e pedidos em restaurante [Avançado]
+Negócios · Avançado
+O garçom lança pedidos pelo celular; a cozinha acompanha a fila de preparo em tela fixa. É o único tema em que dois clientes agem sobre o mesmo dado ao mesmo tempo.
+
+- Web — cozinha e gerência Fila de preparo, cardápio e preços, painel do salão, fechamento e relatórios.
+- Mobile — garçom Abrir comanda, lançar itens, ver o que já está pronto, pedir fechamento.
