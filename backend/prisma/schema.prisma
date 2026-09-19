@@ -11,3 +11,113 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Cliente {
+  id_cliente    Int       @id @default(autoincrement())
+  nome_cliente  String
+  cpf_cliente   String?   @unique
+  email_cliente String    @unique
+  senha         String
+  telefone      String?
+  criado_em     DateTime  @default(now())
+  comandas      Comanda[]
+}
+
+model Funcionario {
+  id_funcionario   Int       @id @default(autoincrement())
+  nome_funcionario String
+  login            String    @unique
+  email_func       String    @unique
+  senha            String
+  perfil           Perfil
+  comandas         Comanda[]
+}
+
+enum Perfil {
+  GERENCIA
+  GARCOM
+  COZINHA
+}
+
+model Mesa {
+  id_mesa    Int       @id @default(autoincrement())
+  nr_mesa    Int       @unique
+  qt_lugares Int
+  comandas   Comanda[]
+}
+
+model Categoria {
+  id_categoria     Int            @id @default(autoincrement())
+  nome_categoria   String
+  categoria_pai_id Int?
+  categoria_pai    Categoria?     @relation("SubCategoria", fields: [categoria_pai_id], references: [id_categoria])
+  subcategorias    Categoria[]    @relation("SubCategoria")
+  itens            ItemCardapio[]
+}
+
+model ItemCardapio {
+  id_item_cardapio Int          @id @default(autoincrement())
+  nome_item        String
+  descricao_item   String?
+  valorunitario    Decimal      @db.Decimal(10, 2)
+  disponivel       Boolean      @default(true)
+  id_categoria     Int
+  categoria        Categoria    @relation(fields: [id_categoria], references: [id_categoria])
+  pedidos          ItemPedido[]
+}
+
+model Comanda {
+  id_comanda      Int             @id @default(autoincrement())
+  id_mesa         Int?
+  id_funcionario  Int?
+  id_cliente      Int?
+  situacao        SituacaoComanda @default(ABERTA)
+  data_abertura   DateTime        @default(now())
+  data_fechamento DateTime?
+  mesa            Mesa?           @relation(fields: [id_mesa], references: [id_mesa])
+  funcionario     Funcionario?    @relation(fields: [id_funcionario], references: [id_funcionario])
+  cliente         Cliente?        @relation(fields: [id_cliente], references: [id_cliente])
+  itens           ItemPedido[]
+  pagamentos      Pagamento[]
+}
+
+enum SituacaoComanda {
+  ABERTA
+  FECHADA
+  CANCELADA
+}
+
+model ItemPedido {
+  id_item_pedido   Int                @id @default(autoincrement())
+  id_comanda       Int
+  id_item_cardapio Int
+  qt_quantidade    Int
+  preco_unitario   Decimal            @db.Decimal(10, 2)
+  ds_observacao    String?
+  situacao         SituacaoItemPedido @default(AGUARDANDO)
+  comanda          Comanda            @relation(fields: [id_comanda], references: [id_comanda], onDelete: Cascade)
+  item_cardapio    ItemCardapio       @relation(fields: [id_item_cardapio], references: [id_item_cardapio])
+}
+
+enum SituacaoItemPedido {
+  AGUARDANDO
+  EM_PREPARO
+  PRONTO
+  ENTREGUE
+  CANCELADO
+}
+
+model Pagamento {
+  id_pagamento    Int            @id @default(autoincrement())
+  id_comanda      Int
+  valor_pago      Decimal        @db.Decimal(10, 2)
+  forma_pagamento FormaPagamento
+  data_pagamento  DateTime       @default(now())
+  comanda         Comanda        @relation(fields: [id_comanda], references: [id_comanda])
+}
+
+enum FormaPagamento {
+  DINHEIRO
+  CARTAO
+  PIX
+}
