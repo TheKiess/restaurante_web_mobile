@@ -59,7 +59,7 @@ model Reserva {
   id_situacao       SituacaoReserva @default(CONFIRMADA)
   dt_criacao        DateTime        @default(now())
   usuario           Usuario         @relation(fields: [id_usuario], references: [id_usuario])
-  mesa              Mesa            @relation(fields: [id_mesa], references: [id_mesa])
+  mesa              Mesa            @relation(fields: [id_mesa],    references: [id_mesa])
   comanda           Comanda?
 
   @@index([dt_reserva, id_mesa])
@@ -178,7 +178,7 @@ model ItemPedido {
   ds_observacao    String?
   id_situacao      SituacaoItemPedido @default(AGUARDANDO)
   dt_pedido        DateTime           @default(now())
-  comanda          Comanda            @relation(fields: [id_comanda], references: [id_comanda], onDelete: Cascade)
+  comanda          Comanda            @relation(fields: [id_comanda],       references: [id_comanda], onDelete: Cascade)
   item_cardapio    ItemCardapio       @relation(fields: [id_item_cardapio], references: [id_item_cardapio])
   movimentos       MovimentoEstoque[]
 }
