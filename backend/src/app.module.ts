@@ -5,9 +5,17 @@ import { MesasModule } from './mesas/mesas.module.js';
 import { CategoriasModule } from './categorias/categorias.module.js';
 import { ItensCardapioModule } from './itens-cardapio/itens-cardapio.module.js';
 import { UsuariosModule } from './usuarios/usuarios.module.js';
+import { ComandasModule } from './comandas/comandas.module.js';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, MesasModule, CategoriasModule, ItensCardapioModule, UsuariosModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    MesasModule,
+    CategoriasModule,
+    ItensCardapioModule,
+    UsuariosModule,
+    ComandasModule
+  ],
 })
 
 export class AppModule {}
