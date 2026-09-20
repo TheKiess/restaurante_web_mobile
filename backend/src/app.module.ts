@@ -10,7 +10,8 @@ import { ItensPedidoModule } from './itens-pedido/itens-pedido.module.js';
 import { PagamentosModule } from './pagamentos/pagamentos.module.js';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }),
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     MesasModule,
     CategoriasModule,
@@ -19,7 +20,7 @@ import { PagamentosModule } from './pagamentos/pagamentos.module.js';
     ComandasModule,
     ItensPedidoModule,
     PagamentosModule
-  ],
+  ]
 })
 
 export class AppModule {}
