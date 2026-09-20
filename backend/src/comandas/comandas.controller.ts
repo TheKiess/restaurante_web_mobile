@@ -33,6 +33,12 @@ export class ComandasController
     return this.comandasService.atualizarComanda(nrId, updateComandaDto);
   }
 
+  @Patch(':id/fechar')
+  fecharComanda(@Param('id', ParseIntPipe) nrId: number)
+  {
+    return this.comandasService.fecharComanda(nrId);
+  }
+
   @Patch(':id/cancelar')
   cancelarComanda(@Param('id', ParseIntPipe) nrId: number)
   {
