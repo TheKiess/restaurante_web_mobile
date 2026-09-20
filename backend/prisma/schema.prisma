@@ -12,73 +12,155 @@ datasource db {
   provider = "postgresql"
 }
 
-model Cliente {
-  id_cliente    Int       @id @default(autoincrement())
-  nome_cliente  String
-  cpf_cliente   String?   @unique
-  email_cliente String    @unique
-  senha         String
-  telefone      String?
-  criado_em     DateTime  @default(now())
-  comandas      Comanda[]
+model Pessoa {
+  id_pessoa   Int     @id @default(autoincrement())
+  nm_pessoa   String
+  ds_cnpj_cpf String? @unique
+  ds_email    String? @unique
+  ds_telefone String?
+  usuario     Usuario?
 }
 
-model Funcionario {
-  id_funcionario   Int       @id @default(autoincrement())
-  nome_funcionario String
-  login            String    @unique
-  email_func       String    @unique
-  senha            String
-  perfil           Perfil
-  comandas         Comanda[]
+model Usuario {
+  id_usuario Int      @id @default(autoincrement())
+  id_pessoa  Int      @unique
+  ds_apelido String   @unique
+  ds_senha   String
+  perfil     Perfil   @default(CLIENTE)
+  dt_criacao DateTime @default(now())
+  pessoa     Pessoa   @relation(fields: [id_pessoa], references: [id_pessoa])
+  comandas   Comanda[]
+  reservas   Reserva[]
 }
 
 enum Perfil {
   GERENCIA
   GARCOM
   COZINHA
+  CLIENTE
 }
 
 model Mesa {
-  id_mesa    Int       @id @default(autoincrement())
-  nr_mesa    Int       @unique
+  id_mesa    Int @id @default(autoincrement())
+  nr_mesa    Int @unique
   qt_lugares Int
   comandas   Comanda[]
+  reservas   Reserva[]
+}
+
+model Reserva {
+  id_reserva        Int             @id @default(autoincrement())
+  id_usuario        Int
+  id_mesa           Int
+  qt_pessoas        Int
+  dt_reserva        DateTime
+  dt_limite_checkin DateTime
+  dt_checkin        DateTime?
+  id_situacao       SituacaoReserva @default(CONFIRMADA)
+  dt_criacao        DateTime        @default(now())
+  usuario           Usuario         @relation(fields: [id_usuario], references: [id_usuario])
+  mesa              Mesa            @relation(fields: [id_mesa], references: [id_mesa])
+  comanda           Comanda?
+
+  @@index([dt_reserva, id_mesa])
+}
+
+enum SituacaoReserva {
+  CONFIRMADA
+  CHECKIN
+  CANCELADA
+  EXPIRADA
 }
 
 model Categoria {
-  id_categoria     Int            @id @default(autoincrement())
-  nome_categoria   String
-  categoria_pai_id Int?
-  categoria_pai    Categoria?     @relation("SubCategoria", fields: [categoria_pai_id], references: [id_categoria])
-  subcategorias    Categoria[]    @relation("SubCategoria")
+  id_categoria     Int         @id @default(autoincrement())
+  nm_categoria     String
+  id_categoria_pai Int?
+  categoria_pai    Categoria?  @relation("SubCategoria", fields: [id_categoria_pai], references: [id_categoria])
+  subcategorias    Categoria[] @relation("SubCategoria")
   itens            ItemCardapio[]
 }
 
 model ItemCardapio {
-  id_item_cardapio Int          @id @default(autoincrement())
-  nome_item        String
-  descricao_item   String?
-  valorunitario    Decimal      @db.Decimal(10, 2)
-  disponivel       Boolean      @default(true)
+  id_item_cardapio Int       @id @default(autoincrement())
   id_categoria     Int
-  categoria        Categoria    @relation(fields: [id_categoria], references: [id_categoria])
+  nm_item          String
+  ds_item          String?
+  vl_unitario      Decimal   @db.Decimal(10, 2)
+  tipo_item        TipoItem
+  disponivel       Boolean   @default(true)
+  categoria        Categoria @relation(fields: [id_categoria], references: [id_categoria])
+  ingredientes     Receita[]
   pedidos          ItemPedido[]
 }
 
+enum TipoItem {
+  PREPARADO
+  REVENDA
+}
+
+model Insumo {
+  id_insumo         Int     @id @default(autoincrement())
+  nm_insumo         String  @unique
+  unidade_medida    UnidadeMedida
+  qt_estoque        Decimal @default(0) @db.Decimal(10, 3)
+  qt_estoque_minimo Decimal @default(0) @db.Decimal(10, 3)
+  receitas          Receita[]
+  movimentos        MovimentoEstoque[]
+}
+
+enum UnidadeMedida {
+  UN
+  KG
+  G
+  L
+  ML
+}
+
+model Receita {
+  id_item_cardapio Int
+  id_insumo        Int
+  qt_insumo        Decimal      @db.Decimal(10, 3)
+  item_cardapio    ItemCardapio @relation(fields: [id_item_cardapio], references: [id_item_cardapio], onDelete: Cascade)
+  insumo           Insumo       @relation(fields: [id_insumo],        references: [id_insumo])
+
+  @@id([id_item_cardapio, id_insumo])
+}
+
+model MovimentoEstoque {
+  id_movimento_estoque Int         @id @default(autoincrement())
+  id_insumo            Int
+  id_item_pedido       Int?
+  tipo_movimento       TipoMovimento
+  qt_movimento         Decimal     @db.Decimal(10, 3)
+  ds_motivo            String?
+  dt_movimento         DateTime    @default(now())
+  insumo               Insumo      @relation(fields: [id_insumo],      references: [id_insumo])
+  item_pedido          ItemPedido? @relation(fields: [id_item_pedido], references: [id_item_pedido], onDelete: SetNull)
+}
+
+enum TipoMovimento {
+  ENTRADA
+  SAIDA
+  PERDA
+}
+
 model Comanda {
-  id_comanda      Int             @id @default(autoincrement())
-  id_mesa         Int?
-  id_funcionario  Int?
-  id_cliente      Int?
-  situacao        SituacaoComanda @default(ABERTA)
-  data_abertura   DateTime        @default(now())
-  data_fechamento DateTime?
-  mesa            Mesa?           @relation(fields: [id_mesa], references: [id_mesa])
-  funcionario     Funcionario?    @relation(fields: [id_funcionario], references: [id_funcionario])
-  cliente         Cliente?        @relation(fields: [id_cliente], references: [id_cliente])
-  itens           ItemPedido[]
-  pagamentos      Pagamento[]
+  id_comanda    Int             @id @default(autoincrement())
+  id_usuario    Int
+  id_mesa       Int?
+  id_reserva    Int?            @unique
+  id_situacao   SituacaoComanda @default(ABERTA)
+  dt_abertura   DateTime        @default(now())
+  dt_fechamento DateTime?
+  usuario       Usuario?        @relation(fields: [id_usuario], references: [id_usuario])
+  mesa          Mesa?           @relation(fields: [id_mesa],    references: [id_mesa])
+  reserva       Reserva?        @relation(fields: [id_reserva], references: [id_reserva])
+  itens         ItemPedido[]
+  pagamentos    Pagamento[]
+
+  @@index([id_usuario])
+  @@index([dt_abertura])
 }
 
 enum SituacaoComanda {
@@ -92,11 +174,13 @@ model ItemPedido {
   id_comanda       Int
   id_item_cardapio Int
   qt_quantidade    Int
-  preco_unitario   Decimal            @db.Decimal(10, 2)
+  vl_unitario      Decimal            @db.Decimal(10, 2)
   ds_observacao    String?
-  situacao         SituacaoItemPedido @default(AGUARDANDO)
+  id_situacao      SituacaoItemPedido @default(AGUARDANDO)
+  dt_pedido        DateTime           @default(now())
   comanda          Comanda            @relation(fields: [id_comanda], references: [id_comanda], onDelete: Cascade)
   item_cardapio    ItemCardapio       @relation(fields: [id_item_cardapio], references: [id_item_cardapio])
+  movimentos       MovimentoEstoque[]
 }
 
 enum SituacaoItemPedido {
@@ -108,12 +192,20 @@ enum SituacaoItemPedido {
 }
 
 model Pagamento {
-  id_pagamento    Int            @id @default(autoincrement())
+  id_pagamento    Int               @id @default(autoincrement())
   id_comanda      Int
-  valor_pago      Decimal        @db.Decimal(10, 2)
+  vl_pago         Decimal           @db.Decimal(10, 2)
   forma_pagamento FormaPagamento
-  data_pagamento  DateTime       @default(now())
-  comanda         Comanda        @relation(fields: [id_comanda], references: [id_comanda])
+  id_situacao     SituacaoPagamento @default(PENDENTE)
+  ds_id_externo   String?           @unique
+  dt_pagamento    DateTime?
+  comanda         Comanda           @relation(fields: [id_comanda], references: [id_comanda])
+}
+
+enum SituacaoPagamento {
+  PENDENTE
+  CONFIRMADO
+  RECUSADO
 }
 
 enum FormaPagamento {
