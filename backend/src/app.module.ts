@@ -6,6 +6,7 @@ import { CategoriasModule } from './categorias/categorias.module.js';
 import { ItensCardapioModule } from './itens-cardapio/itens-cardapio.module.js';
 import { UsuariosModule } from './usuarios/usuarios.module.js';
 import { ComandasModule } from './comandas/comandas.module.js';
+import { ItensPedidoModule } from './itens-pedido/itens-pedido.module.js';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }),
@@ -14,7 +15,8 @@ import { ComandasModule } from './comandas/comandas.module.js';
     CategoriasModule,
     ItensCardapioModule,
     UsuariosModule,
-    ComandasModule
+    ComandasModule,
+    ItensPedidoModule
   ],
 })
 
