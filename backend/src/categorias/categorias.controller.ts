@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { CategoriasService } from './categorias.service.js';
 import { CreateCategoriaDto } from './dto/create-categoria.dto.js';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto.js';
@@ -33,6 +33,7 @@ export class CategoriasController
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   removerCategoria(@Param('id', ParseIntPipe) nrId: number)
   {
     return this.categoriasService.removerCategoria(nrId);

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { MesasService } from './mesas.service.js';
 import { CreateMesaDto } from './dto/create-mesa.dto.js';
 import { UpdateMesaDto } from './dto/update-mesa.dto.js';
@@ -33,6 +33,7 @@ export class MesasController
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   removerMesa(@Param('id', ParseIntPipe) nrId: number)
   {
     return this.mesasService.removerMesa(nrId);

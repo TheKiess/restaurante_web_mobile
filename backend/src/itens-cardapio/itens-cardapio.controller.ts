@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { ItensCardapioService } from './itens-cardapio.service.js';
 import { CreateItensCardapioDto } from './dto/create-itens-cardapio.dto.js';
 import { UpdateItensCardapioDto } from './dto/update-itens-cardapio.dto.js';
@@ -33,6 +33,7 @@ export class ItensCardapioController
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   removerItemCardapio(@Param('id', ParseIntPipe) nrId: number)
   {
     return this.itensCardapioService.removerItemCardapio(nrId);

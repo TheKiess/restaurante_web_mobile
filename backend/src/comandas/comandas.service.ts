@@ -90,7 +90,7 @@ export class ComandasService
         throw new ConflictException('Comanda sem itens, cancele em vez de fechar!');
       if (vlPendente.gt(0))
         throw new ConflictException('Há pagamento pendente de confirmação!');
-      if (vlRestante.gte(0))
+      if (vlRestante.gt(0))
         throw new ConflictException(`Falta pagar ${vlRestante.toFixed(2)}!`);
       if (vlRestante.lt(0))
         throw new ConflictException('Os pagamentos são maiores que o total da comanda!');
