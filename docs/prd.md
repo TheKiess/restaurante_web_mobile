@@ -10,11 +10,11 @@
 
 | Campo | Valor |
 |---|---|
-| **Nome do projeto** | |
-| **Grupo** | |
+| **Nome do projeto** | WebMob Restaurant |
+| **Grupo** | Frank Kiess & Evelyn Soletti |
 | **Versão do documento** | 1.0 |
-| **Data de criação** | |
-| **Última atualização** | |
+| **Data de criação** | 30/08/26 |
+| **Última atualização** | - |
 | **Documento de Visão (ref.)** | `docs/visao.md` |
 | **Contrato da API (ref.)** | `docs/contrato-api.md` |
 
