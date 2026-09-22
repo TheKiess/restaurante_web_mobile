@@ -1,0 +1,866 @@
+# Isso aqui foi inteiramente feita com I.A (principalmente Claude).
+
+# Antes de começar:
+#   docker compose up -d
+#   npx prisma migrate reset      (banco zerado: os ids usados abaixo dependem disso)
+#   npx prisma generate
+#   npm run start:dev
+#
+# Rode as requisições de cima para baixo, uma vez. Para repetir tudo, zere o banco
+# de novo com "npx prisma migrate reset".
+
+@host = http://localhost:3000
+
+###
+# ==========================================================================
+# MESAS
+# ==========================================================================
+
+
+### 1. Criar mesa 1 (espera 201)
+POST {{host}}/mesas
+Content-Type: application/json
+
+{
+  "nr_mesa": 1,
+  "qt_lugares": 4
+}
+
+
+### 2. Criar mesa 2 (espera 201)
+POST {{host}}/mesas
+Content-Type: application/json
+
+{
+  "nr_mesa": 2,
+  "qt_lugares": 2
+}
+
+
+### 3. Criar mesa 3, que vai ser removida mais abaixo (espera 201)
+POST {{host}}/mesas
+Content-Type: application/json
+
+{
+  "nr_mesa": 3,
+  "qt_lugares": 6
+}
+
+
+### 4. Listar (espera 200)
+GET {{host}}/mesas
+
+
+### 5. Buscar por id (espera 200)
+GET {{host}}/mesas/1
+
+
+### 6. Id inexistente (espera 404)
+GET {{host}}/mesas/9999
+
+
+### 7. Id não numérico (espera 400)
+GET {{host}}/mesas/abc
+
+
+### 8. Body inválido (espera 400)
+POST {{host}}/mesas
+Content-Type: application/json
+
+{
+  "nr_mesa": "abc"
+}
+
+
+### 9. O mesmo número de mesa de novo (espera 409)
+# O 409 vem do erro P2002 do banco (restrição UNIQUE do nr_mesa), e não de uma
+# verificação em código. A restrição do banco é atômica; a verificação em código não é.
+POST {{host}}/mesas
+Content-Type: application/json
+
+{
+  "nr_mesa": 1,
+  "qt_lugares": 4
+}
+
+
+### 10. Atualizar parcialmente (espera 200)
+PATCH {{host}}/mesas/1
+Content-Type: application/json
+
+{
+  "qt_lugares": 6
+}
+
+
+### 11. Atualizar id inexistente (espera 404)
+# O 404 vem da busca que o service faz antes de atualizar. Se o registro sumir no meio
+# da operação, o erro P2025 do banco também vira 404 (filtro global).
+PATCH {{host}}/mesas/9999
+Content-Type: application/json
+
+{
+  "qt_lugares": 1
+}
+
+
+### 12. Remover (espera 204)
+DELETE {{host}}/mesas/3
+
+
+### 13. Remover de novo (espera 404)
+DELETE {{host}}/mesas/3
+
+
+###
+# ==========================================================================
+# CATEGORIAS
+# ==========================================================================
+
+
+### 14. Criar categoria (espera 201)
+POST {{host}}/categorias
+Content-Type: application/json
+
+{
+  "nm_categoria": "Pratos"
+}
+
+
+### 15. Criar subcategoria (tem categoria pai) (espera 201)
+POST {{host}}/categorias
+Content-Type: application/json
+
+{
+  "nm_categoria": "Feijoadas",
+  "id_categoria_pai": 1
+}
+
+
+### 16. Categoria pai inexistente (espera 404)
+POST {{host}}/categorias
+Content-Type: application/json
+
+{
+  "nm_categoria": "Sem pai",
+  "id_categoria_pai": 9999
+}
+
+
+### 17. Criar categoria (espera 201)
+POST {{host}}/categorias
+Content-Type: application/json
+
+{
+  "nm_categoria": "Bebidas"
+}
+
+
+### 18. Sem nome (espera 400)
+POST {{host}}/categorias
+Content-Type: application/json
+
+{}
+
+
+### 19. Listar (espera 200)
+GET {{host}}/categorias
+
+
+### 20. Buscar por id (traz as subcategorias) (espera 200)
+GET {{host}}/categorias/1
+
+
+### 21. Uma categoria não pode ser pai dela mesma (espera 400)
+PATCH {{host}}/categorias/2
+Content-Type: application/json
+
+{
+  "id_categoria_pai": 2
+}
+
+
+###
+# ==========================================================================
+# ITENS DO CARDÁPIO
+# ==========================================================================
+
+
+### 22. Criar prato (PREPARADO, vai para a cozinha) (espera 201)
+POST {{host}}/itens-cardapio
+Content-Type: application/json
+
+{
+  "id_categoria": 1,
+  "nm_item": "Feijoada",
+  "vl_unitario": 42.9,
+  "tipo_item": "PREPARADO"
+}
+
+
+### 23. Criar bebida (REVENDA, não passa pela cozinha) (espera 201)
+POST {{host}}/itens-cardapio
+Content-Type: application/json
+
+{
+  "id_categoria": 3,
+  "nm_item": "Coca-Cola 350ml",
+  "vl_unitario": 6.5,
+  "tipo_item": "REVENDA"
+}
+
+
+### 24. Criar item fora do cardápio (disponivel = false) (espera 201)
+POST {{host}}/itens-cardapio
+Content-Type: application/json
+
+{
+  "id_categoria": 1,
+  "nm_item": "Torta de limão",
+  "vl_unitario": 18,
+  "tipo_item": "PREPARADO",
+  "disponivel": false
+}
+
+
+### 25. Categoria inexistente (espera 404)
+POST {{host}}/itens-cardapio
+Content-Type: application/json
+
+{
+  "id_categoria": 9999,
+  "nm_item": "Sem categoria",
+  "vl_unitario": 10,
+  "tipo_item": "REVENDA"
+}
+
+
+### 26. Tipo de item inválido (espera 400)
+POST {{host}}/itens-cardapio
+Content-Type: application/json
+
+{
+  "id_categoria": 1,
+  "nm_item": "Tipo errado",
+  "vl_unitario": 10,
+  "tipo_item": "OUTRO"
+}
+
+
+### 27. Preço com 3 casas decimais (espera 400)
+POST {{host}}/itens-cardapio
+Content-Type: application/json
+
+{
+  "id_categoria": 1,
+  "nm_item": "Preço errado",
+  "vl_unitario": 6.555,
+  "tipo_item": "REVENDA"
+}
+
+
+### 28. Listar (espera 200)
+GET {{host}}/itens-cardapio
+
+
+### 29. Buscar por id (espera 200)
+GET {{host}}/itens-cardapio/1
+
+
+### 30. Atualizar a descrição (espera 200)
+PATCH {{host}}/itens-cardapio/1
+Content-Type: application/json
+
+{
+  "ds_item": "Serve 2 pessoas"
+}
+
+
+###
+# ==========================================================================
+# USUÁRIOS (cada cadastro cria a Pessoa e o Usuario juntos)
+# ==========================================================================
+
+
+### 31. Cadastrar cliente (espera 201)
+# A senha é salva como hash bcrypt e nunca volta na resposta. O perfil padrão é CLIENTE.
+POST {{host}}/usuarios
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Ana Souza",
+  "ds_cnpj_cpf": "12345678909",
+  "ds_email": "ana@email.com",
+  "ds_telefone": "54999990000",
+  "ds_apelido": "ana",
+  "ds_senha": "senha123"
+}
+
+
+### 32. Cadastrar garçom (espera 201)
+POST {{host}}/usuarios
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Bruno Lima",
+  "ds_apelido": "bruno",
+  "ds_senha": "garcom123",
+  "perfil": "GARCOM"
+}
+
+
+### 33. Apelido repetido (espera 409)
+# O service confere antes de gravar. Se duas pessoas se cadastrarem ao mesmo tempo, o erro
+# P2002 do banco (índice UNIQUE) também vira 409 pelo filtro global.
+POST {{host}}/usuarios
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Outra Pessoa",
+  "ds_apelido": "ana",
+  "ds_senha": "senha123"
+}
+
+
+### 34. E-mail repetido (espera 409)
+POST {{host}}/usuarios
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Outra Pessoa",
+  "ds_email": "ana@email.com",
+  "ds_apelido": "outra",
+  "ds_senha": "senha123"
+}
+
+
+### 35. Dados inválidos (espera 400)
+POST {{host}}/usuarios
+Content-Type: application/json
+
+{
+  "nm_pessoa": "",
+  "ds_email": "isto-nao-e-email",
+  "ds_apelido": "ab",
+  "ds_senha": "123",
+  "perfil": "DONO"
+}
+
+
+### 36. Listar (sem a senha) (espera 200)
+GET {{host}}/usuarios
+
+
+### 37. Buscar por id (espera 200)
+GET {{host}}/usuarios/1
+
+
+### 38. Id inexistente (espera 404)
+GET {{host}}/usuarios/9999
+
+
+### 39. Atualizar telefone e trocar a senha (espera 200)
+PATCH {{host}}/usuarios/1
+Content-Type: application/json
+
+{
+  "ds_telefone": "54888880000",
+  "ds_senha": "novasenha1"
+}
+
+
+### 40. Trocar o apelido para o de outro usuário (espera 409)
+PATCH {{host}}/usuarios/1
+Content-Type: application/json
+
+{
+  "ds_apelido": "bruno"
+}
+
+
+###
+# ==========================================================================
+# COMANDAS
+# ==========================================================================
+
+
+### 41. Abrir comanda na mesa 1 (espera 201)
+POST {{host}}/comandas
+Content-Type: application/json
+
+{
+  "id_usuario": 1,
+  "id_mesa": 1
+}
+
+
+### 42. Abrir outra comanda na mesma mesa (espera 409)
+POST {{host}}/comandas
+Content-Type: application/json
+
+{
+  "id_usuario": 1,
+  "id_mesa": 1
+}
+
+
+### 43. Usuário inexistente (espera 404)
+POST {{host}}/comandas
+Content-Type: application/json
+
+{
+  "id_usuario": 9999
+}
+
+
+### 44. Mesa inexistente (espera 404)
+POST {{host}}/comandas
+Content-Type: application/json
+
+{
+  "id_usuario": 1,
+  "id_mesa": 9999
+}
+
+
+### 45. Body vazio (espera 400)
+POST {{host}}/comandas
+Content-Type: application/json
+
+{}
+
+
+### 46. Abrir comanda sem mesa (espera 201)
+POST {{host}}/comandas
+Content-Type: application/json
+
+{
+  "id_usuario": 1
+}
+
+
+### 47. Listar as comandas abertas (espera 200)
+GET {{host}}/comandas?id_situacao=ABERTA
+
+
+### 48. Filtro de situação inválido (espera 400)
+GET {{host}}/comandas?id_situacao=XYZ
+
+
+### 49. Definir a mesa da comanda 2 (espera 200)
+PATCH {{host}}/comandas/2
+Content-Type: application/json
+
+{
+  "id_mesa": 2
+}
+
+
+### 50. Trocar para uma mesa que já está ocupada (espera 409)
+PATCH {{host}}/comandas/2
+Content-Type: application/json
+
+{
+  "id_mesa": 1
+}
+
+
+### 51. Buscar o detalhe da comanda (espera 200)
+GET {{host}}/comandas/1
+
+
+### 52. Comanda inexistente (espera 404)
+GET {{host}}/comandas/9999
+
+
+###
+# ==========================================================================
+# ITENS DO PEDIDO (cozinha e garçom)
+# ==========================================================================
+
+
+### 53. Lançar o prato (2 unidades) (espera 201)
+# O prato entra como AGUARDANDO e o preço é copiado do cardápio na hora do pedido.
+POST {{host}}/itens-pedido
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "id_item_cardapio": 1,
+  "qt_quantidade": 2,
+  "ds_observacao": "sem cebola"
+}
+
+
+### 54. Lançar a bebida (1 unidade) (espera 201)
+# Item de REVENDA já entra como PRONTO, porque não passa pela cozinha.
+POST {{host}}/itens-pedido
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "id_item_cardapio": 2,
+  "qt_quantidade": 1
+}
+
+
+### 55. Lançar um item fora do cardápio (espera 409)
+POST {{host}}/itens-pedido
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "id_item_cardapio": 3,
+  "qt_quantidade": 1
+}
+
+
+### 56. Quantidade zero (espera 400)
+POST {{host}}/itens-pedido
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "id_item_cardapio": 1,
+  "qt_quantidade": 0
+}
+
+
+### 57. Comanda inexistente (espera 404)
+POST {{host}}/itens-pedido
+Content-Type: application/json
+
+{
+  "id_comanda": 9999,
+  "id_item_cardapio": 1,
+  "qt_quantidade": 1
+}
+
+
+### 58. Fila da cozinha (só o que está aguardando ou em preparo) (espera 200)
+GET {{host}}/itens-pedido/fila
+
+
+### 59. Filtrar o que está pronto numa comanda (espera 200)
+GET {{host}}/itens-pedido?id_situacao=PRONTO&id_comanda=1
+
+
+### 60. Buscar por id (espera 200)
+GET {{host}}/itens-pedido/1
+
+
+### 61. Corrigir a observação (enquanto está aguardando) (espera 200)
+PATCH {{host}}/itens-pedido/1
+Content-Type: application/json
+
+{
+  "ds_observacao": "sem cebola e sem pimenta"
+}
+
+
+### 62. Cozinha: começar a preparar (espera 200)
+PATCH {{host}}/itens-pedido/1/situacao
+Content-Type: application/json
+
+{
+  "id_situacao": "EM_PREPARO"
+}
+
+
+### 63. Corrigir depois que a cozinha começou (espera 409)
+PATCH {{host}}/itens-pedido/1
+Content-Type: application/json
+
+{
+  "qt_quantidade": 5
+}
+
+
+### 64. Pular uma etapa (EM_PREPARO direto para ENTREGUE) (espera 409)
+PATCH {{host}}/itens-pedido/1/situacao
+Content-Type: application/json
+
+{
+  "id_situacao": "ENTREGUE"
+}
+
+
+### 65. Situação inválida (espera 400)
+PATCH {{host}}/itens-pedido/1/situacao
+Content-Type: application/json
+
+{
+  "id_situacao": "XYZ"
+}
+
+
+### 66. Cozinha: prato pronto (espera 200)
+PATCH {{host}}/itens-pedido/1/situacao
+Content-Type: application/json
+
+{
+  "id_situacao": "PRONTO"
+}
+
+
+### 67. Garçom: entregar o prato (espera 200)
+# Se a cozinha e o garçom mexerem no mesmo item ao mesmo tempo, só um vence e o outro
+# recebe 409: a troca de situação só grava se o item ainda estiver como foi lido.
+PATCH {{host}}/itens-pedido/1/situacao
+Content-Type: application/json
+
+{
+  "id_situacao": "ENTREGUE"
+}
+
+
+### 68. Garçom: entregar a bebida (espera 200)
+PATCH {{host}}/itens-pedido/2/situacao
+Content-Type: application/json
+
+{
+  "id_situacao": "ENTREGUE"
+}
+
+
+### 69. Cancelar um item que já foi entregue (espera 409)
+PATCH {{host}}/itens-pedido/1/situacao
+Content-Type: application/json
+
+{
+  "id_situacao": "CANCELADO"
+}
+
+
+###
+# ==========================================================================
+# CONTA, PAGAMENTOS E FECHAMENTO DA COMANDA
+# ==========================================================================
+
+
+### 70. Conferir a conta (espera 200)
+# vl_total deve ser "92.30" (2 x 42.90 + 6.50) e vl_restante também.
+GET {{host}}/comandas/1
+
+
+### 71. Pagar 50,00 em dinheiro (espera 201)
+# Dinheiro e cartão já entram como CONFIRMADO.
+POST {{host}}/pagamentos
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "vl_pago": 50,
+  "forma_pagamento": "DINHEIRO"
+}
+
+
+### 72. Pagar 20,00 no PIX (espera 201)
+# O PIX entra como PENDENTE até alguém confirmar (depois, o webhook vai fazer isso).
+POST {{host}}/pagamentos
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "vl_pago": 20,
+  "forma_pagamento": "PIX"
+}
+
+
+### 73. Pagar mais do que falta (espera 409)
+# Faltam 22.30, porque o PIX pendente já conta.
+POST {{host}}/pagamentos
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "vl_pago": 30,
+  "forma_pagamento": "CARTAO"
+}
+
+
+### 74. Valor zero (espera 400)
+POST {{host}}/pagamentos
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "vl_pago": 0,
+  "forma_pagamento": "CARTAO"
+}
+
+
+### 75. Forma de pagamento inválida (espera 400)
+POST {{host}}/pagamentos
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "vl_pago": 5,
+  "forma_pagamento": "BOLETO"
+}
+
+
+### 76. Comanda inexistente (espera 404)
+POST {{host}}/pagamentos
+Content-Type: application/json
+
+{
+  "id_comanda": 9999,
+  "vl_pago": 5,
+  "forma_pagamento": "PIX"
+}
+
+
+### 77. Fechar com pagamento pendente (espera 409)
+PATCH {{host}}/comandas/1/fechar
+
+
+### 78. Confirmar o PIX (espera 200)
+PATCH {{host}}/pagamentos/2/situacao
+Content-Type: application/json
+
+{
+  "id_situacao": "CONFIRMADO"
+}
+
+
+### 79. Confirmar de novo (espera 409)
+PATCH {{host}}/pagamentos/2/situacao
+Content-Type: application/json
+
+{
+  "id_situacao": "CONFIRMADO"
+}
+
+
+### 80. Fechar faltando pagar (espera 409)
+PATCH {{host}}/comandas/1/fechar
+
+
+### 81. Pagar o resto (22,30) no cartão (espera 201)
+POST {{host}}/pagamentos
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "vl_pago": 22.3,
+  "forma_pagamento": "CARTAO"
+}
+
+
+### 82. Listar os pagamentos da comanda (espera 200)
+GET {{host}}/pagamentos?id_comanda=1
+
+
+### 83. Buscar pagamento por id (espera 200)
+GET {{host}}/pagamentos/1
+
+
+### 84. Fechar a comanda (espera 200)
+# A resposta traz a comanda FECHADA com vl_restante "0.00". O fechamento roda em um $transaction.
+PATCH {{host}}/comandas/1/fechar
+
+
+### 85. Fechar de novo (espera 409)
+PATCH {{host}}/comandas/1/fechar
+
+
+### 86. Lançar item em comanda fechada (espera 409)
+POST {{host}}/itens-pedido
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "id_item_cardapio": 2,
+  "qt_quantidade": 1
+}
+
+
+### 87. Pagar uma comanda fechada (espera 409)
+POST {{host}}/pagamentos
+Content-Type: application/json
+
+{
+  "id_comanda": 1,
+  "vl_pago": 1,
+  "forma_pagamento": "DINHEIRO"
+}
+
+
+###
+# ==========================================================================
+# CANCELAMENTO DE COMANDA
+# ==========================================================================
+
+
+### 88. Cancelar a comanda 2 (aberta e sem itens) (espera 200)
+PATCH {{host}}/comandas/2/cancelar
+
+
+### 89. Cancelar de novo (espera 409)
+PATCH {{host}}/comandas/2/cancelar
+
+
+### 90. Cancelar uma comanda que já foi fechada (espera 409)
+PATCH {{host}}/comandas/1/cancelar
+
+
+###
+# ==========================================================================
+# REMOÇÕES E INTEGRIDADE DOS DADOS
+# ==========================================================================
+
+
+### 91. Apagar categoria que ainda tem itens (espera 409)
+DELETE {{host}}/categorias/1
+Content-Type: application/json
+
+[
+  "O 409 vem do erro P2003 do banco (chave estrangeira): a categoria está em uso."
+]
+
+
+### 92. Apagar item do cardápio que já foi pedido (espera 409)
+DELETE {{host}}/itens-cardapio/1
+
+
+### 93. Apagar item que nunca foi pedido (espera 204)
+DELETE {{host}}/itens-cardapio/3
+
+
+### 94. Apagar de novo (espera 404)
+DELETE {{host}}/itens-cardapio/3
+
+
+### 95. Apagar categoria sem itens (espera 204)
+DELETE {{host}}/categorias/2
+
+
+### 96. Apagar de novo (espera 404)
+DELETE {{host}}/categorias/2
+
+
+###
+# ==========================================================================
+# PERSISTÊNCIA
+# ==========================================================================
+
+
+### Reinicie a API agora
+# Pare a API (Ctrl+C) e suba de novo com "npm run start:dev". Depois rode as
+# requisições abaixo: os dados continuam lá, porque estão no PostgreSQL e não na
+# memória da aplicação. Reiniciar não pode mudar nenhuma resposta.
+
+
+### 97. As mesas continuam salvas (espera 200)
+GET {{host}}/mesas
+
+
+### 98. A comanda fechada continua com itens e pagamentos (espera 200)
+# Deve continuar FECHADA, com vl_total "92.30", vl_pago "92.30" e vl_restante "0.00".
+GET {{host}}/comandas/1
+
+
+### 99. Os usuários continuam salvos, sem a senha (espera 200)
+GET {{host}}/usuarios

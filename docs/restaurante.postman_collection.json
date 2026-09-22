@@ -1,0 +1,1684 @@
+{
+  "info": {
+    "name": "Restaurante: API do MVP",
+    "description": "Rode a pasta 1 em ordem (Runner). Ela cria tudo o que precisa e guarda os ids em variáveis, então pode ser repetida. Use com o servidor em http://localhost:3000. A pasta 2 mostra as regras e os erros esperados e só faz sentido depois da pasta 1. Se o seu programa não executar os scripts, as variáveis já vêm com os valores que funcionam com o banco zerado.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Fluxo completo (da mesa ao fechamento da comanda)",
+      "item": [
+        {
+          "name": "1. Criar mesa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mesas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mesas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nr_mesa\": {{nr_mesa}},\n  \"qt_lugares\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('nr_mesa', Math.floor(Date.now() / 1000));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const corpo = pm.response.json();",
+                  "pm.collectionVariables.set('id_mesa', corpo.id_mesa);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Criar categoria",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nm_categoria\": \"Pratos\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const corpo = pm.response.json();",
+                  "pm.collectionVariables.set('id_categoria', corpo.id_categoria);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Criar item do cardápio (prato, vai para a cozinha)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/itens-cardapio",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-cardapio"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_categoria\": {{id_categoria}},\n  \"nm_item\": \"Feijoada\",\n  \"ds_item\": \"Serve 2 pessoas\",\n  \"vl_unitario\": 42.9,\n  \"tipo_item\": \"PREPARADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const corpo = pm.response.json();",
+                  "pm.collectionVariables.set('id_item_prato', corpo.id_item_cardapio);",
+                  "pm.test('tipo PREPARADO', () => pm.expect(corpo.tipo_item === 'PREPARADO').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Criar item do cardápio (bebida, não passa pela cozinha)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/itens-cardapio",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-cardapio"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_categoria\": {{id_categoria}},\n  \"nm_item\": \"Coca-Cola 350ml\",\n  \"vl_unitario\": 6.5,\n  \"tipo_item\": \"REVENDA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const corpo = pm.response.json();",
+                  "pm.collectionVariables.set('id_item_bebida', corpo.id_item_cardapio);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Cadastrar cliente (Pessoa + Usuario de uma vez)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nm_pessoa\": \"Ana Souza\",\n  \"ds_email\": \"{{ds_email}}\",\n  \"ds_telefone\": \"54999990000\",\n  \"ds_apelido\": \"{{ds_apelido}}\",\n  \"ds_senha\": \"senha123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const agora = Date.now();",
+                  "pm.collectionVariables.set('ds_apelido', 'ana' + agora);",
+                  "pm.collectionVariables.set('ds_email', 'ana' + agora + '@email.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const corpo = pm.response.json();",
+                  "pm.collectionVariables.set('id_usuario', corpo.id_usuario);",
+                  "pm.test('perfil padrão é CLIENTE', () => pm.expect(corpo.perfil === 'CLIENTE').to.be.true);",
+                  "pm.test('a senha não volta na resposta', () => pm.expect(!('ds_senha' in corpo)).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Abrir comanda na mesa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/comandas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comandas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_usuario\": {{id_usuario}},\n  \"id_mesa\": {{id_mesa}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const corpo = pm.response.json();",
+                  "pm.collectionVariables.set('id_comanda', corpo.id_comanda);",
+                  "pm.test('comanda ABERTA', () => pm.expect(corpo.id_situacao === 'ABERTA').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Lançar o prato (2 unidades)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_comanda\": {{id_comanda}},\n  \"id_item_cardapio\": {{id_item_prato}},\n  \"qt_quantidade\": 2,\n  \"ds_observacao\": \"sem cebola\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const corpo = pm.response.json();",
+                  "pm.collectionVariables.set('id_item_pedido_prato', corpo.id_item_pedido);",
+                  "pm.test('prato entra AGUARDANDO', () => pm.expect(corpo.id_situacao === 'AGUARDANDO').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Lançar a bebida (1 unidade)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_comanda\": {{id_comanda}},\n  \"id_item_cardapio\": {{id_item_bebida}},\n  \"qt_quantidade\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const corpo = pm.response.json();",
+                  "pm.collectionVariables.set('id_item_pedido_bebida', corpo.id_item_pedido);",
+                  "pm.test('bebida já entra PRONTO', () => pm.expect(corpo.id_situacao === 'PRONTO').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. Cozinha: ver a fila de preparo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido/fila",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido",
+                "fila"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('o prato está na fila', () => pm.expect(corpo.some((i) => i.id_item_pedido == pm.collectionVariables.get('id_item_pedido_prato'))).to.be.true);",
+                  "pm.test('a bebida não está na fila', () => pm.expect(!corpo.some((i) => i.id_item_pedido == pm.collectionVariables.get('id_item_pedido_bebida'))).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Cozinha: começar a preparar",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido/{{id_item_pedido_prato}}/situacao",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido",
+                "{{id_item_pedido_prato}}",
+                "situacao"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_situacao\": \"EM_PREPARO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('EM_PREPARO', () => pm.expect(corpo.id_situacao === 'EM_PREPARO').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11. Cozinha: prato pronto",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido/{{id_item_pedido_prato}}/situacao",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido",
+                "{{id_item_pedido_prato}}",
+                "situacao"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_situacao\": \"PRONTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('PRONTO', () => pm.expect(corpo.id_situacao === 'PRONTO').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12. Garçom: ver o que está pronto para entregar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido?id_situacao=PRONTO&id_comanda={{id_comanda}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido"
+              ],
+              "query": [
+                {
+                  "key": "id_situacao",
+                  "value": "PRONTO"
+                },
+                {
+                  "key": "id_comanda",
+                  "value": "{{id_comanda}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('prato e bebida prontos', () => pm.expect(corpo.length === 2).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13. Garçom: entregar o prato",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido/{{id_item_pedido_prato}}/situacao",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido",
+                "{{id_item_pedido_prato}}",
+                "situacao"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_situacao\": \"ENTREGUE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('ENTREGUE', () => pm.expect(corpo.id_situacao === 'ENTREGUE').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14. Garçom: entregar a bebida",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido/{{id_item_pedido_bebida}}/situacao",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido",
+                "{{id_item_pedido_bebida}}",
+                "situacao"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_situacao\": \"ENTREGUE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('ENTREGUE', () => pm.expect(corpo.id_situacao === 'ENTREGUE').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15. Conferir a conta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comandas/{{id_comanda}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comandas",
+                "{{id_comanda}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('total 92.30 (2 x 42.90 + 6.50)', () => pm.expect(corpo.vl_total === '92.30').to.be.true);",
+                  "pm.test('ainda falta pagar tudo', () => pm.expect(corpo.vl_restante === '92.30').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16. Pagar 50,00 em dinheiro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pagamentos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pagamentos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_comanda\": {{id_comanda}},\n  \"vl_pago\": 50,\n  \"forma_pagamento\": \"DINHEIRO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('dinheiro já entra CONFIRMADO', () => pm.expect(corpo.id_situacao === 'CONFIRMADO').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17. Pagar 20,00 no PIX (fica pendente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pagamentos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pagamentos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_comanda\": {{id_comanda}},\n  \"vl_pago\": 20,\n  \"forma_pagamento\": \"PIX\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const corpo = pm.response.json();",
+                  "pm.collectionVariables.set('id_pagamento_pix', corpo.id_pagamento);",
+                  "pm.test('PIX entra PENDENTE', () => pm.expect(corpo.id_situacao === 'PENDENTE').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18. Confirmar o PIX",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pagamentos/{{id_pagamento_pix}}/situacao",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pagamentos",
+                "{{id_pagamento_pix}}",
+                "situacao"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_situacao\": \"CONFIRMADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('CONFIRMADO', () => pm.expect(corpo.id_situacao === 'CONFIRMADO').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19. Pagar o resto (22,30) no cartão",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pagamentos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pagamentos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_comanda\": {{id_comanda}},\n  \"vl_pago\": 22.3,\n  \"forma_pagamento\": \"CARTAO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "20. Fechar a comanda",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comandas/{{id_comanda}}/fechar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comandas",
+                "{{id_comanda}}",
+                "fechar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('comanda FECHADA', () => pm.expect(corpo.id_situacao === 'FECHADA').to.be.true);",
+                  "pm.test('nada mais a pagar', () => pm.expect(corpo.vl_restante === '0.00').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "21. Listar comandas fechadas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comandas?id_situacao=FECHADA",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comandas"
+              ],
+              "query": [
+                {
+                  "key": "id_situacao",
+                  "value": "FECHADA"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('a comanda do fluxo está na lista', () => pm.expect(corpo.some((c) => c.id_comanda == pm.collectionVariables.get('id_comanda'))).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Erros esperados (mostram as regras)",
+      "item": [
+        {
+          "name": "Mesa com body inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mesas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mesas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nr_mesa\": \"abc\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mesa com número repetido (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mesas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mesas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nr_mesa\": {{nr_mesa}},\n  \"qt_lugares\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));",
+                  "const corpo = pm.response.json();",
+                  "pm.test('a mensagem cita o campo', () => pm.expect(corpo.message.includes('nr_mesa')).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mesa que não existe (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/mesas/999999",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mesas",
+                "999999"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Id que não é número (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/mesas/abc",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mesas",
+                "abc"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastro com apelido repetido (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nm_pessoa\": \"Outra Pessoa\",\n  \"ds_apelido\": \"{{ds_apelido}}\",\n  \"ds_senha\": \"senha123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lançar item em comanda fechada (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_comanda\": {{id_comanda}},\n  \"id_item_cardapio\": {{id_item_bebida}},\n  \"qt_quantidade\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fechar uma comanda que já foi fechada (409)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comandas/{{id_comanda}}/fechar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comandas",
+                "{{id_comanda}}",
+                "fechar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pagar uma comanda fechada (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/pagamentos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pagamentos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_comanda\": {{id_comanda}},\n  \"vl_pago\": 1,\n  \"forma_pagamento\": \"DINHEIRO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancelar item que já foi entregue (409)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido/{{id_item_pedido_prato}}/situacao",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido",
+                "{{id_item_pedido_prato}}",
+                "situacao"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_situacao\": \"CANCELADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apagar categoria que tem itens (409)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/categorias/{{id_categoria}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias",
+                "{{id_categoria}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Consultas e cadastros avulsos",
+      "item": [
+        {
+          "name": "Listar mesas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/mesas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mesas"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar categorias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar itens do cardápio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/itens-cardapio",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-cardapio"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar usuários (sem a senha)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Comandas abertas (painel do salão)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comandas?id_situacao=ABERTA",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "comandas"
+              ],
+              "query": [
+                {
+                  "key": "id_situacao",
+                  "value": "ABERTA"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pagamentos pendentes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pagamentos?id_situacao=PENDENTE",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "pagamentos"
+              ],
+              "query": [
+                {
+                  "key": "id_situacao",
+                  "value": "PENDENTE"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fila da cozinha",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/itens-pedido/fila",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "itens-pedido",
+                "fila"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar garçom",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nm_pessoa\": \"Bruno Lima\",\n  \"ds_apelido\": \"{{apelido_garcom}}\",\n  \"ds_senha\": \"garcom123\",\n  \"perfil\": \"GARCOM\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('apelido_garcom', 'garcom' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar cozinha",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nm_pessoa\": \"Carla Dias\",\n  \"ds_apelido\": \"{{apelido_cozinha}}\",\n  \"ds_senha\": \"cozinha123\",\n  \"perfil\": \"COZINHA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('apelido_cozinha', 'cozinha' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar o telefone do cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios/{{id_usuario}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{id_usuario}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ds_telefone\": \"54888880000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "nr_mesa",
+      "value": "1"
+    },
+    {
+      "key": "id_mesa",
+      "value": "1"
+    },
+    {
+      "key": "id_categoria",
+      "value": "1"
+    },
+    {
+      "key": "id_item_prato",
+      "value": "1"
+    },
+    {
+      "key": "id_item_bebida",
+      "value": "2"
+    },
+    {
+      "key": "id_usuario",
+      "value": "1"
+    },
+    {
+      "key": "id_comanda",
+      "value": "1"
+    },
+    {
+      "key": "id_item_pedido_prato",
+      "value": "1"
+    },
+    {
+      "key": "id_item_pedido_bebida",
+      "value": "2"
+    },
+    {
+      "key": "id_pagamento_pix",
+      "value": "2"
+    },
+    {
+      "key": "ds_apelido",
+      "value": "ana"
+    },
+    {
+      "key": "ds_email",
+      "value": "ana@email.com"
+    },
+    {
+      "key": "apelido_garcom",
+      "value": "garcom"
+    },
+    {
+      "key": "apelido_cozinha",
+      "value": "cozinha"
+    }
+  ]
+}
