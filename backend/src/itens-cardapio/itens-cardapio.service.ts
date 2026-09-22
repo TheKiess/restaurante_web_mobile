@@ -27,7 +27,7 @@ export class ItensCardapioService
     });
 
     if (!item)
-      throw new NotFoundException(`Item ${nrId} não encontrado`);
+      throw new NotFoundException(`Item ${nrId} não encontrado!`);
 
     return item;
   }
@@ -53,6 +53,6 @@ export class ItensCardapioService
     const categoria = await this.prisma.categoria.findUnique({ where: { id_categoria: nrIdCategoria } });
 
     if (!categoria)
-      throw new NotFoundException(`Categoria ${nrIdCategoria} não encontrada`);
+      throw new NotFoundException(`Categoria ${nrIdCategoria} não encontrada!`);
   }
 }

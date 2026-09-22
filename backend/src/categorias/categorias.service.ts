@@ -29,7 +29,7 @@ export class CategoriasService
     });
 
     if (!categoria)
-      throw new NotFoundException(`Categoria ${nrId} não encontrada`);
+      throw new NotFoundException(`Categoria ${nrId} não encontrada!`);
 
     return categoria;
   }
@@ -39,7 +39,7 @@ export class CategoriasService
     await this.buscarCategoriaPorId(nrId);
 
     if (updateCategoriaDto.id_categoria_pai === nrId)
-      throw new BadRequestException('Uma categoria não pode ser pai dela mesma');
+      throw new BadRequestException('Uma categoria não pode ser pai dela mesma!');
 
     if (updateCategoriaDto.id_categoria_pai)
       await this.buscarCategoriaPorId(updateCategoriaDto.id_categoria_pai);

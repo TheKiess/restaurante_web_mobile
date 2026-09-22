@@ -136,7 +136,7 @@ export class ItensPedidoService
     });
 
     if (count === 0)
-      throw new ConflictException('Este item acabou de ser alterado por outra pessoa, atualize e tente de novo');
+      throw new ConflictException('Este item acabou de ser alterado por outra pessoa, atualize e tente de novo!');
 
     return this.buscarItemPedidoPorId(nrId);
   }

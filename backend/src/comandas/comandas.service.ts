@@ -101,7 +101,7 @@ export class ComandasService
       });
 
       if (count === 0)
-        throw new ConflictException('Esta comanda acabou de ser alterada por outra pessoa, atualize e tente de novo');
+        throw new ConflictException('Esta comanda acabou de ser alterada por outra pessoa, atualize e tente de novo!');
     });
 
     return this.buscarComandaPorId(nrId);

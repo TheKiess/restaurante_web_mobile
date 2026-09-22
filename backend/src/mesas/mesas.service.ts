@@ -23,7 +23,7 @@ export class MesasService
     const mesa = await this.prisma.mesa.findUnique({ where: { id_mesa: nrId } });
 
     if (!mesa)
-      throw new NotFoundException(`Mesa ${nrId} não encontrada`);
+      throw new NotFoundException(`Mesa ${nrId} não encontrada!`);
 
     return mesa;
   }

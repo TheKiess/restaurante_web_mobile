@@ -44,7 +44,7 @@ export class UsuariosService
     });
 
     if (!usuario)
-      throw new NotFoundException(`Usuário ${nrId} não encontrado`);
+      throw new NotFoundException(`Usuário ${nrId} não encontrado!`);
 
     return usuario;
   }
@@ -77,12 +77,12 @@ export class UsuariosService
   private async validarDadosUnicos(dsApelido?: string, dsEmail?: string, dsCnpjCpf?: string)
   {
     if (dsApelido && await this.prisma.usuario.findUnique({ where: { ds_apelido: dsApelido } }))
-      throw new ConflictException('Apelido já está em uso');
+      throw new ConflictException('Apelido já está em uso!');
 
     if (dsEmail && await this.prisma.pessoa.findUnique({ where: { ds_email: dsEmail } }))
-      throw new ConflictException('E-mail já cadastrado');
+      throw new ConflictException('E-mail já cadastrado!');
 
     if (dsCnpjCpf && await this.prisma.pessoa.findUnique({ where: { ds_cnpj_cpf: dsCnpjCpf } }))
-      throw new ConflictException('CPF/CNPJ já cadastrado');
+      throw new ConflictException('CPF/CNPJ já cadastrado!');
   }
 }
