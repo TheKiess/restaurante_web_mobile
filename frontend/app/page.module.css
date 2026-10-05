@@ -1,0 +1,35 @@
+.titulo {
+  margin: 0 0 8px;
+  font-size: 2rem;
+}
+
+.descricao {
+  margin: 0 0 32px;
+  color: var(--cor-texto-suave);
+}
+
+.modulos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cartao {
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  background: var(--cor-superficie);
+}
+
+.tituloCartao {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+}
+
+.textoCartao {
+  margin: 0;
+  color: var(--cor-texto-suave);
+}

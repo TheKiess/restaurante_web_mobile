@@ -1,0 +1,40 @@
+.cabecalho {
+  border-bottom: 1px solid var(--cor-borda);
+  background: var(--cor-fundo);
+}
+
+.conteudo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  max-width: var(--largura-maxima);
+  margin: 0 auto;
+  padding: 16px var(--espaco-pagina);
+}
+
+.marca {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  color: var(--cor-texto-suave);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--cor-texto);
+  text-decoration: underline;
+}

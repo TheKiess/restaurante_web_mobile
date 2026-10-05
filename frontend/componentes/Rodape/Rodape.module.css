@@ -1,0 +1,23 @@
+.rodape
+{
+  border-top: 1px solid var(--cor-borda);
+  background: var(--cor-superficie);
+  color: var(--cor-texto-suave);
+  font-size: 0.875rem;
+}
+
+.conteudo
+{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 24px;
+  max-width: var(--largura-maxima);
+  margin: 0 auto;
+  padding: 20px var(--espaco-pagina);
+}
+
+.conteudo p
+{
+  margin: 0;
+}
