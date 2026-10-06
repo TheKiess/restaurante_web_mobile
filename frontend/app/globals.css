@@ -1,14 +1,35 @@
-:root {
-  --cor-fundo: #ffffff;
-  --cor-superficie: #f5f5f5;
-  --cor-texto: #171717;
-  --cor-texto-suave: #525252;
-  --cor-borda: #d4d4d4;
+:root
+{
+  --vinho-950: #1f0a0e;
+  --vinho-900: #2d0f15;
+  --vinho-800: #4a1620;
+  --dourado: #d4a95a;
+  --dourado-claro: #e8cd94;
+  --dourado-escuro: #8a6422;
+  --creme: #f8f2e8;
+  --creme-escuro: #efe5d3;
+  --papel: #fffdf9;
+  --texto: #2a1a1c;
+  --texto-suave: #6a5558;
+  --texto-sobre-escuro: #f3e9dc;
+  --cor-destaque: var(--dourado-escuro);
+  --fonte-titulo: Georgia, "Times New Roman", serif;
   --largura-maxima: 1100px;
   --espaco-pagina: 24px;
 }
 
-*, *::before, *::after {
+@media (max-width: 480px)
+{
+  :root
+  {
+    --espaco-pagina: 16px;
+  }
+}
+
+*,
+*::before,
+*::after
+{
   box-sizing: border-box;
 }
 
