@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import Cabecalho from "@/componentes/Cabecalho/Cabecalho";
 import Rodape from "@/componentes/Rodape/Rodape";
-import { DS_SISTEMA, NM_SISTEMA } from "@/lib/constantes";
+import { DS_RESTAURANTE, NM_RESTAURANTE } from "@/lib/constantes";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: NM_SISTEMA,
-  description: DS_SISTEMA,
+  title: NM_RESTAURANTE,
+  description: DS_RESTAURANTE,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: LayoutProps<"/">)
+{
   return (
     <html lang="pt-BR">
       <body>

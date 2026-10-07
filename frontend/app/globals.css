@@ -33,25 +33,132 @@
   box-sizing: border-box;
 }
 
-body {
+html
+{
+  scroll-padding-top: 88px;
+}
+
+@media (prefers-reduced-motion: no-preference)
+{
+  html
+  {
+    scroll-behavior: smooth;
+  }
+}
+
+body
+{
   margin: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--cor-fundo);
-  color: var(--cor-texto);
+  background: var(--creme);
+  color: var(--texto);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-main {
+main
+{
   flex: 1;
+}
+
+h1,
+h2,
+h3
+{
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+a
+{
+  color: inherit;
+}
+
+:focus-visible
+{
+  outline: 2px solid var(--dourado);
+  outline-offset: 3px;
+}
+
+.container
+{
   width: 100%;
   max-width: var(--largura-maxima);
-  margin: 0 auto;
-  padding: 32px var(--espaco-pagina);
+  margin-inline: auto;
+  padding-inline: var(--espaco-pagina);
 }
 
-a {
-  color: inherit;
+.secao
+{
+  padding-block: clamp(56px, 9vw, 96px);
+}
+
+.cabecalhoSecao
+{
+  max-width: 640px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+
+.cabecalhoSecao p
+{
+  margin: 16px 0 0;
+  color: var(--texto-suave);
+}
+
+.sobretitulo
+{
+  margin: 0 0 12px;
+  color: var(--cor-destaque);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.tituloSecao
+{
+  color: var(--vinho-800);
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+}
+
+.botao
+{
+  display: inline-block;
+  padding: 12px 28px;
+  border: 1px solid var(--dourado);
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.botaoPreenchido
+{
+  background: var(--dourado);
+  color: var(--vinho-950);
+}
+
+.botaoPreenchido:hover
+{
+  border-color: var(--dourado-claro);
+  background: var(--dourado-claro);
+}
+
+.botaoContorno
+{
+  background: transparent;
+  color: var(--dourado);
+}
+
+.botaoContorno:hover
+{
+  background: var(--dourado);
+  color: var(--vinho-950);
 }
