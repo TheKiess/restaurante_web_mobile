@@ -1,40 +1,155 @@
-.cabecalho {
-  border-bottom: 1px solid var(--cor-borda);
-  background: var(--cor-fundo);
+.cabecalho
+{
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid rgba(212, 169, 90, 0.35);
+  background: var(--vinho-800);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.3);
 }
 
-.conteudo {
-  display: flex;
+.conteudo
+{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: "marca navegacao acoes";
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  max-width: var(--largura-maxima);
-  margin: 0 auto;
-  padding: 16px var(--espaco-pagina);
+  gap: 12px 32px;
+  padding-block: 14px;
 }
 
-.marca {
-  font-size: 1.25rem;
+.marca
+{
+  grid-area: marca;
+  display: inline-flex;
+  align-items: center;
+  color: var(--texto-sobre-escuro);
+  font-family: var(--fonte-titulo);
+  font-size: 1.4rem;
   font-weight: 700;
+  letter-spacing: 0.02em;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.lista {
+.ornamento
+{
+  width: 10px;
+  height: 10px;
+  margin-right: 12px;
+  background: var(--dourado);
+  transform: rotate(45deg);
+}
+
+.navegacao
+{
+  grid-area: navegacao;
+  justify-self: center;
+}
+
+.lista
+{
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 20px;
+  justify-content: center;
+  gap: 8px 28px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.link {
-  color: var(--cor-texto-suave);
+.link
+{
+  position: relative;
+  padding-block: 6px;
+  color: rgba(243, 233, 220, 0.85);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
-.link:hover {
-  color: var(--cor-texto);
-  text-decoration: underline;
+.link::after
+{
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--dourado);
+  transition: width 0.25s ease;
+}
+
+.link:hover,
+.link:focus-visible
+{
+  color: var(--dourado-claro);
+}
+
+.link:hover::after,
+.link:focus-visible::after
+{
+  width: 100%;
+}
+
+.acoes
+{
+  grid-area: acoes;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 900px)
+{
+  .cabecalho
+  {
+    position: static;
+  }
+
+  .conteudo
+  {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "marca acoes"
+      "navegacao navegacao";
+  }
+
+  .navegacao
+  {
+    justify-self: stretch;
+    padding-top: 10px;
+    border-top: 1px solid rgba(212, 169, 90, 0.2);
+  }
+}
+
+@media (max-width: 480px)
+{
+  .conteudo
+  {
+    column-gap: 12px;
+  }
+
+  .marca
+  {
+    font-size: 1.15rem;
+  }
+
+  .acoes :global(.botao)
+  {
+    padding: 8px 18px;
+  }
+
+  .lista
+  {
+    justify-content: space-between;
+    gap: 6px 12px;
+  }
+
+  .link
+  {
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+  }
 }

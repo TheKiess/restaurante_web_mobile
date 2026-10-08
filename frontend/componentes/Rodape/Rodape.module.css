@@ -1,23 +1,143 @@
 .rodape
 {
-  border-top: 1px solid var(--cor-borda);
-  background: var(--cor-superficie);
-  color: var(--cor-texto-suave);
-  font-size: 0.875rem;
+  border-top: 1px solid rgba(212, 169, 90, 0.35);
+  background: var(--vinho-900);
+  color: rgba(243, 233, 220, 0.8);
+  font-size: 0.95rem;
 }
 
-.conteudo
+.colunas
+{
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1.2fr 1.2fr;
+  gap: 40px;
+  padding-block: 56px 48px;
+}
+
+.marca
+{
+  margin: 0 0 12px;
+  color: var(--texto-sobre-escuro);
+  font-family: var(--fonte-titulo);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.texto
+{
+  margin: 0;
+}
+
+.tituloColuna
+{
+  margin: 0 0 16px;
+  color: var(--dourado);
+  font-family: inherit;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.lista
+{
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link
+{
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.link:hover,
+.link:focus-visible
+{
+  color: var(--dourado-claro);
+}
+
+.horarios
+{
+  margin: 0;
+}
+
+.horario
+{
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 8px;
+  border-bottom: 1px dotted rgba(243, 233, 220, 0.25);
+}
+
+.horario dt
+{
+  margin: 0;
+}
+
+.horario dd
+{
+  margin: 0;
+  color: var(--dourado-claro);
+  white-space: nowrap;
+}
+
+.contato
+{
+  display: grid;
+  gap: 10px;
+  font-style: normal;
+}
+
+.contato p
+{
+  margin: 0;
+}
+
+.barraFinal
+{
+  background: var(--vinho-950);
+  color: rgba(243, 233, 220, 0.65);
+  font-size: 0.85rem;
+}
+
+.conteudoBarra
 {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 4px 24px;
-  max-width: var(--largura-maxima);
-  margin: 0 auto;
-  padding: 20px var(--espaco-pagina);
+  padding-block: 18px;
 }
 
-.conteudo p
+.conteudoBarra p
 {
   margin: 0;
+}
+
+@media (max-width: 900px)
+{
+  .colunas
+  {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px)
+{
+  .colunas
+  {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .conteudoBarra
+  {
+    justify-content: center;
+    text-align: center;
+  }
 }
