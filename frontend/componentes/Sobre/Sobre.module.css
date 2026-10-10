@@ -1,0 +1,38 @@
+.diferenciais
+{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diferencial
+{
+  text-align: center;
+}
+
+.diferencial::before
+{
+  content: "";
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: 0 auto 20px;
+  background: var(--dourado-escuro);
+  transform: rotate(45deg);
+}
+
+.tituloDiferencial
+{
+  margin-bottom: 8px;
+  color: var(--vinho-800);
+  font-size: 1.25rem;
+}
+
+.textoDiferencial
+{
+  margin: 0;
+  color: var(--texto-suave);
+}
