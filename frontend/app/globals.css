@@ -1,5 +1,4 @@
-:root
-{
+:root {
   --vinho-950: #1f0a0e;
   --vinho-900: #2d0f15;
   --vinho-800: #4a1620;
@@ -18,36 +17,27 @@
   --espaco-pagina: 24px;
 }
 
-@media (max-width: 480px)
-{
-  :root
-  {
+@media (max-width: 480px) {
+  :root {
     --espaco-pagina: 16px;
   }
 }
 
-*,
-*::before,
-*::after
-{
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
-html
-{
+html {
   scroll-padding-top: 88px;
 }
 
-@media (prefers-reduced-motion: no-preference)
-{
-  html
-  {
+@media (prefers-reduced-motion: no-preference) {
+  html {
     scroll-behavior: smooth;
   }
 }
 
-body
-{
+body {
   margin: 0;
   min-height: 100vh;
   display: flex;
@@ -58,60 +48,49 @@ body
   line-height: 1.6;
 }
 
-main
-{
+main {
   flex: 1;
 }
 
-h1,
-h2,
-h3
-{
+h1, h2, h3 {
   margin: 0;
   font-family: var(--fonte-titulo);
   font-weight: 700;
   line-height: 1.2;
 }
 
-a
-{
+a {
   color: inherit;
 }
 
-:focus-visible
-{
+:focus-visible {
   outline: 2px solid var(--dourado);
   outline-offset: 3px;
 }
 
-.container
-{
+.container {
   width: 100%;
   max-width: var(--largura-maxima);
   margin-inline: auto;
   padding-inline: var(--espaco-pagina);
 }
 
-.secao
-{
+.secao {
   padding-block: clamp(56px, 9vw, 96px);
 }
 
-.cabecalhoSecao
-{
+.cabecalhoSecao {
   max-width: 640px;
   margin: 0 auto 48px;
   text-align: center;
 }
 
-.cabecalhoSecao p
-{
+.cabecalhoSecao p {
   margin: 16px 0 0;
   color: var(--texto-suave);
 }
 
-.sobretitulo
-{
+.sobretitulo {
   margin: 0 0 12px;
   color: var(--cor-destaque);
   font-size: 0.8rem;
@@ -120,14 +99,12 @@ a
   text-transform: uppercase;
 }
 
-.tituloSecao
-{
+.tituloSecao {
   color: var(--vinho-800);
   font-size: clamp(1.7rem, 4vw, 2.4rem);
 }
 
-.botao
-{
+.botao {
   display: inline-block;
   padding: 12px 28px;
   border: 1px solid var(--dourado);
@@ -139,26 +116,22 @@ a
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.botaoPreenchido
-{
+.botaoPreenchido {
   background: var(--dourado);
   color: var(--vinho-950);
 }
 
-.botaoPreenchido:hover
-{
+.botaoPreenchido:hover {
   border-color: var(--dourado-claro);
   background: var(--dourado-claro);
 }
 
-.botaoContorno
-{
+.botaoContorno {
   background: transparent;
   color: var(--dourado);
 }
 
-.botaoContorno:hover
-{
+.botaoContorno:hover {
   background: var(--dourado);
   color: var(--vinho-950);
 }

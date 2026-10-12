@@ -1,5 +1,4 @@
-.cabecalho
-{
+.cabecalho {
   position: sticky;
   top: 0;
   z-index: 10;
@@ -8,8 +7,7 @@
   box-shadow: 0 2px 14px rgba(0, 0, 0, 0.3);
 }
 
-.conteudo
-{
+.conteudo {
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-areas: "marca navegacao acoes";
@@ -18,8 +16,7 @@
   padding-block: 14px;
 }
 
-.marca
-{
+.marca {
   grid-area: marca;
   display: inline-flex;
   align-items: center;
@@ -32,8 +29,7 @@
   white-space: nowrap;
 }
 
-.ornamento
-{
+.ornamento {
   width: 10px;
   height: 10px;
   margin-right: 12px;
@@ -41,14 +37,12 @@
   transform: rotate(45deg);
 }
 
-.navegacao
-{
+.navegacao {
   grid-area: navegacao;
   justify-self: center;
 }
 
-.lista
-{
+.lista {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -58,8 +52,7 @@
   list-style: none;
 }
 
-.link
-{
+.link {
   position: relative;
   padding-block: 6px;
   color: rgba(243, 233, 220, 0.85);
@@ -69,8 +62,7 @@
   transition: color 0.2s ease;
 }
 
-.link::after
-{
+.link::after {
   content: "";
   position: absolute;
   bottom: 0;
@@ -81,74 +73,59 @@
   transition: width 0.25s ease;
 }
 
-.link:hover,
-.link:focus-visible
-{
+.link:hover, .link:focus-visible {
   color: var(--dourado-claro);
 }
 
-.link:hover::after,
-.link:focus-visible::after
-{
+.link:hover::after, .link:focus-visible::after {
   width: 100%;
 }
 
-.acoes
-{
+.acoes {
   grid-area: acoes;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-@media (max-width: 900px)
-{
-  .cabecalho
-  {
+@media (max-width: 900px) {
+  .cabecalho {
     position: static;
   }
 
-  .conteudo
-  {
+  .conteudo {
     grid-template-columns: 1fr auto;
     grid-template-areas:
       "marca acoes"
       "navegacao navegacao";
   }
 
-  .navegacao
-  {
+  .navegacao {
     justify-self: stretch;
     padding-top: 10px;
     border-top: 1px solid rgba(212, 169, 90, 0.2);
   }
 }
 
-@media (max-width: 480px)
-{
-  .conteudo
-  {
+@media (max-width: 480px) {
+  .conteudo {
     column-gap: 12px;
   }
 
-  .marca
-  {
+  .marca {
     font-size: 1.15rem;
   }
 
-  .acoes :global(.botao)
-  {
+  .acoes :global(.botao) {
     padding: 8px 18px;
   }
 
-  .lista
-  {
+  .lista {
     justify-content: space-between;
     gap: 6px 12px;
   }
 
-  .link
-  {
+  .link {
     font-size: 0.85rem;
     letter-spacing: 0.02em;
   }

@@ -2,8 +2,7 @@ import Link from "next/link";
 import { DS_CHAMADA, NM_RESTAURANTE } from "@/lib/constantes";
 import estilos from "./Apresentacao.module.css";
 
-export default function Apresentacao()
-{
+export default function Apresentacao() {
   return (
     <section className={estilos.apresentacao}>
       <div className={`container ${estilos.conteudo}`}>

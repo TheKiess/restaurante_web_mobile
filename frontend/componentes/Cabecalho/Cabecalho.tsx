@@ -2,8 +2,7 @@ import Link from "next/link";
 import { ARR_LINKS_NAVEGACAO, NM_RESTAURANTE } from "@/lib/constantes";
 import estilos from "./Cabecalho.module.css";
 
-export default function Cabecalho()
-{
+export default function Cabecalho() {
   return (
     <header className={estilos.cabecalho}>
       <div className={`container ${estilos.conteudo}`}>
