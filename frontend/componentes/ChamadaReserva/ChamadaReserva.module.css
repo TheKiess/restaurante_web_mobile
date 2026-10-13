@@ -1,0 +1,18 @@
+.painel {
+  padding: clamp(36px, 6vw, 64px) 24px;
+  border: 1px solid var(--dourado);
+  border-radius: 12px;
+  background: linear-gradient(160deg, var(--vinho-800), var(--vinho-900));
+  color: var(--texto-sobre-escuro);
+  text-align: center;
+}
+
+.titulo {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+
+.texto {
+  max-width: 520px;
+  margin: 12px auto 28px;
+  color: rgba(243, 233, 220, 0.85);
+}
