@@ -1,0 +1,38 @@
+.formulario {
+  display: grid;
+  gap: 20px;
+  text-align: left;
+}
+
+.campo {
+  display: grid;
+  gap: 6px;
+}
+
+.rotulo {
+  color: var(--vinho-800);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.entrada {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid rgba(74, 22, 32, 0.25);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--texto);
+  font: inherit;
+}
+
+.entrada:focus-visible {
+  border-color: var(--dourado-escuro);
+  outline: 2px solid var(--dourado);
+  outline-offset: 1px;
+}
+
+.botao {
+  width: 100%;
+  margin-top: 8px;
+  cursor: pointer;
+}

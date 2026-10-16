@@ -1,10 +1,5 @@
+import { ARR_DIFERENCIAIS } from "@/lib/constantes";
 import estilos from "./Sobre.module.css";
-
-const ARR_DIFERENCIAIS = [
-  { nmTitulo: "Ingredientes frescos", dsTexto: "Pratos feitos na hora, com ingredientes selecionados." },
-  { nmTitulo: "Ambiente acolhedor", dsTexto: "Um espaço confortável para reunir família e amigos." },
-  { nmTitulo: "Atendimento atencioso", dsTexto: "Uma equipe pronta para cuidar de cada detalhe do seu pedido." },
-];
 
 export default function Sobre()
 {

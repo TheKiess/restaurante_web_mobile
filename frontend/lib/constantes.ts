@@ -19,3 +19,16 @@ export const ARR_LINKS_NAVEGACAO = [
   { nmRotulo: "Horários", dsCaminho: "/#horarios" },
   { nmRotulo: "Contato",  dsCaminho: "/#contato" },
 ];
+
+export const ARR_CATEGORIAS_CARDAPIO = [
+  { nmCategoria: "Entradas",          dsCategoria: "Porções e petiscos para começar a refeição com calma." },
+  { nmCategoria: "Pratos principais", dsCategoria: "Pratos preparados na hora, com opções para todos os gostos." },
+  { nmCategoria: "Sobremesas",        dsCategoria: "Doces para fechar a refeição com um toque especial." },
+  { nmCategoria: "Bebidas",           dsCategoria: "Sucos, refrigerantes, cervejas e vinhos para acompanhar." },
+];
+
+export const ARR_DIFERENCIAIS = [
+  { nmTitulo: "Ingredientes frescos",  dsTexto: "Pratos feitos na hora, com ingredientes selecionados." },
+  { nmTitulo: "Ambiente acolhedor",    dsTexto: "Um espaço confortável para reunir família e amigos." },
+  { nmTitulo: "Atendimento atencioso", dsTexto: "Uma equipe pronta para cuidar de cada detalhe do seu pedido." },
+];
