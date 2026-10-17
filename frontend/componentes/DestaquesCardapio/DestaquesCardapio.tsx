@@ -1,11 +1,5 @@
+import { ARR_CATEGORIAS_CARDAPIO } from "@/lib/constantes";
 import estilos from "./DestaquesCardapio.module.css";
-
-const ARR_CATEGORIAS = [
-  { nmCategoria: "Entradas", dsCategoria: "Porções e petiscos para começar a refeição com calma." },
-  { nmCategoria: "Pratos principais", dsCategoria: "Pratos preparados na hora, com opções para todos os gostos." },
-  { nmCategoria: "Sobremesas", dsCategoria: "Doces para fechar a refeição com um toque especial." },
-  { nmCategoria: "Bebidas", dsCategoria: "Sucos, refrigerantes, cervejas e vinhos para acompanhar." },
-];
 
 export default function DestaquesCardapio() {
   return (
@@ -17,7 +11,7 @@ export default function DestaquesCardapio() {
           <p>Conheça as categorias do nosso cardápio. Os itens e valores completos você confere no salão.</p>
         </div>
         <ul className={estilos.categorias}>
-          {ARR_CATEGORIAS.map((categoria) => (
+          {ARR_CATEGORIAS_CARDAPIO.map((categoria) => (
             <li key={categoria.nmCategoria} className={estilos.cartao}>
               <h3 className={estilos.tituloCartao}>{categoria.nmCategoria}</h3>
               <p className={estilos.textoCartao}>{categoria.dsCategoria}</p>

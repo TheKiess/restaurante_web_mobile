@@ -1,0 +1,30 @@
+.pagina {
+  display: flex;
+  align-items: center;
+  min-height: 70vh;
+}
+
+.cartao {
+  max-width: 420px;
+  margin-inline: auto;
+  padding: clamp(28px, 5vw, 44px) clamp(20px, 4vw, 36px);
+  border: 1px solid rgba(74, 22, 32, 0.12);
+  border-top: 3px solid var(--dourado);
+  border-radius: 6px;
+  background: var(--papel);
+  box-shadow: 0 10px 24px rgba(74, 22, 32, 0.1);
+  text-align: center;
+}
+
+.titulo {
+  color: var(--vinho-800);
+  font-size: 2rem;
+}
+
+.divisor {
+  display: block;
+  width: 48px;
+  height: 2px;
+  margin: 20px auto 28px;
+  background: var(--dourado);
+}
