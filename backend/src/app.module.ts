@@ -19,7 +19,7 @@ import { PagamentosModule } from './pagamentos/pagamentos.module.js';
     UsuariosModule,
     ComandasModule,
     ItensPedidoModule,
-    PagamentosModule
+    PagamentosModule,
   ]
 })
 
