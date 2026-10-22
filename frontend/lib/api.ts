@@ -17,13 +17,29 @@ function obterUrl(endpoint: string): string {
   return `${baseUrl}/${caminho}`;
 }
 
-async function tratarResposta<T>(resposta: Response): Promise<T> {
-  if (!resposta.ok) {
-    const mensagem = await resposta.text();
+function lerMensagemDoCorpo(dsCorpo: string): string | undefined {
+  try
+  {
+    const { message } = JSON.parse(dsCorpo);
 
-    throw new Error(
-      mensagem || `Erro na API: HTTP ${resposta.status}`
-    );
+    if (Array.isArray(message))
+      return message.join(". ");
+
+    return typeof message === "string" ? message : undefined;
+  }
+  catch
+  {
+    return undefined;
+  }
+}
+
+async function tratarResposta<T>(resposta: Response): Promise<T> {
+  if (!resposta.ok)
+  {
+    const dsCorpo    = await resposta.text();
+    const dsMensagem = lerMensagemDoCorpo(dsCorpo) || dsCorpo || `Erro na API: HTTP ${resposta.status}`;
+
+    throw new Error(dsMensagem);
   }
 
   if (resposta.status === 204) {
