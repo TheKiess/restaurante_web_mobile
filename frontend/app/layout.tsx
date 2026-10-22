@@ -1,6 +1,4 @@
-import type { Metadata } from "next";
-import Cabecalho from "@/componentes/Cabecalho/Cabecalho";
-import Rodape from "@/componentes/Rodape/Rodape";
+import type { Metadata }                  from "next";
 import { DS_RESTAURANTE, NM_RESTAURANTE } from "@/lib/constantes";
 import "./globals.css";
 
@@ -13,11 +11,7 @@ export default function RootLayout({ children }: LayoutProps<"/">)
 {
   return (
     <html lang="pt-BR">
-      <body>
-        <Cabecalho />
-        <main>{children}</main>
-        <Rodape />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
