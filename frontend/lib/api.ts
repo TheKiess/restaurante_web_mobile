@@ -2,38 +2,29 @@
  * Arquivo responsável por mediar a comunicação entre frontend e backend
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "/api";
 
 function obterUrl(endpoint: string): string {
-  if (!API_URL) {
-    throw new Error(
-      "A variável NEXT_PUBLIC_API_URL não foi configurada."
-    );
-  }
-
-  const baseUrl = API_URL.replace(/\/+$/, "");
-  const caminho = endpoint.replace(/^\/+/, "");
-
-  return `${baseUrl}/${caminho}`;
+  return `${API_URL}/${endpoint.replace(/^\/+/, "")}`;
 }
 
 function lerMensagemDoCorpo(dsCorpo: string): string | undefined {
-  try
-  {
+  try {
     const { message } = JSON.parse(dsCorpo);
 
     if (Array.isArray(message))
       return message.join(". ");
 
     return typeof message === "string" ? message : undefined;
-  }
-  catch
-  {
+  } catch {
     return undefined;
   }
 }
 
 async function tratarResposta<T>(resposta: Response): Promise<T> {
+  if (resposta.status === 401 && !window.location.pathname.startsWith("/login"))
+    window.location.href = `/login?de=${encodeURIComponent(window.location.pathname)}`;
+
   if (!resposta.ok)
   {
     const dsCorpo    = await resposta.text();

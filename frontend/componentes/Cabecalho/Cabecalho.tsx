@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AcoesSessao from "@/componentes/AcoesSessao/AcoesSessao";
 import { ARR_LINKS_NAVEGACAO, NM_RESTAURANTE } from "@/lib/constantes";
 import estilos from "./Cabecalho.module.css";
 
@@ -20,7 +21,7 @@ export default function Cabecalho() {
           </ul>
         </nav>
         <div className={estilos.acoes}>
-          <Link href="/login" className="botao botaoContorno">Entrar</Link>
+          <AcoesSessao />
         </div>
       </div>
     </header>

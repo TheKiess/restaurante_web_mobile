@@ -864,3 +864,79 @@ GET {{host}}/comandas/1
 
 ### 99. Os usuários continuam salvos, sem a senha (espera 200)
 GET {{host}}/usuarios
+
+
+###
+# ==========================================================================
+# AUTENTICAÇÃO
+# ==========================================================================
+# Precisa de JWT_SECRET no .env. Roda depois dos usuários (itens 31 a 40): a ana
+# está com a senha "novasenha1" depois do item 39.
+
+### 100. Entrar com o apelido (espera 200)
+# O token vem em ds_token e o usuário volta sem a senha.
+# @name loginAna
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "ana",
+  "ds_senha": "novasenha1"
+}
+
+###
+@token = {{loginAna.response.body.ds_token}}
+
+
+### 101. Entrar com o e-mail (espera 200)
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "ana@email.com",
+  "ds_senha": "novasenha1"
+}
+
+
+### 102. Senha errada (espera 401)
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "ana",
+  "ds_senha": "senha-errada"
+}
+
+
+### 103. Usuário que não existe (espera 401, a mesma mensagem da senha errada)
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "fantasma",
+  "ds_senha": "novasenha1"
+}
+
+
+### 104. Campos vazios (espera 400)
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "",
+  "ds_senha": ""
+}
+
+
+### 105. Ver quem está logado, com o token do item 100 (espera 200)
+GET {{host}}/auth/me
+Authorization: Bearer {{token}}
+
+
+### 106. Ver quem está logado sem token (espera 401)
+GET {{host}}/auth/me
+
+
+### 107. Ver quem está logado com token inválido (espera 401)
+GET {{host}}/auth/me
+Authorization: Bearer token-invalido

@@ -32,3 +32,48 @@ export const ARR_DIFERENCIAIS = [
   { nmTitulo: "Ambiente acolhedor",    dsTexto: "Um espaço confortável para reunir família e amigos." },
   { nmTitulo: "Atendimento atencioso", dsTexto: "Uma equipe pronta para cuidar de cada detalhe do seu pedido." },
 ];
+
+export const ARR_LINKS_GERENTE = [
+  { nmRotulo: "Início",     dsCaminho: "/gerente" },
+  { nmRotulo: "Pedidos",    dsCaminho: "/gerente/pedidos" },
+  { nmRotulo: "Mesas",      dsCaminho: "/gerente/mesas" },
+  { nmRotulo: "Cardápio",   dsCaminho: "/gerente/cardapio" },
+  { nmRotulo: "Categorias", dsCaminho: "/gerente/categorias" },
+  { nmRotulo: "Relatórios", dsCaminho: "/gerente/relatorios" },
+];
+
+export const ARR_LINKS_GARCOM = [
+  { nmRotulo: "Início",     dsCaminho: "/garcom" },
+  { nmRotulo: "Pedidos",    dsCaminho: "/garcom/pedidos" },
+  { nmRotulo: "Entregas",   dsCaminho: "/garcom/entregas" },
+  { nmRotulo: "Comandas",   dsCaminho: "/garcom/comandas" },
+  { nmRotulo: "Pagamentos", dsCaminho: "/garcom/pagamentos" },
+];
+
+export const ARR_LINKS_COZINHA = [
+  { nmRotulo: "Fila de preparo", dsCaminho: "/cozinha" },
+];
+
+export const ARR_LINKS_CLIENTE = [
+  { nmRotulo: "Início",       dsCaminho: "/cliente" },
+  { nmRotulo: "Cardápio",     dsCaminho: "/cliente/cardapio" },
+  { nmRotulo: "Meus pedidos", dsCaminho: "/cliente/pedidos" },
+];
+
+export type Perfil = "GERENCIA" | "GARCOM" | "COZINHA" | "CLIENTE";
+
+export const NM_COOKIE_SESSAO = "restaurante_token";
+
+export const OBJ_ROTA_POR_PERFIL: Record<Perfil, string> = {
+  GERENCIA: "/gerente",
+  GARCOM: "/garcom",
+  COZINHA: "/cozinha",
+  CLIENTE: "/cliente",
+};
+
+export const OBJ_PERFIS_POR_AREA: Record<string, Perfil[]> = {
+  "/gerente": ["GERENCIA"],
+  "/garcom": ["GARCOM"],
+  "/cozinha": ["COZINHA"],
+  "/cliente": ["CLIENTE"],
+};

@@ -118,6 +118,7 @@
 
   .acoes :global(.botao) {
     padding: 8px 18px;
+    white-space: nowrap;
   }
 
   .lista {
@@ -128,5 +129,20 @@
   .link {
     font-size: 0.85rem;
     letter-spacing: 0.02em;
+  }
+}
+
+@media (max-width: 360px) {
+  .marca {
+    font-size: 1rem;
+  }
+
+  .acoes {
+    gap: 4px;
+  }
+
+  .acoes :global(.botao) {
+    padding: 8px 12px;
+    font-size: 0.85rem;
   }
 }
