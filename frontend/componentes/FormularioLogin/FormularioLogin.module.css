@@ -36,3 +36,13 @@
   margin-top: 8px;
   cursor: pointer;
 }
+
+.erro {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid #a12b2b;
+  border-radius: 4px;
+  background: rgba(161, 43, 43, 0.08);
+  color: #7a1f1f;
+  font-size: 0.9rem;
+}

@@ -81,6 +81,25 @@
   border-top: 1px solid rgba(243, 233, 220, 0.15);
 }
 
+.usuario {
+  margin: 0 0 8px;
+  padding-inline: 12px;
+  font-size: 0.85rem;
+  color: var(--dourado-claro);
+}
+
+.sair {
+  composes: link;
+  width: 100%;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .conteudo {
   flex: 1;
   min-width: 0;

@@ -1,0 +1,14 @@
+.sair {
+  padding: 8px 4px;
+  border: 0;
+  background: transparent;
+  color: rgba(243, 233, 220, 0.85);
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.sair:hover,
+.sair:focus-visible {
+  color: var(--dourado-claro);
+}

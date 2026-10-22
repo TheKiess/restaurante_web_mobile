@@ -1,9 +1,11 @@
 "use client";
 
-import Link               from "next/link";
-import { usePathname }    from "next/navigation";
-import { NM_RESTAURANTE } from "@/lib/constantes";
-import estilos            from "./LayoutPainel.module.css";
+import Link                       from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { NM_RESTAURANTE }         from "@/lib/constantes";
+import { encerrarSessao }         from "@/lib/sessao";
+import { useSessao }              from "@/lib/useSessao";
+import estilos                    from "./LayoutPainel.module.css";
 
 interface LinkPainel {
   nmRotulo: string;
@@ -16,10 +18,17 @@ interface LayoutPainelProps {
   children: React.ReactNode;
 }
 
-export default function LayoutPainel({ nmArea, arrLinks, children }: LayoutPainelProps)
-{
+export default function LayoutPainel({ nmArea, arrLinks, children }: LayoutPainelProps) {
   const dsRotaAtual = usePathname();
+  const router = useRouter();
+  const usuario = useSessao();
   const dsRaiz = arrLinks[0]?.dsCaminho;
+
+  async function sair() {
+    await encerrarSessao();
+    router.push("/login");
+    router.refresh();
+  }
 
   function verificarAtivo(dsCaminho: string) {
     if (dsRotaAtual === dsCaminho)
@@ -52,7 +61,9 @@ export default function LayoutPainel({ nmArea, arrLinks, children }: LayoutPaine
           </ul>
         </nav>
         <div className={estilos.rodapeLateral}>
+          {usuario && <p className={estilos.usuario}>{usuario.nm_pessoa}</p>}
           <Link href="/" className={estilos.link}>Voltar ao site</Link>
+          <button type="button" onClick={sair} className={estilos.sair}>Sair</button>
         </div>
       </aside>
       <div className={estilos.conteudo}>{children}</div>
