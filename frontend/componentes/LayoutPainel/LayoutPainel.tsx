@@ -1,11 +1,11 @@
 "use client";
 
-import Link                       from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { NM_RESTAURANTE }         from "@/lib/constantes";
-import { encerrarSessao }         from "@/lib/sessao";
-import { useSessao }              from "@/lib/useSessao";
-import estilos                    from "./LayoutPainel.module.css";
+import Link                                  from "next/link";
+import { usePathname }                       from "next/navigation";
+import { NM_RESTAURANTE }                    from "@/lib/constantes";
+import { encerrarSessao, navegarComRecarga } from "@/lib/sessao";
+import { useSessao }                         from "@/lib/useSessao";
+import estilos                               from "./LayoutPainel.module.css";
 
 interface LinkPainel {
   nmRotulo: string;
@@ -20,17 +20,17 @@ interface LayoutPainelProps {
 
 export default function LayoutPainel({ nmArea, arrLinks, children }: LayoutPainelProps) {
   const dsRotaAtual = usePathname();
-  const router = useRouter();
   const usuario = useSessao();
   const dsRaiz = arrLinks[0]?.dsCaminho;
 
-  async function sair() {
+  async function sair()
+  {
     await encerrarSessao();
-    router.push("/login");
-    router.refresh();
+    navegarComRecarga("/login");
   }
 
-  function verificarAtivo(dsCaminho: string) {
+  function verificarAtivo(dsCaminho: string)
+  {
     if (dsRotaAtual === dsCaminho)
       return true;
 

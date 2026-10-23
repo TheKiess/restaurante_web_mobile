@@ -40,3 +40,15 @@ export async function encerrarSessao(): Promise<void>
 {
   await fetch("/api/auth/logout", { method: "POST" });
 }
+
+/**
+ * Recarrega a página inteira, assim o proxy confere o cookie de novo e nenhum
+ * estado antigo do navegador (cache de rotas, nome do usuário) sobrevive.
+ */
+export function navegarComRecarga(dsDestino: string): void
+{
+  if (!dsDestino)
+    return;
+
+  window.location.assign(dsDestino);
+}

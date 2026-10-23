@@ -1,22 +1,19 @@
 "use client";
 
-import Link                    from "next/link";
-import { useRouter }           from "next/navigation";
-import { OBJ_ROTA_POR_PERFIL } from "@/lib/constantes";
-import { encerrarSessao }      from "@/lib/sessao";
-import { useSessao }           from "@/lib/useSessao";
-import estilos                 from "./AcoesSessao.module.css";
+import Link                                  from "next/link";
+import { OBJ_ROTA_POR_PERFIL }               from "@/lib/constantes";
+import { encerrarSessao, navegarComRecarga } from "@/lib/sessao";
+import { useSessao }                         from "@/lib/useSessao";
+import estilos                               from "./AcoesSessao.module.css";
 
 export default function AcoesSessao()
 {
-  const router = useRouter();
   const usuario = useSessao();
 
   async function sair()
   {
     await encerrarSessao();
-    router.push("/login");
-    router.refresh();
+    navegarComRecarga("/login");
   }
 
   if (!usuario)

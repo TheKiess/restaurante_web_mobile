@@ -2,28 +2,35 @@
  * Arquivo responsável por mediar a comunicação entre frontend e backend
  */
 
+import { navegarComRecarga } from "@/lib/sessao";
+
 const API_URL = "/api";
 
 function obterUrl(endpoint: string): string {
   return `${API_URL}/${endpoint.replace(/^\/+/, "")}`;
 }
 
-function lerMensagemDoCorpo(dsCorpo: string): string | undefined {
-  try {
+function lerMensagemDoCorpo(dsCorpo: string): string | undefined
+{
+  try
+  {
     const { message } = JSON.parse(dsCorpo);
 
     if (Array.isArray(message))
       return message.join(". ");
 
     return typeof message === "string" ? message : undefined;
-  } catch {
+  }
+  catch
+  {
     return undefined;
   }
 }
 
-async function tratarResposta<T>(resposta: Response): Promise<T> {
+async function tratarResposta<T>(resposta: Response): Promise<T>
+{
   if (resposta.status === 401 && !window.location.pathname.startsWith("/login"))
-    window.location.href = `/login?de=${encodeURIComponent(window.location.pathname)}`;
+    navegarComRecarga(`/login?de=${encodeURIComponent(window.location.pathname)}`);
 
   if (!resposta.ok)
   {
@@ -33,14 +40,14 @@ async function tratarResposta<T>(resposta: Response): Promise<T> {
     throw new Error(dsMensagem);
   }
 
-  if (resposta.status === 204) {
+  if (resposta.status === 204)
     return undefined as T;
-  }
 
   return (await resposta.json()) as T;
 }
 
-export async function apiGet<T>(endpoint: string): Promise<T> {
+export async function apiGet<T>(endpoint: string): Promise<T>
+{
   const resposta = await fetch(obterUrl(endpoint), {
     method: "GET",
     headers: { Accept: "application/json" },
@@ -50,10 +57,10 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
   return tratarResposta<T>(resposta);
 }
 
-export async function apiPost<T>(
-  endpoint: string,
+export async function apiPost<T>(endpoint: string,
   dados: unknown
-): Promise<T> {
+): Promise<T>
+{
   const resposta = await fetch(obterUrl(endpoint), {
     method: "POST",
     headers: {
@@ -66,10 +73,10 @@ export async function apiPost<T>(
   return tratarResposta<T>(resposta);
 }
 
-export async function apiPatch<T>(
-  endpoint: string,
+export async function apiPatch<T>(endpoint: string,
   dados: unknown
-): Promise<T> {
+): Promise<T>
+{
   const resposta = await fetch(obterUrl(endpoint), {
     method: "PATCH",
     headers: {
@@ -83,7 +90,8 @@ export async function apiPatch<T>(
   return tratarResposta<T>(resposta);
 }
 
-export async function apiDelete<T>(endpoint: string): Promise<T> {
+export async function apiDelete<T>(endpoint: string): Promise<T>
+{
   const resposta = await fetch(obterUrl(endpoint), {
     method: "DELETE",
     headers: { Accept: "application/json" },

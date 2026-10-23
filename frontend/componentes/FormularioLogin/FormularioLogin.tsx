@@ -1,9 +1,8 @@
 "use client";
 
-import { FormEvent, useState }                 from "react";
-import { useRouter }                           from "next/navigation";
-import { OBJ_ROTA_POR_PERFIL }                 from "@/lib/constantes";
-import { verificarAcesso, type UsuarioSessao } from "@/lib/sessao";
+import { FormEvent, useState } from "react";
+import { OBJ_ROTA_POR_PERFIL } from "@/lib/constantes";
+import { navegarComRecarga, verificarAcesso, type UsuarioSessao } from "@/lib/sessao";
 import estilos from "./FormularioLogin.module.css";
 
 function escolherDestino(usuario: UsuarioSessao): string
@@ -19,14 +18,15 @@ function escolherDestino(usuario: UsuarioSessao): string
   return OBJ_ROTA_POR_PERFIL[usuario.perfil];
 }
 
-export default function FormularioLogin() {
-  const router                  = useRouter();
+export default function FormularioLogin()
+{
   const [dsLogin,  setDsLogin]  = useState("");
   const [dsSenha,  setDsSenha]  = useState("");
   const [dsErro,   setDsErro]   = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  async function enviarFormulario(evento: FormEvent<HTMLFormElement>) {
+  async function enviarFormulario(evento: FormEvent<HTMLFormElement>)
+  {
     evento.preventDefault();
 
     if (!dsLogin.trim() || !dsSenha)
@@ -47,13 +47,11 @@ export default function FormularioLogin() {
       if (!resposta.ok)
       {
         const dsMensagem = Array.isArray(corpo?.message) ? corpo.message.join(". ") : corpo?.message;
-
         setDsErro(dsMensagem || "Não foi possível entrar.");
         return;
       }
 
-      router.push(escolherDestino(corpo.usuario));
-      router.refresh();
+      navegarComRecarga(escolherDestino(corpo.usuario));
     }
     catch
     {

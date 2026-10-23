@@ -3,6 +3,7 @@
   --vinho-950: #1f0a0e;
   --vinho-900: #2d0f15;
   --vinho-800: #4a1620;
+  --vinho-700: #5e1c28;
   --dourado: #d4a95a;
   --dourado-claro: #e8cd94;
   --dourado-escuro: #8a6422;
@@ -12,6 +13,12 @@
   --texto: #2a1a1c;
   --texto-suave: #6a5558;
   --texto-sobre-escuro: #f3e9dc;
+  --borda: rgba(74, 22, 32, 0.14);
+  --borda-forte: rgba(74, 22, 32, 0.28);
+  --cor-erro: #8f2323;
+  --cor-erro-fundo: rgba(161, 43, 43, 0.08);
+  --cor-sucesso: #2f6b3a;
+  --cor-sucesso-fundo: rgba(47, 107, 58, 0.1);
   --cor-destaque: var(--dourado-escuro);
   --fonte-titulo: Georgia, "Times New Roman", serif;
   --largura-maxima: 1100px;
