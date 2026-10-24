@@ -10,8 +10,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { apiGet } from "@/lib/api";
+import Link                    from "next/link";
+import { apiGet }              from "@/lib/api";
+import estilos                 from "@/componentes/Painel/Painel.module.css";
+import estilosPagina           from "./page.module.css";
 
 type ItemPedidoApi = {
   id_item_pedido: number;
@@ -173,111 +175,74 @@ export default function GerentePage() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-9">
-      <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className={estilos.pagina}>
+      <header className={estilos.cabecalhoComAcao}>
         <div>
-          <p className="text-sm font-semibold tracking-widest text-[#9B6875]">
-            ÁREA ADMINISTRATIVA
-          </p>
-
-          <h1 className="mt-2 text-3xl font-bold text-[#6F2438] sm:text-4xl">
-            Painel do Gerente
-          </h1>
-
-          <p className="mt-2 text-[#77685E]">
+          <p className="sobretitulo">Área administrativa</p>
+          <h1 className={estilos.titulo}>Painel do Gerente</h1>
+          <p className={estilos.descricao}>
             Acompanhe os resultados e gerencie seu restaurante.
           </p>
         </div>
 
         <Link
           href="/gerente/relatorios"
-          className="inline-flex items-center justify-center rounded-lg bg-[#6F2438] px-5 py-3 font-semibold !text-white transition hover:bg-[#87364D]"
+          className={`${estilos.botao} ${estilos.botaoPrimario}`}
         >
           Ver relatórios →
         </Link>
       </header>
 
-      <section>
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-[#49352F]">
-            Visão geral
-          </h2>
-        </div>
+      <section className={estilosPagina.secao}>
+        <h2 className={estilos.tituloCartao}>Visão geral</h2>
 
         {erro && (
-          <div
-            role="alert"
-            className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-          >
+          <div role="alert" className={`${estilos.alerta} ${estilos.alertaErro}`}>
             {erro}
           </div>
         )}
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className={estilosPagina.indicadores}>
           {cards.map((card) => (
-            <div
-              key={card.titulo}
-              className="rounded-xl border border-[#E4D7CB] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#77685E]">
-                    {card.titulo}
-                  </p>
+            <div key={card.titulo} className={estilosPagina.indicador}>
+              <div className={estilosPagina.indicadorTopo}>
+                <div>
+                  <p className={estilosPagina.indicadorRotulo}>{card.titulo}</p>
 
-                  <p className="mt-3 break-words text-2xl font-bold text-[#6F2438]">
+                  <p className={estilosPagina.indicadorValor}>
                     {carregando ? "Carregando..." : card.valor}
                   </p>
                 </div>
 
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F5E9EC] text-lg font-bold text-[#6F2438]">
-                  {card.icone}
-                </div>
+                <div className={estilosPagina.icone}>{card.icone}</div>
               </div>
 
-              <p className="mt-4 text-sm text-[#77685E]">
-                {card.descricao}
-              </p>
+              <p className={estilosPagina.indicadorTexto}>{card.descricao}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section>
-        <div className="mb-5">
-          <h2 className="text-xl font-semibold text-[#49352F]">
-            Gestão do restaurante
-          </h2>
-        </div>
+      <section className={estilosPagina.secao}>
+        <h2 className={estilos.tituloCartao}>Gestão do restaurante</h2>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className={estilosPagina.atalhos}>
           {atalhos.map((atalho) => (
             <Link
               key={atalho.href}
               href={atalho.href}
-              className="group flex flex-col rounded-xl border border-[#E4D7CB] bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-[#B98B96] hover:shadow-md"
+              className={estilosPagina.atalho}
             >
-              <div className="flex items-center justify-between">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F5E9EC] font-bold text-[#6F2438]">
-                  {atalho.simbolo}
-                </span>
-
-                <span className="text-xl text-[#9B6875] transition group-hover:translate-x-1">
-                  →
-                </span>
+              <div className={estilosPagina.atalhoTopo}>
+                <span className={estilosPagina.icone}>{atalho.simbolo}</span>
+                <span className={estilosPagina.atalhoSeta}>→</span>
               </div>
 
-              <h3 className="mt-5 text-lg font-bold text-[#6F2438]">
-                {atalho.titulo}
-              </h3>
+              <h3 className={estilosPagina.atalhoTitulo}>{atalho.titulo}</h3>
 
-              <p className="mt-2 flex-1 text-sm leading-6 text-[#77685E]">
-                {atalho.descricao}
-              </p>
+              <p className={estilosPagina.atalhoTexto}>{atalho.descricao}</p>
 
-              <span className="mt-5 border-t border-[#F0E5DD] pt-4 text-sm font-semibold text-[#6F2438]">
-                {atalho.acao} →
-              </span>
+              <span className={estilosPagina.atalhoAcao}>{atalho.acao} →</span>
             </Link>
           ))}
         </div>

@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState }     from "react";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
+import estilos                                  from "@/componentes/Painel/Painel.module.css";
 
 type Categoria = {
   id_categoria: number;
@@ -262,52 +263,43 @@ export default function CardapioPage() {
   const indisponiveis = itens.length - disponiveis;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 text-[#352A2C]">
+    <div className={estilos.pagina}>
       <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#87364D]">
-          Administração
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">
-          Cardápio
-        </h1>
-        <p className="mt-2 text-sm text-[#786C6C]">
+        <p className="sobretitulo">Administração</p>
+        <h1 className={estilos.titulo}>Cardápio</h1>
+        <p className={estilos.descricao}>
           Gerencie os produtos, preços, categorias e disponibilidade.
         </p>
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className={estilos.estatisticas}>
         {[
           { titulo: "Total de itens", valor: itens.length },
           { titulo: "Disponíveis", valor: disponiveis },
           { titulo: "Indisponíveis", valor: indisponiveis },
         ].map((indicador) => (
-          <div
-            key={indicador.titulo}
-            className="rounded-2xl border border-[#E9DED6] bg-white p-6 shadow-sm"
-          >
-            <p className="text-sm text-[#786C6C]">{indicador.titulo}</p>
-            <p className="mt-2 text-3xl font-bold text-[#6F2438]">
-              {indicador.valor}
-            </p>
+          <div key={indicador.titulo} className={estilos.cartao}>
+            <p className={estilos.estatisticaRotulo}>{indicador.titulo}</p>
+            <p className={estilos.estatisticaValor}>{indicador.valor}</p>
           </div>
         ))}
       </section>
 
-      <section className="rounded-2xl border border-[#E9DED6] bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold">
+      <section className={estilos.cartao}>
+        <h2 className={estilos.tituloCartao}>
           {itemEditando !== null ? "Editar item" : "Cadastrar item"}
         </h2>
 
         {categorias.length === 0 && !carregando && (
-          <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <p className={`${estilos.alerta} ${estilos.alertaAviso} ${estilos.espacoTopo}`}>
             Nenhuma categoria foi encontrada. Cadastre uma categoria antes
             de adicionar itens ao cardápio.
           </p>
         )}
 
-        <form onSubmit={salvarItem} className="mt-5 grid gap-5 md:grid-cols-2">
+        <form onSubmit={salvarItem} className={estilos.formularioGrade}>
           <div>
-            <label htmlFor="nm_item" className="mb-2 block text-sm font-medium">
+            <label htmlFor="nm_item" className={estilos.rotulo}>
               Nome do item *
             </label>
             <input
@@ -317,15 +309,12 @@ export default function CardapioPage() {
               value={formulario.nm_item}
               onChange={(e) => alterarCampo("nm_item", e.target.value)}
               placeholder="Ex.: Hambúrguer da casa"
-              className="w-full rounded-xl border border-[#E2D5CD] bg-[#FFFCF9] px-4 py-3 outline-none focus:border-[#87364D] focus:ring-2 focus:ring-[#87364D]/15"
+              className={estilos.entrada}
             />
           </div>
 
           <div>
-            <label
-              htmlFor="id_categoria"
-              className="mb-2 block text-sm font-medium"
-            >
+            <label htmlFor="id_categoria" className={estilos.rotulo}>
               Categoria *
             </label>
             <select
@@ -333,7 +322,7 @@ export default function CardapioPage() {
               required
               value={formulario.id_categoria}
               onChange={(e) => alterarCampo("id_categoria", e.target.value)}
-              className="w-full rounded-xl border border-[#E2D5CD] bg-[#FFFCF9] px-4 py-3 outline-none focus:border-[#87364D]"
+              className={estilos.entrada}
             >
               <option value="">Selecione uma categoria</option>
               {categorias.map((categoria) => (
@@ -348,10 +337,7 @@ export default function CardapioPage() {
           </div>
 
           <div>
-            <label
-              htmlFor="vl_unitario"
-              className="mb-2 block text-sm font-medium"
-            >
+            <label htmlFor="vl_unitario" className={estilos.rotulo}>
               Preço (R$) *
             </label>
             <input
@@ -364,15 +350,12 @@ export default function CardapioPage() {
                 alterarCampo("vl_unitario", e.target.value)
               }
               placeholder="Ex.: 29,90"
-              className="w-full rounded-xl border border-[#E2D5CD] bg-[#FFFCF9] px-4 py-3 outline-none focus:border-[#87364D]"
+              className={estilos.entrada}
             />
           </div>
 
           <div>
-            <label
-              htmlFor="tipo_item"
-              className="mb-2 block text-sm font-medium"
-            >
+            <label htmlFor="tipo_item" className={estilos.rotulo}>
               Tipo do item *
             </label>
             <select
@@ -384,18 +367,15 @@ export default function CardapioPage() {
                   e.target.value as Formulario["tipo_item"]
                 )
               }
-              className="w-full rounded-xl border border-[#E2D5CD] bg-[#FFFCF9] px-4 py-3 outline-none focus:border-[#87364D]"
+              className={estilos.entrada}
             >
               <option value="PREPARADO">Preparado na cozinha</option>
               <option value="REVENDA">Item para revenda</option>
             </select>
           </div>
 
-          <div className="md:col-span-2">
-            <label
-              htmlFor="ds_item"
-              className="mb-2 block text-sm font-medium"
-            >
+          <div className={estilos.larguraTotal}>
+            <label htmlFor="ds_item" className={estilos.rotulo}>
               Descrição
             </label>
             <textarea
@@ -404,27 +384,26 @@ export default function CardapioPage() {
               value={formulario.ds_item}
               onChange={(e) => alterarCampo("ds_item", e.target.value)}
               placeholder="Descreva os ingredientes ou detalhes do item..."
-              className="w-full rounded-xl border border-[#E2D5CD] bg-[#FFFCF9] px-4 py-3 outline-none focus:border-[#87364D]"
+              className={`${estilos.entrada} ${estilos.areaTexto}`}
             />
           </div>
 
-          <label className="flex items-center gap-3 text-sm font-medium md:col-span-2">
+          <label className={`${estilos.campoCheckbox} ${estilos.larguraTotal}`}>
             <input
               type="checkbox"
               checked={formulario.disponivel}
               onChange={(e) =>
                 alterarCampo("disponivel", e.target.checked)
               }
-              className="h-4 w-4 accent-[#6F2438]"
             />
             Item disponível para pedidos
           </label>
 
-          <div className="flex flex-wrap gap-3 md:col-span-2">
+          <div className={`${estilos.botoes} ${estilos.larguraTotal}`}>
             <button
               type="submit"
               disabled={salvando || categorias.length === 0}
-              className="rounded-xl bg-[#6F2438] px-5 py-3 font-semibold text-white transition hover:bg-[#87364D] disabled:cursor-not-allowed disabled:opacity-60"
+              className={`${estilos.botao} ${estilos.botaoPrimario}`}
             >
               {salvando
                 ? "Salvando..."
@@ -437,7 +416,7 @@ export default function CardapioPage() {
               <button
                 type="button"
                 onClick={limparFormulario}
-                className="rounded-xl border border-[#E2D5CD] px-5 py-3 font-medium hover:bg-[#FAF7F2]"
+                className={`${estilos.botao} ${estilos.botaoSecundario}`}
               >
                 Cancelar edição
               </button>
@@ -446,23 +425,23 @@ export default function CardapioPage() {
         </form>
 
         {erro && (
-          <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <p role="alert" className={`${estilos.alerta} ${estilos.alertaErro} ${estilos.espacoTopo}`}>
             {erro}
           </p>
         )}
         {sucesso && !erro && (
-          <p role="status" className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+          <p role="status" className={`${estilos.alerta} ${estilos.alertaSucesso} ${estilos.espacoTopo}`}>
             {sucesso}
           </p>
         )}
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-[#E9DED6] bg-white shadow-sm">
-        <div className="space-y-4 border-b border-[#EEE5DF] p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+      <section className={estilos.cartaoTabela}>
+        <div className={estilos.cabecalhoCartaoColuna}>
+          <div className={estilos.linhaCabecalho}>
             <div>
-              <h2 className="text-xl font-bold">Itens cadastrados</h2>
-              <p className="mt-1 text-sm text-[#786C6C]">
+              <h2 className={estilos.tituloCartao}>Itens cadastrados</h2>
+              <p className={estilos.subtituloCartao}>
                 {itensFiltrados.length} item(ns) encontrado(s)
               </p>
             </div>
@@ -470,24 +449,24 @@ export default function CardapioPage() {
               type="button"
               onClick={() => void carregarDados()}
               disabled={carregando}
-              className="rounded-xl border border-[#E2D5CD] px-4 py-2 text-sm font-semibold hover:bg-[#FAF7F2] disabled:opacity-60"
+              className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno}`}
             >
               {carregando ? "Atualizando..." : "Atualizar"}
             </button>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className={estilos.filtros}>
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar por nome ou descrição..."
-              className="rounded-xl border border-[#E2D5CD] bg-[#FFFCF9] px-4 py-3 outline-none focus:border-[#87364D]"
+              className={estilos.entrada}
             />
 
             <select
               value={filtroCategoria}
               onChange={(e) => setFiltroCategoria(e.target.value)}
-              className="rounded-xl border border-[#E2D5CD] bg-[#FFFCF9] px-4 py-3 outline-none focus:border-[#87364D]"
+              className={estilos.entrada}
             >
               <option value="TODAS">Todas as categorias</option>
               {categorias.map((categoria) => (
@@ -503,7 +482,7 @@ export default function CardapioPage() {
             <select
               value={filtroDisponibilidade}
               onChange={(e) => setFiltroDisponibilidade(e.target.value)}
-              className="rounded-xl border border-[#E2D5CD] bg-[#FFFCF9] px-4 py-3 outline-none focus:border-[#87364D]"
+              className={estilos.entrada}
             >
               <option value="TODOS">Todas as disponibilidades</option>
               <option value="DISPONIVEIS">Disponíveis</option>
@@ -513,44 +492,37 @@ export default function CardapioPage() {
         </div>
 
         {carregando ? (
-          <p className="p-8 text-center text-[#786C6C]">
-            Carregando cardápio...
-          </p>
+          <p className={estilos.carregando}>Carregando cardápio...</p>
         ) : itensFiltrados.length === 0 ? (
-          <div className="p-10 text-center">
-            <p className="text-lg font-semibold">Nenhum item encontrado</p>
-            <p className="mt-2 text-sm text-[#786C6C]">
+          <div className={estilos.vazio}>
+            <p className={estilos.vazioTitulo}>Nenhum item encontrado</p>
+            <p className={estilos.vazioTexto}>
               Tente mudar os filtros ou cadastre um novo item.
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-[#FAF7F2] text-[#6A5558]">
+          <div className={estilos.tabelaRolagem}>
+            <table className={`${estilos.tabela} ${estilos.tabelaLarga}`}>
+              <thead>
                 <tr>
-                  <th className="px-5 py-4 font-semibold">Item</th>
-                  <th className="px-5 py-4 font-semibold">Categoria</th>
-                  <th className="px-5 py-4 font-semibold">Tipo</th>
-                  <th className="px-5 py-4 font-semibold">Preço</th>
-                  <th className="px-5 py-4 font-semibold">Disponibilidade</th>
-                  <th className="px-5 py-4 text-right font-semibold">Ações</th>
+                  <th>Item</th>
+                  <th>Categoria</th>
+                  <th>Tipo</th>
+                  <th>Preço</th>
+                  <th>Disponibilidade</th>
+                  <th className={estilos.alinharDireita}>Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#EEE5DF]">
+              <tbody>
                 {itensFiltrados.map((item) => (
-                  <tr
-                    key={item.id_item_cardapio}
-                    className="align-top transition hover:bg-[#FFFCF9]"
-                  >
-                    <td className="px-5 py-4">
-                      <p className="font-semibold">{item.nm_item}</p>
+                  <tr key={item.id_item_cardapio} className={estilos.linhaTopo}>
+                    <td>
+                      <span className={estilos.negrito}>{item.nm_item}</span>
                       {item.ds_item && (
-                        <p className="mt-1 max-w-xs text-xs text-[#786C6C]">
-                          {item.ds_item}
-                        </p>
+                        <p className={estilos.textoPequeno}>{item.ds_item}</p>
                       )}
                     </td>
-                    <td className="px-5 py-4">
+                    <td>
                       {item.categoria?.nm_categoria ??
                         categorias.find(
                           (categoria) =>
@@ -558,45 +530,43 @@ export default function CardapioPage() {
                         )?.nm_categoria ??
                         "—"}
                     </td>
-                    <td className="px-5 py-4">
+                    <td>
                       {item.tipo_item === "PREPARADO"
                         ? "Preparado"
                         : "Revenda"}
                     </td>
-                    <td className="whitespace-nowrap px-5 py-4 font-semibold">
+                    <td className={`${estilos.negrito} ${estilos.semQuebra}`}>
                       {formatarPreco(item.vl_unitario)}
                     </td>
-                    <td className="px-5 py-4">
+                    <td>
                       <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                          item.disponivel
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-700"
+                        className={`${estilos.seloEstado} ${
+                          item.disponivel ? estilos.seloSucesso : estilos.seloNeutro
                         }`}
                       >
                         {item.disponivel ? "Disponível" : "Indisponível"}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex min-w-40 flex-wrap justify-end gap-2">
+                    <td>
+                      <div className={estilos.acoesLinha}>
                         <button
                           type="button"
                           onClick={() => editarItem(item)}
-                          className="rounded-lg border border-[#E2D5CD] px-3 py-2 font-medium hover:bg-[#FAF7F2]"
+                          className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno}`}
                         >
                           Editar
                         </button>
                         <button
                           type="button"
                           onClick={() => void alternarDisponibilidade(item)}
-                          className="rounded-lg border border-[#E2D5CD] px-3 py-2 font-medium hover:bg-[#FAF7F2]"
+                          className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno}`}
                         >
                           {item.disponivel ? "Indisponibilizar" : "Disponibilizar"}
                         </button>
                         <button
                           type="button"
                           onClick={() => void excluirItem(item)}
-                          className="rounded-lg border border-red-200 px-3 py-2 font-medium text-red-700 hover:bg-red-50"
+                          className={`${estilos.botao} ${estilos.botaoPerigo} ${estilos.botaoPequeno}`}
                         >
                           Excluir
                         </button>

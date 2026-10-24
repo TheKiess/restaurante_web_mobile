@@ -2,7 +2,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { apiGet, apiPatch } from "@/lib/api";
+import { apiGet, apiPatch }                 from "@/lib/api";
+import estilos                              from "@/componentes/Painel/Painel.module.css";
+import estilosPagina                        from "./page.module.css";
 
 type Situacao =
   | "AGUARDANDO"
@@ -47,11 +49,11 @@ const nomesSituacao: Record<Situacao, string> = {
 };
 
 const estilosSituacao: Record<Situacao, string> = {
-  AGUARDANDO: "bg-amber-100 text-amber-800",
-  EM_PREPARO: "bg-blue-100 text-blue-800",
-  PRONTO: "bg-emerald-100 text-emerald-800",
-  ENTREGUE: "bg-stone-200 text-stone-700",
-  CANCELADO: "bg-red-100 text-red-800",
+  AGUARDANDO: estilos.seloAguardando,
+  EM_PREPARO: estilos.seloEmPreparo,
+  PRONTO: estilos.seloPronto,
+  ENTREGUE: estilos.seloEntregue,
+  CANCELADO: estilos.seloCancelado,
 };
 
 const proximasSituacoes: Record<Situacao, Situacao[]> = {
@@ -162,18 +164,12 @@ export default function PedidosPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className={estilos.pagina}>
+      <header className={estilos.cabecalhoComAcao}>
         <div>
-          <p className="text-sm font-semibold tracking-wider text-[#9B6875]">
-            OPERAÇÃO DO RESTAURANTE
-          </p>
-
-          <h1 className="mt-1 text-3xl font-bold text-[#6F2438]">
-            Pedidos
-          </h1>
-
-          <p className="mt-2 text-[#77685E]">
+          <p className="sobretitulo">Operação do restaurante</p>
+          <h1 className={estilos.titulo}>Pedidos</h1>
+          <p className={estilos.descricao}>
             Consulte os pedidos e atualize a situação de cada item.
           </p>
         </div>
@@ -182,37 +178,29 @@ export default function PedidosPage() {
           type="button"
           onClick={() => void carregarPedidos()}
           disabled={carregando}
-          className="rounded-lg border border-[#D7C3B8] bg-white px-4 py-3 font-medium text-[#6F2438] transition hover:bg-[#F5E9EC] disabled:cursor-not-allowed disabled:opacity-60"
+          className={`${estilos.botao} ${estilos.botaoSecundario}`}
         >
           {carregando ? "Atualizando..." : "↻ Atualizar pedidos"}
         </button>
       </header>
 
       {erro && (
-        <div
-          role="alert"
-          className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-        >
-          <p className="font-semibold">Não foi possível concluir a operação.</p>
-          <p className="mt-1 break-words">{erro}</p>
+        <div role="alert" className={`${estilos.alerta} ${estilos.alertaErro}`}>
+          <strong>Não foi possível concluir a operação.</strong>
+          <p className={`${estilos.quebraPalavra} ${estilos.espacoTopo}`}>{erro}</p>
         </div>
       )}
 
       {sucesso && (
-        <div
-          role="status"
-          className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
-        >
+        <div role="status" className={`${estilos.alerta} ${estilos.alertaSucesso}`}>
           {sucesso}
         </div>
       )}
 
-      <section className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold text-[#49352F]">
-          Situação dos itens
-        </h2>
+      <section>
+        <h2 className={estilos.tituloSecao}>Situação dos itens</h2>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className={estilosPagina.situacoes}>
           {situacoes.map((situacao) => {
             const quantidade = itens.filter(
               (item) => item.id_situacao === situacao
@@ -225,23 +213,19 @@ export default function PedidosPage() {
                 onClick={() =>
                   setFiltro(filtro === situacao ? "TODOS" : situacao)
                 }
-                className={`rounded-xl border bg-white p-4 text-left shadow-sm transition hover:shadow-md ${
-                  filtro === situacao
-                    ? "border-[#6F2438] ring-2 ring-[#6F2438]/20"
-                    : "border-[#E4D7CB]"
+                className={`${estilosPagina.situacao} ${
+                  filtro === situacao ? estilosPagina.situacaoAtiva : ""
                 }`}
               >
-                <p className="text-sm text-[#77685E]">
+                <p className={estilosPagina.situacaoRotulo}>
                   {nomesSituacao[situacao]}
                 </p>
 
-                <p className="mt-2 text-3xl font-bold text-[#6F2438]">
+                <p className={estilosPagina.situacaoValor}>
                   {carregando ? "—" : quantidade}
                 </p>
 
-                <span
-                  className={`mt-3 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${estilosSituacao[situacao]}`}
-                >
+                <span className={`${estilos.seloEstado} ${estilosSituacao[situacao]}`}>
                   {filtro === situacao ? "Filtro ativo" : "Ver itens"}
                 </span>
               </button>
@@ -250,25 +234,23 @@ export default function PedidosPage() {
         </div>
       </section>
 
-      <section className="mt-8">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <section>
+        <div className={`${estilos.linhaCabecalho} ${estilos.espacoBaixo}`}>
           <div>
-            <h2 className="text-xl font-semibold text-[#6F2438]">
-              Lista de pedidos
-            </h2>
-            <p className="mt-1 text-sm text-[#77685E]">
+            <h2 className={estilos.tituloCartao}>Lista de pedidos</h2>
+            <p className={estilos.subtituloCartao}>
               Os itens estão agrupados por comanda.
             </p>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-[#49352F]">
+          <label className={estilosPagina.filtroSituacao}>
             Filtrar situação
             <select
               value={filtro}
               onChange={(event) =>
                 setFiltro(event.target.value as "TODOS" | Situacao)
               }
-              className="rounded-lg border border-[#D7C3B8] bg-white px-3 py-2"
+              className={estilos.entrada}
             >
               <option value="TODOS">Todas</option>
               {situacoes.map((situacao) => (
@@ -281,17 +263,15 @@ export default function PedidosPage() {
         </div>
 
         {carregando ? (
-          <div className="rounded-xl border border-[#E4D7CB] bg-white p-10 text-center text-[#77685E]">
+          <div className={`${estilos.cartao} ${estilos.carregando}`}>
             Carregando pedidos da API...
           </div>
         ) : itensFiltrados.length === 0 ? (
-          <div className="rounded-xl border border-[#E4D7CB] bg-white p-10 text-center">
-            <p className="text-lg font-semibold text-[#6F2438]">
-              Nenhum item encontrado
-            </p>
+          <div className={`${estilos.cartao} ${estilos.vazio}`}>
+            <p className={estilos.vazioTitulo}>Nenhum item encontrado</p>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className={estilos.comandas}>
             {Array.from(grupos.entries()).map(([idComanda, itensComanda]) => {
               const primeiro = itensComanda[0];
               const numeroMesa = primeiro.comanda?.mesa?.nr_mesa;
@@ -304,16 +284,13 @@ export default function PedidosPage() {
               );
 
               return (
-                <article
-                  key={idComanda}
-                  className="overflow-hidden rounded-xl border border-[#E4D7CB] bg-white shadow-sm"
-                >
-                  <header className="flex flex-col gap-3 border-b border-[#EDE3DA] bg-[#F7F0E9] p-5 sm:flex-row sm:items-center sm:justify-between">
+                <article key={idComanda} className={estilos.comanda}>
+                  <header className={estilos.comandaCabecalho}>
                     <div>
-                      <h3 className="text-lg font-bold text-[#6F2438]">
+                      <h3 className={estilos.comandaTitulo}>
                         Comanda #{idComanda}
                       </h3>
-                      <p className="mt-1 text-sm text-[#77685E]">
+                      <p className={estilos.subtituloCartao}>
                         {numeroMesa != null
                           ? `Mesa ${numeroMesa}`
                           : "Mesa não informada"}{" "}
@@ -322,93 +299,86 @@ export default function PedidosPage() {
                       </p>
                     </div>
 
-                    <div className="sm:text-right">
-                      <p className="text-xs text-[#77685E]">
+                    <div className={estilos.comandaTotal}>
+                      <p className={estilos.subtituloCartao}>
                         Total dos itens exibidos
                       </p>
-                      <p className="mt-1 text-xl font-bold text-[#6F2438]">
-                        {moeda(total)}
-                      </p>
+                      <p className={estilos.comandaTotalValor}>{moeda(total)}</p>
                     </div>
                   </header>
 
-                  <div className="divide-y divide-[#EDE3DA]">
+                  <div>
                     {itensComanda.map((item) => {
                       const permitidas = proximasSituacoes[item.id_situacao];
 
                       return (
-                        <div
-                          key={item.id_item_pedido}
-                          className="p-5"
-                        >
-                          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h4 className="font-semibold text-[#49352F]">
-                                  {item.item_cardapio?.nm_item ??
-                                    `Item #${item.id_item_pedido}`}
-                                </h4>
+                        <div key={item.id_item_pedido} className={estilos.itemComanda}>
+                          <div className={estilos.itemComandaInfo}>
+                            <div className={estilos.itemComandaTitulo}>
+                              <h4>
+                                {item.item_cardapio?.nm_item ??
+                                  `Item #${item.id_item_pedido}`}
+                              </h4>
 
-                                <span
-                                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${estilosSituacao[item.id_situacao]}`}
+                              <span
+                                className={`${estilos.seloEstado} ${estilosSituacao[item.id_situacao]}`}
+                              >
+                                {nomesSituacao[item.id_situacao]}
+                              </span>
+                            </div>
+
+                            <p className={estilos.itemComandaTexto}>
+                              Pedido #{item.id_item_pedido} · Quantidade:{" "}
+                              {item.qt_quantidade} · Unitário:{" "}
+                              {moeda(Number(item.vl_unitario) || 0)}
+                            </p>
+
+                            <p className={estilos.itemComandaTexto}>
+                              {dataHora(item.dt_pedido)}
+                            </p>
+
+                            {item.ds_observacao && (
+                              <p className={estilos.observacao}>
+                                <strong>Observação:</strong>{" "}
+                                {item.ds_observacao}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className={estilos.acoesItem}>
+                            {permitidas.length === 0 ? (
+                              <span className={estilos.textoSuave}>
+                                Sem próximas ações
+                              </span>
+                            ) : (
+                              permitidas.map((novaSituacao) => (
+                                <button
+                                  key={novaSituacao}
+                                  type="button"
+                                  disabled={
+                                    itemAtualizando === item.id_item_pedido
+                                  }
+                                  onClick={() =>
+                                    void alterarSituacao(item, novaSituacao)
+                                  }
+                                  className={`${estilos.botao} ${estilos.botaoPequeno} ${
+                                    novaSituacao === "CANCELADO"
+                                      ? estilos.botaoPerigo
+                                      : estilos.botaoPrimario
+                                  }`}
                                 >
-                                  {nomesSituacao[item.id_situacao]}
-                                </span>
-                              </div>
-
-                              <p className="mt-2 text-sm text-[#77685E]">
-                                Pedido #{item.id_item_pedido} · Quantidade:{" "}
-                                {item.qt_quantidade} · Unitário:{" "}
-                                {moeda(Number(item.vl_unitario) || 0)}
-                              </p>
-
-                              <p className="mt-1 text-sm text-[#77685E]">
-                                {dataHora(item.dt_pedido)}
-                              </p>
-
-                              {item.ds_observacao && (
-                                <p className="mt-2 rounded-lg bg-[#FAF7F2] p-3 text-sm text-[#49352F]">
-                                  <strong>Observação:</strong>{" "}
-                                  {item.ds_observacao}
-                                </p>
-                              )}
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 lg:max-w-xs lg:justify-end">
-                              {permitidas.length === 0 ? (
-                                <span className="text-sm text-[#77685E]">
-                                  Sem próximas ações
-                                </span>
-                              ) : (
-                                permitidas.map((novaSituacao) => (
-                                  <button
-                                    key={novaSituacao}
-                                    type="button"
-                                    disabled={
-                                      itemAtualizando === item.id_item_pedido
-                                    }
-                                    onClick={() =>
-                                      void alterarSituacao(item, novaSituacao)
-                                    }
-                                    className={`rounded-lg px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                                      novaSituacao === "CANCELADO"
-                                        ? "border border-red-200 text-red-700 hover:bg-red-50"
-                                        : "bg-[#6F2438] text-white hover:bg-[#87364D]"
-                                    }`}
-                                  >
-                                    {itemAtualizando === item.id_item_pedido
-                                      ? "Salvando..."
-                                      : novaSituacao === "EM_PREPARO"
-                                        ? "Iniciar preparo"
-                                        : novaSituacao === "PRONTO"
-                                          ? "Marcar pronto"
-                                          : novaSituacao === "ENTREGUE"
-                                            ? "Marcar entregue"
-                                            : "Cancelar item"}
-                                  </button>
-                                ))
-                              )}
-                            </div>
+                                  {itemAtualizando === item.id_item_pedido
+                                    ? "Salvando..."
+                                    : novaSituacao === "EM_PREPARO"
+                                      ? "Iniciar preparo"
+                                      : novaSituacao === "PRONTO"
+                                        ? "Marcar pronto"
+                                        : novaSituacao === "ENTREGUE"
+                                          ? "Marcar entregue"
+                                          : "Cancelar item"}
+                                </button>
+                              ))
+                            )}
                           </div>
                         </div>
                       );

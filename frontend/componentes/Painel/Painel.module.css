@@ -145,7 +145,10 @@
 }
 
 .botao {
+  display: inline-block;
   padding: 11px 22px;
+  text-align: center;
+  text-decoration: none;
   border: 1px solid transparent;
   border-radius: 999px;
   font: inherit;
@@ -246,6 +249,7 @@
 
 .acoesLinha {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
 }
@@ -299,4 +303,249 @@
   padding: 32px 20px;
   color: var(--texto-suave);
   text-align: center;
+}
+
+.alertaAviso {
+  background: rgba(212, 169, 90, 0.2);
+  color: #6b4e12;
+}
+
+.formularioGrade {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.larguraTotal {
+  grid-column: 1 / -1;
+}
+
+.areaTexto {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.campoCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.campoCheckbox input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--vinho-800);
+}
+
+.cabecalhoCartaoColuna {
+  display: grid;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.linhaCabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.tabelaLarga {
+  min-width: 860px;
+}
+
+.tabelaLarga th:last-child,
+.tabelaLarga td:last-child {
+  min-width: 280px;
+}
+
+.linhaTopo td {
+  vertical-align: top;
+}
+
+.negrito {
+  font-weight: 600;
+}
+
+.semQuebra {
+  white-space: nowrap;
+}
+
+.textoPequeno {
+  max-width: 320px;
+  margin: 4px 0 0;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+}
+
+.seloEstado {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.seloSucesso,
+.seloPronto {
+  background: var(--cor-sucesso-fundo);
+  color: var(--cor-sucesso);
+}
+
+.seloNeutro,
+.seloEntregue {
+  background: rgba(74, 22, 32, 0.08);
+  color: var(--texto-suave);
+}
+
+.seloAguardando {
+  background: rgba(212, 169, 90, 0.25);
+  color: #6b4e12;
+}
+
+.seloEmPreparo {
+  background: rgba(37, 80, 122, 0.12);
+  color: #25507a;
+}
+
+.seloCancelado {
+  background: var(--cor-erro-fundo);
+  color: var(--cor-erro);
+}
+
+.cabecalhoComAcao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.comandas {
+  display: grid;
+  gap: 20px;
+}
+
+.comanda {
+  overflow: hidden;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--papel);
+  box-shadow: 0 1px 3px rgba(74, 22, 32, 0.06);
+}
+
+.comandaCabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--borda);
+  background: var(--creme);
+}
+
+.comandaTitulo {
+  color: var(--vinho-800);
+  font-size: 1.15rem;
+}
+
+.comandaTotal {
+  text-align: right;
+}
+
+.comandaTotalValor {
+  margin: 2px 0 0;
+  color: var(--vinho-800);
+  font-family: var(--fonte-titulo);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.itemComanda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 24px;
+}
+
+.itemComanda + .itemComanda {
+  border-top: 1px solid var(--borda);
+}
+
+.itemComandaInfo {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.itemComandaTitulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.itemComandaTitulo h4 {
+  margin: 0;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.itemComandaTexto {
+  margin: 8px 0 0;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.observacao {
+  margin: 10px 0 0;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--creme);
+  font-size: 0.9rem;
+}
+
+.acoesItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .formularioGrade {
+    grid-template-columns: 1fr;
+  }
+}
+
+.espacoTopo {
+  margin-top: 16px;
+}
+
+.espacoBaixo {
+  margin-bottom: 16px;
+}
+
+.quebraPalavra {
+  overflow-wrap: anywhere;
+}
+
+.tituloSecao {
+  margin: 0 0 16px;
+  color: var(--vinho-800);
+  font-size: 1.2rem;
 }
