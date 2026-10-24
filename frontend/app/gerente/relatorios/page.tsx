@@ -3,14 +3,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -19,16 +11,11 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { apiGet } from "@/lib/api";
+import jsPDF         from "jspdf";
+import html2canvas   from "html2canvas";
+import { apiGet }    from "@/lib/api";
+import estilos       from "@/componentes/Painel/Painel.module.css";
+import estilosPagina from "./page.module.css";
 
 type ItemPedidoApi = {
   id_item_pedido: number;
@@ -50,8 +37,7 @@ type ItemPedidoApi = {
 
 type Periodo = "hoje" | "seteDias" | "trintaDias" | "mes" | "personalizado";
 
-const moeda = (valor: number) =>
-  valor.toLocaleString("pt-BR", {
+const moeda = (valor: number) => valor.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
   });
@@ -305,7 +291,7 @@ export default function PaginaRelatorios() {
     try {
       const canvas = await html2canvas(relatorioRef.current, {
         scale: 2,
-        backgroundColor: "#FAF7F0",
+        backgroundColor: "#f8f2e8",
         useCORS: true,
       });
 
@@ -320,13 +306,13 @@ export default function PaginaRelatorios() {
       let restante = alturaImagem;
       let posicao = 0;
 
-      pdf.addImage(imagem, "PNG", 0, posicao, larguraImagem, alturaImagem);
+      pdf.addImage(imagem, "PNG", 0, posicao, larguraImagem, alturaImagem, undefined, "FAST");
       restante -= alturaPagina;
 
       while (restante > 0) {
         posicao = restante - alturaImagem;
         pdf.addPage();
-        pdf.addImage(imagem, "PNG", 0, posicao, larguraImagem, alturaImagem);
+        pdf.addImage(imagem, "PNG", 0, posicao, larguraImagem, alturaImagem, undefined, "FAST");
         restante -= alturaPagina;
       }
 
@@ -338,356 +324,295 @@ export default function PaginaRelatorios() {
   };
 
   return (
-    <main className="min-h-screen bg-[#FAF7F0] p-4 text-[#3B2525] md:p-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-[#6B1727]">
-              Relatórios
-            </h1>
-            <p className="mt-1 text-sm text-[#725D55]">
-              Acompanhe o desempenho do restaurante.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => void carregarItens()}
-            disabled={carregando}
-            className="rounded-lg border border-[#6B1727] bg-white px-4 py-2 text-sm font-semibold text-[#6B1727] hover:bg-[#F3E7D5] disabled:opacity-50"
-          >
-            {carregando ? "Atualizando..." : "Atualizar dados"}
-          </button>
+    <div className={estilos.pagina}>
+      <header className={estilos.cabecalhoComAcao}>
+        <div>
+          <p className="sobretitulo">Administração</p>
+          <h1 className={estilos.titulo}>Relatórios</h1>
+          <p className={estilos.descricao}>
+            Acompanhe o desempenho do restaurante.
+          </p>
         </div>
 
-        <Card className="mb-6 border-[#E5D6C4] bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#6B1727]">
-              Filtrar relatório
-            </CardTitle>
-          </CardHeader>
+        <button
+          type="button"
+          onClick={() => void carregarItens()}
+          disabled={carregando}
+          className={`${estilos.botao} ${estilos.botaoSecundario}`}
+        >
+          {carregando ? "Atualizando..." : "Atualizar dados"}
+        </button>
+      </header>
 
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {[
-                { valor: "hoje", texto: "Hoje" },
-                { valor: "seteDias", texto: "7 dias" },
-                { valor: "trintaDias", texto: "30 dias" },
-                { valor: "mes", texto: "Por mês" },
-                { valor: "personalizado", texto: "Personalizado" },
-              ].map((opcao) => (
-                <button
-                  key={opcao.valor}
-                  type="button"
-                  onClick={() => setPeriodo(opcao.valor as Periodo)}
-                  className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${
-                    periodo === opcao.valor
-                      ? "border-[#6B1727] bg-[#6B1727] text-white"
-                      : "border-[#D8C6B2] bg-white text-[#6B1727] hover:bg-[#F3E7D5]"
-                  }`}
-                >
-                  {opcao.texto}
-                </button>
-              ))}
-            </div>
+      <section className={estilos.cartao}>
+        <h2 className={estilos.tituloCartao}>Filtrar relatório</h2>
 
-            {periodo === "mes" && (
-              <div className="flex flex-col gap-2 sm:max-w-xs">
-                <label htmlFor="mes" className="text-sm font-medium">
-                  Selecione o mês
-                </label>
-                <input
-                  id="mes"
-                  type="month"
-                  value={mesSelecionado}
-                  onChange={(e) => setMesSelecionado(e.target.value)}
-                  className="rounded-lg border border-[#D8C6B2] bg-white p-2"
-                />
-              </div>
-            )}
+        <div className={`${estilos.botoes} ${estilos.espacoTopo}`}>
+          {[
+            { valor: "hoje",          texto: "Hoje" },
+            { valor: "seteDias",      texto: "7 dias" },
+            { valor: "trintaDias",    texto: "30 dias" },
+            { valor: "mes",           texto: "Por mês" },
+            { valor: "personalizado", texto: "Personalizado" },
+          ].map((opcao) => (
+            <button
+              key={opcao.valor}
+              type="button"
+              onClick={() => setPeriodo(opcao.valor as Periodo)}
+              aria-pressed={periodo === opcao.valor}
+              className={`${estilos.botao} ${estilos.botaoPequeno} ${
+                periodo === opcao.valor
+                  ? estilos.botaoPrimario
+                  : estilos.botaoSecundario
+              }`}
+            >
+              {opcao.texto}
+            </button>
+          ))}
+        </div>
 
-            {periodo === "personalizado" && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="dataInicio" className="text-sm font-medium">
-                    Data inicial
-                  </label>
-                  <input
-                    id="dataInicio"
-                    type="date"
-                    value={dataInicio}
-                    max={dataFim}
-                    onChange={(e) => setDataInicio(e.target.value)}
-                    className="rounded-lg border border-[#D8C6B2] bg-white p-2"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="dataFim" className="text-sm font-medium">
-                    Data final
-                  </label>
-                  <input
-                    id="dataFim"
-                    type="date"
-                    value={dataFim}
-                    min={dataInicio}
-                    max={hoje}
-                    onChange={(e) => setDataFim(e.target.value)}
-                    className="rounded-lg border border-[#D8C6B2] bg-white p-2"
-                  />
-                </div>
-              </div>
-            )}
-
-            <p className="text-sm text-[#725D55]">
-              Período selecionado:{" "}
-              <span className="font-semibold capitalize">{tituloPeriodo}</span>
-            </p>
-          </CardContent>
-        </Card>
-
-        {erro && (
-          <div
-            role="alert"
-            className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-          >
-            {erro}
+        {periodo === "mes" && (
+          <div className={estilosPagina.campoFiltro}>
+            <label htmlFor="mes" className={estilos.rotulo}>
+              Selecione o mês
+            </label>
+            <input
+              id="mes"
+              type="month"
+              value={mesSelecionado}
+              onChange={(e) => setMesSelecionado(e.target.value)}
+              className={estilos.entrada}
+            />
           </div>
         )}
 
-        <div ref={relatorioRef} className="space-y-6 bg-[#FAF7F0] p-1">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Card className="border-[#E5D6C4] bg-white shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-[#725D55]">
-                  Valor dos pedidos válidos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-[#6B1727]">
-                  {carregando ? "..." : moeda(totalVendido)}
-                </div>
-                <p className="mt-1 text-xs text-[#88756B]">
-                  Itens não cancelados
-                </p>
-              </CardContent>
-            </Card>
+        {periodo === "personalizado" && (
+          <div className={`${estilos.camposLinha} ${estilos.espacoTopo}`}>
+            <div>
+              <label htmlFor="dataInicio" className={estilos.rotulo}>
+                Data inicial
+              </label>
+              <input
+                id="dataInicio"
+                type="date"
+                value={dataInicio}
+                max={dataFim}
+                onChange={(e) => setDataInicio(e.target.value)}
+                className={estilos.entrada}
+              />
+            </div>
+            <div>
+              <label htmlFor="dataFim" className={estilos.rotulo}>
+                Data final
+              </label>
+              <input
+                id="dataFim"
+                type="date"
+                value={dataFim}
+                min={dataInicio}
+                max={hoje}
+                onChange={(e) => setDataFim(e.target.value)}
+                className={estilos.entrada}
+              />
+            </div>
+          </div>
+        )}
 
-            <Card className="border-[#E5D6C4] bg-white shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-[#725D55]">
-                  Comandas com pedidos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-[#6B1727]">
-                  {carregando ? "..." : totalComandas}
-                </div>
-                <p className="mt-1 text-xs text-[#88756B]">
-                  Comandas distintas no período
-                </p>
-              </CardContent>
-            </Card>
+        <p className={estilosPagina.periodoSelecionado}>
+          Período selecionado:{" "}
+          <span className={estilosPagina.capitalizar}>{tituloPeriodo}</span>
+        </p>
+      </section>
 
-            <Card className="border-[#E5D6C4] bg-white shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-[#725D55]">
-                  Itens vendidos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-[#6B1727]">
-                  {carregando ? "..." : totalItens}
-                </div>
-                <p className="mt-1 text-xs text-[#88756B]">
-                  Quantidade não cancelada
-                </p>
-              </CardContent>
-            </Card>
+      {erro && (
+        <div role="alert" className={`${estilos.alerta} ${estilos.alertaErro}`}>
+          {erro}
+        </div>
+      )}
 
-            <Card className="border-[#E5D6C4] bg-white shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-[#725D55]">
-                  Itens cancelados
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-[#6B1727]">
-                  {carregando ? "..." : totalCancelados}
-                </div>
-                <p className="mt-1 text-xs text-[#88756B]">
-                  Quantidade cancelada no período
-                </p>
-              </CardContent>
-            </Card>
+      <div ref={relatorioRef} className={estilosPagina.relatorio}>
+        <section className={estilos.estatisticas}>
+          <div className={estilos.cartao}>
+            <p className={estilos.estatisticaRotulo}>Valor dos pedidos válidos</p>
+            <p className={estilos.estatisticaValor}>
+              {carregando ? "..." : moeda(totalVendido)}
+            </p>
+            <p className={estilos.textoPequeno}>Itens não cancelados</p>
           </div>
 
-          <Card className="border-[#E5D6C4] bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg text-[#6B1727]">
-                Situação dos pedidos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-3">
-              <Badge className="bg-[#EADFCB] text-[#634B32] hover:bg-[#EADFCB]">
-                Aguardando: {carregando ? "..." : totalAguardando}
-              </Badge>
-              <Badge className="bg-[#F4D7A1] text-[#76501A] hover:bg-[#F4D7A1]">
-                Em preparo: {carregando ? "..." : totalEmPreparo}
-              </Badge>
-              <Badge className="bg-[#D9E8CF] text-[#35572E] hover:bg-[#D9E8CF]">
-                Prontos: {carregando ? "..." : totalProntos}
-              </Badge>
-              <Badge className="bg-[#D8E5F5] text-[#2F4E75] hover:bg-[#D8E5F5]">
-                Entregues: {carregando ? "..." : totalEntregues}
-              </Badge>
-              <Badge className="bg-[#F3D7D7] text-[#8A2A2A] hover:bg-[#F3D7D7]">
-                Cancelados: {carregando ? "..." : itensCancelados.length}
-              </Badge>
-            </CardContent>
-          </Card>
+          <div className={estilos.cartao}>
+            <p className={estilos.estatisticaRotulo}>Comandas com pedidos</p>
+            <p className={estilos.estatisticaValor}>
+              {carregando ? "..." : totalComandas}
+            </p>
+            <p className={estilos.textoPequeno}>Comandas distintas no período</p>
+          </div>
 
-          <Card className="border-[#E5D6C4] bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg text-[#6B1727]">
-                Vendas por dia
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {dadosGrafico.length === 0 ? (
-                <p className="py-12 text-center text-sm text-[#88756B]">
-                  {carregando
-                    ? "Carregando dados..."
-                    : "Não há pedidos registrados neste período."}
-                </p>
-              ) : (
-                <div className="h-72 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dadosGrafico}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E5D6C4" />
-                      <XAxis dataKey="data" tick={{ fontSize: 12 }} />
-                      <YAxis
-                        tick={{ fontSize: 12 }}
-                        tickFormatter={(valor: number) =>
-                          valor.toLocaleString("pt-BR")
-                        }
-                      />
-                      <Tooltip
-                        formatter={(valor) => moeda(Number(valor))}
-                        labelStyle={{ color: "#3B2525" }}
-                      />
-                      <Bar
-                        dataKey="vendas"
-                        name="Vendas"
-                        fill="#6B1727"
-                        radius={[5, 5, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className={estilos.cartao}>
+            <p className={estilos.estatisticaRotulo}>Itens vendidos</p>
+            <p className={estilos.estatisticaValor}>
+              {carregando ? "..." : totalItens}
+            </p>
+            <p className={estilos.textoPequeno}>Quantidade não cancelada</p>
+          </div>
 
-          <Card className="border-[#E5D6C4] bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg text-[#6B1727]">
-                Produtos mais vendidos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-[#E5D6C4]">
-                    <TableHead>Produto</TableHead>
-                    <TableHead className="text-right">Quantidade</TableHead>
-                    <TableHead className="text-right">Valor total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {produtosAgrupados.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={3}
-                        className="h-24 text-center text-[#88756B]"
-                      >
+          <div className={estilos.cartao}>
+            <p className={estilos.estatisticaRotulo}>Itens cancelados</p>
+            <p className={estilos.estatisticaValor}>
+              {carregando ? "..." : totalCancelados}
+            </p>
+            <p className={estilos.textoPequeno}>Quantidade cancelada no período</p>
+          </div>
+        </section>
+
+        <section className={estilos.cartao}>
+          <h2 className={estilos.tituloCartao}>Situação dos pedidos</h2>
+
+          <div className={`${estilos.botoes} ${estilos.espacoTopo}`}>
+            <span className={`${estilos.seloEstado} ${estilosPagina.seloGrande} ${estilos.seloAguardando}`}>
+              Aguardando: {carregando ? "..." : totalAguardando}
+            </span>
+            <span className={`${estilos.seloEstado} ${estilosPagina.seloGrande} ${estilos.seloEmPreparo}`}>
+              Em preparo: {carregando ? "..." : totalEmPreparo}
+            </span>
+            <span className={`${estilos.seloEstado} ${estilosPagina.seloGrande} ${estilos.seloPronto}`}>
+              Prontos: {carregando ? "..." : totalProntos}
+            </span>
+            <span className={`${estilos.seloEstado} ${estilosPagina.seloGrande} ${estilos.seloEntregue}`}>
+              Entregues: {carregando ? "..." : totalEntregues}
+            </span>
+            <span className={`${estilos.seloEstado} ${estilosPagina.seloGrande} ${estilos.seloCancelado}`}>
+              Cancelados: {carregando ? "..." : itensCancelados.length}
+            </span>
+          </div>
+        </section>
+
+        <section className={estilos.cartao}>
+          <h2 className={estilos.tituloCartao}>Vendas por dia</h2>
+
+          {dadosGrafico.length === 0 ? (
+            <p className={estilos.carregando}>
+              {carregando
+                ? "Carregando dados..."
+                : "Não há pedidos registrados neste período."}
+            </p>
+          ) : (
+            <div className={estilosPagina.grafico}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dadosGrafico}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e4d8c8" />
+                  <XAxis dataKey="data" tick={{ fontSize: 12, fill: "#6a5558" }} />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: "#6a5558" }}
+                    tickFormatter={(valor: number) =>
+                      valor.toLocaleString("pt-BR")
+                    }
+                  />
+                  <Tooltip
+                    formatter={(valor) => moeda(Number(valor))}
+                    labelStyle={{ color: "#2a1a1c" }}
+                  />
+                  <Bar
+                    dataKey="vendas"
+                    name="Vendas"
+                    fill="#4a1620"
+                    radius={[5, 5, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </section>
+
+        <section className={estilos.cartaoTabela}>
+          <div className={estilos.cabecalhoCartao}>
+            <h2 className={estilos.tituloCartao}>Produtos mais vendidos</h2>
+          </div>
+
+          <div className={estilos.tabelaRolagem}>
+            <table className={estilos.tabela}>
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th className={estilos.alinharDireita}>Quantidade</th>
+                  <th className={estilos.alinharDireita}>Valor total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {produtosAgrupados.length === 0 ? (
+                  <tr>
+                    <td colSpan={3}>
+                      <p className={estilos.carregando}>
                         {carregando
                           ? "Carregando..."
                           : "Nenhum produto encontrado no período."}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    produtosAgrupados.map((produto) => (
-                      <TableRow
-                        key={produto.nome}
-                        className="border-[#F0E6DA]"
-                      >
-                        <TableCell className="font-medium">
-                          {produto.nome}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {produto.quantidade}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {moeda(produto.total)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <Card className="border-[#E5D6C4] bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg text-[#6B1727]">
-                Resumo do relatório
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-[#5F4A42]">
-              <p>
-                <strong>Período:</strong> {tituloPeriodo}
-              </p>
-              <p>
-                <strong>Valor dos itens não cancelados:</strong>{" "}
-                {carregando ? "Carregando..." : moeda(totalVendido)}
-              </p>
-              <p>
-                <strong>Produtos diferentes vendidos:</strong>{" "}
-                {carregando ? "..." : produtosAgrupados.length}
-              </p>
-              <p>
-                <strong>Tempo médio de preparo:</strong> Não disponível nos
-                dados atuais da API.
-              </p>
-              <p className="text-xs text-[#88756B]">
-                O valor total é calculado pela quantidade multiplicada pelo
-                preço unitário dos itens não cancelados. Não representa
-                necessariamente pagamentos recebidos.
-              </p>
-            </CardContent>
-          </Card>
-
-          <div className="flex flex-wrap justify-center gap-3 pb-6">
-            <button
-              type="button"
-              onClick={exportarCSV}
-              disabled={carregando}
-              className="rounded-lg border border-[#6B1727] bg-white px-4 py-2 text-sm font-semibold text-[#6B1727] hover:bg-[#F3E7D5] disabled:opacity-50"
-            >
-              Exportar CSV
-            </button>
-            <button
-              type="button"
-              onClick={() => void exportarPDF()}
-              disabled={carregando}
-              className="rounded-lg bg-[#6B1727] px-4 py-2 text-sm font-semibold text-white hover:bg-[#50111D] disabled:opacity-50"
-            >
-              Exportar PDF
-            </button>
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  produtosAgrupados.map((produto) => (
+                    <tr key={produto.nome}>
+                      <td className={estilos.negrito}>{produto.nome}</td>
+                      <td className={estilos.alinharDireita}>
+                        {produto.quantidade}
+                      </td>
+                      <td className={estilos.alinharDireita}>
+                        {moeda(produto.total)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
+        </section>
+
+        <section className={estilos.cartao}>
+          <h2 className={estilos.tituloCartao}>Resumo do relatório</h2>
+
+          <div className={estilosPagina.resumo}>
+            <p>
+              <strong>Período:</strong> {tituloPeriodo}
+            </p>
+            <p>
+              <strong>Valor dos itens não cancelados:</strong>{" "}
+              {carregando ? "Carregando..." : moeda(totalVendido)}
+            </p>
+            <p>
+              <strong>Produtos diferentes vendidos:</strong>{" "}
+              {carregando ? "..." : produtosAgrupados.length}
+            </p>
+            <p>
+              <strong>Tempo médio de preparo:</strong> Não disponível nos
+              dados atuais da API.
+            </p>
+            <p className={estilosPagina.nota}>
+              O valor total é calculado pela quantidade multiplicada pelo
+              preço unitário dos itens não cancelados. Não representa
+              necessariamente pagamentos recebidos.
+            </p>
+          </div>
+        </section>
       </div>
-    </main>
+
+      <div className={`${estilos.botoes} ${estilosPagina.exportar}`}>
+        <button
+          type="button"
+          onClick={exportarCSV}
+          disabled={carregando}
+          className={`${estilos.botao} ${estilos.botaoSecundario}`}
+        >
+          Exportar CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => void exportarPDF()}
+          disabled={carregando}
+          className={`${estilos.botao} ${estilos.botaoPrimario}`}
+        >
+          Exportar PDF
+        </button>
+      </div>
+    </div>
   );
 }
