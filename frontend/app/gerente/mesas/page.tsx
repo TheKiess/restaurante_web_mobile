@@ -80,10 +80,8 @@ export default function MesasPage()
     const nrMesa    = Number(formulario.nr_mesa);
     const qtLugares = Number(formulario.qt_lugares);
 
-    if (!Number.isInteger(nrMesa)  ||
-      nrMesa < 1                   ||
-      !Number.isInteger(qtLugares) ||
-      qtLugares < 1
+    if (!Number.isInteger(nrMesa)  || nrMesa < 1 ||
+      !Number.isInteger(qtLugares) || qtLugares < 1
     )
     {
       setErro("Informe números inteiros maiores que zero.");

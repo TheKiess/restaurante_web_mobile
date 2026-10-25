@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import FormularioLogin from "@/componentes/FormularioLogin/FormularioLogin";
+import type { Metadata }  from "next";
+import FormularioLogin    from "@/componentes/FormularioLogin/FormularioLogin";
 import { NM_RESTAURANTE } from "@/lib/constantes";
-import estilos from "./page.module.css";
+import estilos            from "./page.module.css";
 
 export const metadata: Metadata = {
   title: `Entrar | ${NM_RESTAURANTE}`,

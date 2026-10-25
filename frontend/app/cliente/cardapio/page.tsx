@@ -2,9 +2,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { apiGet } from "@/lib/api";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { apiGet }                       from "@/lib/api";
+import Link                             from "next/link";
+import { ArrowLeft }                    from "lucide-react";
 
 interface Categoria {
   id_categoria: number;

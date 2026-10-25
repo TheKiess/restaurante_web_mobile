@@ -74,9 +74,8 @@ function moeda(valor: number) {
 function dataHora(valor: string) {
   const data = new Date(valor);
 
-  if (Number.isNaN(data.getTime())) {
+  if (Number.isNaN(data.getTime()))
     return "Data indisponível";
-  }
 
   return data.toLocaleString("pt-BR", {
     dateStyle: "short",
@@ -90,7 +89,8 @@ function erroTexto(erro: unknown) {
     : "Ocorreu um erro inesperado.";
 }
 
-export default function PedidosPage() {
+export default function PedidosPage()
+{
   const [itens, setItens] = useState<ItemPedido[]>([]);
   const [filtro, setFiltro] = useState<"TODOS" | Situacao>("TODOS");
   const [carregando, setCarregando] = useState(true);
@@ -99,35 +99,39 @@ export default function PedidosPage() {
   const [sucesso, setSucesso] = useState("");
 
   const carregarPedidos = useCallback(async () => {
-    try {
+    try
+    {
       setCarregando(true);
       setErro("");
 
       const dados = await apiGet<ItemPedido[]>("itens-pedido");
       setItens(dados);
-    } catch (error) {
+    }
+    catch (error)
+    {
       setErro(erroTexto(error));
-    } finally {
+    }
+    finally
+    {
       setCarregando(false);
     }
   }, []);
 
-  useEffect(() => {
-    void carregarPedidos();
-  }, [carregarPedidos]);
+  useEffect(() => { void carregarPedidos(); }, [carregarPedidos]);
 
   async function alterarSituacao(
     item: ItemPedido,
     novaSituacao: Situacao
-  ) {
-    const permitidas = proximasSituacoes[item.id_situacao];
-
-    if (!permitidas.includes(novaSituacao)) {
+  )
+  {
+    if (!proximasSituacoes[item.id_situacao].includes(novaSituacao))
+    {
       setErro("Essa alteração de situação não é permitida.");
       return;
     }
 
-    try {
+    try
+    {
       setItemAtualizando(item.id_item_pedido);
       setErro("");
       setSucesso("");
@@ -137,22 +141,23 @@ export default function PedidosPage() {
         { id_situacao: novaSituacao }
       );
 
-      setSucesso(
-        `Item #${item.id_item_pedido} atualizado para ${nomesSituacao[novaSituacao]}.`
-      );
+      setSucesso(`Item #${item.id_item_pedido} atualizado para ${nomesSituacao[novaSituacao]}.`);
 
       await carregarPedidos();
-    } catch (error) {
+    }
+    catch (error)
+    {
       setErro(erroTexto(error));
-    } finally {
+    }
+    finally
+    {
       setItemAtualizando(null);
     }
   }
 
-  const itensFiltrados =
-    filtro === "TODOS"
-      ? itens
-      : itens.filter((item) => item.id_situacao === filtro);
+  const itensFiltrados = filtro === "TODOS"
+    ? itens
+    : itens.filter((item) => item.id_situacao === filtro);
 
   const grupos = new Map<number, ItemPedido[]>();
 

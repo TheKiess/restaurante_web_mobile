@@ -10,7 +10,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-} from "recharts";
+}                    from "recharts";
 import jsPDF         from "jspdf";
 import html2canvas   from "html2canvas";
 import { apiGet }    from "@/lib/api";

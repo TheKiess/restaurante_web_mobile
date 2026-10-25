@@ -51,25 +51,18 @@ function calcularIndicadores(
       String(item.id_situacao).trim().toUpperCase() !==
       "CANCELADO"
   );
-
+  
+  const comandas    = new Set(itensValidos.map((item) => String(item.id_comanda)));
+  const pedidos     = comandas.size;
   const faturamento = itensValidos.reduce((total, item) => {
-    const quantidade = Number(item.qt_quantidade) || 0;
-    const preco = Number(item.vl_unitario) || 0;
-
-    return total + quantidade * preco;
+    return total + (Number(item.qt_quantidade) || 0 * Number(item.vl_unitario) || 0);
   }, 0);
 
-  const comandas = new Set(
-    itensValidos.map((item) => String(item.id_comanda))
-  );
-
-  const pedidos = comandas.size;
 
   return {
     faturamento,
     pedidos,
-    ticketMedio:
-      pedidos > 0 ? faturamento / pedidos : 0,
+    ticketMedio: pedidos > 0 ? faturamento / pedidos : 0,
   };
 }
 
@@ -118,7 +111,8 @@ export default function GerentePage() {
     let ativo = true;
 
     async function carregarDados() {
-      try {
+      try
+      {
         setCarregando(true);
         setErro("");
 
@@ -128,29 +122,31 @@ export default function GerentePage() {
         if (ativo) {
           setIndicadores(calcularIndicadores(itens));
         }
-      } catch (error) {
+      }
+      catch (error)
+      {
         console.error(
           "Erro ao carregar indicadores do gerente:",
           error
         );
 
-        if (ativo) {
+        if (ativo)
+        {
           setErro(
             "Não foi possível carregar os indicadores. Verifique se a API está funcionando."
           );
         }
-      } finally {
-        if (ativo) {
+      }
+      finally
+      {
+        if (ativo)
           setCarregando(false);
-        }
       }
     }
 
     carregarDados();
 
-    return () => {
-      ativo = false;
-    };
+    return () => { ativo = false; };
   }, []);
 
   const cards = [

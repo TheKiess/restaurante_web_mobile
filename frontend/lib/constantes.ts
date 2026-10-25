@@ -1,10 +1,10 @@
 export const NM_RESTAURANTE = "Comanda e Pedidos";
 export const DS_RESTAURANTE = "Conheça nosso restaurante, veja o cardápio e reserve sua mesa.";
-export const DS_CHAMADA = "Sabor de verdade, servido com carinho.";
+export const DS_CHAMADA     = "Sabor de verdade, servido com carinho.";
 
 export const DS_ENDERECO = "Rua Exemplo, 000, Centro";
 export const DS_TELEFONE = "(00) 0000-0000";
-export const DS_EMAIL = "contato@exemplo.com.br";
+export const DS_EMAIL    = "contato@exemplo.com.br";
 
 export const ARR_HORARIOS = [
   { nmDias: "Terça a quinta", dsHorario: "18h às 23h" },
