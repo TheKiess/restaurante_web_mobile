@@ -51,18 +51,19 @@ function calcularIndicadores(
       String(item.id_situacao).trim().toUpperCase() !==
       "CANCELADO"
   );
-  
-  const comandas    = new Set(itensValidos.map((item) => String(item.id_comanda)));
-  const pedidos     = comandas.size;
+
   const faturamento = itensValidos.reduce((total, item) => {
     return total + (Number(item.qt_quantidade) || 0 * Number(item.vl_unitario) || 0);
   }, 0);
 
+  const comandas = new Set(itensValidos.map((item) => String(item.id_comanda)));
+  const pedidos  = comandas.size;
 
   return {
     faturamento,
     pedidos,
-    ticketMedio: pedidos > 0 ? faturamento / pedidos : 0,
+    ticketMedio:
+      pedidos > 0 ? faturamento / pedidos : 0,
   };
 }
 
@@ -131,11 +132,8 @@ export default function GerentePage() {
         );
 
         if (ativo)
-        {
-          setErro(
-            "Não foi possível carregar os indicadores. Verifique se a API está funcionando."
-          );
-        }
+          setErro("Não foi possível carregar os indicadores. Verifique se a API está funcionando.");
+
       }
       finally
       {
@@ -189,7 +187,7 @@ export default function GerentePage() {
         </Link>
       </header>
 
-      <section className={estilosPagina.secao}>
+      <section className={estilos.secaoPainel}>
         <h2 className={estilos.tituloCartao}>Visão geral</h2>
 
         {erro && (
@@ -210,7 +208,7 @@ export default function GerentePage() {
                   </p>
                 </div>
 
-                <div className={estilosPagina.icone}>{card.icone}</div>
+                <div className={estilos.icone}>{card.icone}</div>
               </div>
 
               <p className={estilosPagina.indicadorTexto}>{card.descricao}</p>
@@ -219,26 +217,26 @@ export default function GerentePage() {
         </div>
       </section>
 
-      <section className={estilosPagina.secao}>
+      <section className={estilos.secaoPainel}>
         <h2 className={estilos.tituloCartao}>Gestão do restaurante</h2>
 
-        <div className={estilosPagina.atalhos}>
+        <div className={estilos.gradeAtalhos}>
           {atalhos.map((atalho) => (
             <Link
               key={atalho.href}
               href={atalho.href}
-              className={estilosPagina.atalho}
+              className={estilos.atalho}
             >
-              <div className={estilosPagina.atalhoTopo}>
-                <span className={estilosPagina.icone}>{atalho.simbolo}</span>
-                <span className={estilosPagina.atalhoSeta}>→</span>
+              <div className={estilos.atalhoTopo}>
+                <span className={estilos.icone}>{atalho.simbolo}</span>
+                <span className={estilos.atalhoSeta}>→</span>
               </div>
 
-              <h3 className={estilosPagina.atalhoTitulo}>{atalho.titulo}</h3>
+              <h3 className={estilos.atalhoTitulo}>{atalho.titulo}</h3>
 
-              <p className={estilosPagina.atalhoTexto}>{atalho.descricao}</p>
+              <p className={estilos.atalhoTexto}>{atalho.descricao}</p>
 
-              <span className={estilosPagina.atalhoAcao}>{atalho.acao} →</span>
+              <span className={estilos.atalhoAcao}>{atalho.acao} →</span>
             </Link>
           ))}
         </div>
