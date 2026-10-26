@@ -8,17 +8,10 @@
  */
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { apiGet, apiPatch } from "@/lib/api";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  ChefHat,
-  Clock,
-  RefreshCw,
-  CheckCircle2,
-  Utensils,
-} from "lucide-react";
+import { useCallback, useEffect, useState }                  from "react";
+import { apiGet, apiPatch }                                  from "@/lib/api";
+import estilos                                               from "@/componentes/Painel/Painel.module.css";
+import { ChefHat, Clock, RefreshCw, CheckCircle2, Utensils } from "lucide-react";
 
 type SituacaoItem =
   | "AGUARDANDO"
@@ -44,12 +37,12 @@ interface ItemPedido {
   };
 }
 
-function formatarHorario(data: string) {
+function formatarHorario(data: string)
+{
   const dataPedido = new Date(data);
 
-  if (Number.isNaN(dataPedido.getTime())) {
+  if (Number.isNaN(dataPedido.getTime()))
     return "Horário indisponível";
-  }
 
   return dataPedido.toLocaleTimeString("pt-BR", {
     hour: "2-digit",
@@ -57,28 +50,32 @@ function formatarHorario(data: string) {
   });
 }
 
-export default function CozinhaPage() {
-  const [pedidos, setPedidos] = useState<ItemPedido[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const [atualizando, setAtualizando] = useState(false);
-  const [itemEmAtualizacao, setItemEmAtualizacao] =
-    useState<number | null>(null);
-  const [erro, setErro] = useState("");
-
-  const carregarPedidos = useCallback(async () => {
-    try {
+export default function CozinhaPage()
+{
+  const [pedidos, setPedidos]                     = useState<ItemPedido[]>([]);
+  const [carregando, setCarregando]               = useState(true);
+  const [atualizando, setAtualizando]             = useState(false);
+  const [itemEmAtualizacao, setItemEmAtualizacao] = useState<number | null>(null);
+  const [erro, setErro]                           = useState("");
+  const carregarPedidos                           = useCallback(async () => {
+    try
+    {
       setErro("");
       setAtualizando(true);
 
       const dados = await apiGet<ItemPedido[]>("itens-pedido/fila");
+
       setPedidos(dados);
-    } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível carregar a fila da cozinha."
+    }
+    catch (error)
+    {
+      setErro(error instanceof Error
+        ? error.message
+        : "Não foi possível carregar a fila da cozinha."
       );
-    } finally {
+    }
+    finally
+    {
       setCarregando(false);
       setAtualizando(false);
     }
@@ -91,8 +88,10 @@ export default function CozinhaPage() {
   async function alterarSituacao(
     item: ItemPedido,
     novaSituacao: SituacaoItem
-  ) {
-    try {
+  )
+  {
+    try
+    {
       setErro("");
       setItemEmAtualizacao(item.id_item_pedido);
 
@@ -102,200 +101,170 @@ export default function CozinhaPage() {
       );
 
       await carregarPedidos();
-    } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível alterar o status do pedido."
+    }
+    catch (error)
+    {
+      setErro(error instanceof Error
+        ? error.message
+        : "Não foi possível alterar o status do pedido."
       );
-    } finally {
+    }
+    finally
+    {
       setItemEmAtualizacao(null);
     }
   }
 
-  const aguardando = pedidos.filter(
-    (item) => item.id_situacao === "AGUARDANDO"
-  );
-
-  const emPreparo = pedidos.filter(
-    (item) => item.id_situacao === "EM_PREPARO"
-  );
+  const aguardando = pedidos.filter((item) => item.id_situacao === "AGUARDANDO");
+  const emPreparo  = pedidos.filter((item) => item.id_situacao === "EM_PREPARO");
 
   function renderizarPedido(item: ItemPedido) {
-    const processando =
-      itemEmAtualizacao === item.id_item_pedido;
+    const processando = itemEmAtualizacao === item.id_item_pedido;
 
     return (
-      <Card key={item.id_item_pedido} className="border-[#e5d5c8]">
-        <CardContent className="space-y-4 p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm text-[#77685e]">
-                Comanda #{item.comanda.id_comanda}
-              </p>
-
-              <h3 className="mt-1 text-lg font-semibold text-[#6f2438]">
-                {item.item_cardapio.nm_item}
-              </h3>
-            </div>
-
-            <span className="rounded-full bg-[#f5e9dc] px-3 py-1 text-sm font-semibold">
-              {item.qt_quantidade} un.
-            </span>
-          </div>
-
-          <div className="space-y-2 text-sm text-[#77685e]">
-            <p>
-              <Clock className="mr-1 inline size-4" />
-              Recebido às {formatarHorario(item.dt_pedido)}
+      <article key={item.id_item_pedido} className={estilos.cartaoInterno}>
+        <div className={estilos.linhaCabecalho}>
+          <div>
+            <p className={estilos.subtituloCartao}>
+              Comanda #{item.comanda.id_comanda}
             </p>
 
-            <p>
-              <Utensils className="mr-1 inline size-4" />
-              {item.comanda.mesa
-                ? `Mesa ${item.comanda.mesa.nr_mesa}`
-                : "Mesa não informada"}
-            </p>
+            <h3 className={estilos.tituloItem}>
+              {item.item_cardapio.nm_item}
+            </h3>
           </div>
 
-          {item.ds_observacao && (
-            <div className="rounded-md bg-[#f8f4ef] p-3">
-              <p className="text-xs font-semibold uppercase text-[#6f2438]">
-                Observações
-              </p>
-              <p className="mt-1 text-sm">{item.ds_observacao}</p>
-            </div>
+          <span className={`${estilos.seloEstado} ${estilos.seloNeutro}`}>
+            {item.qt_quantidade} un.
+          </span>
+        </div>
+
+        <div className={estilos.dadosLista}>
+          <p className={estilos.linhaIcone}>
+            <Clock size={16} aria-hidden="true" />
+            Recebido às {formatarHorario(item.dt_pedido)}
+          </p>
+
+          <p className={estilos.linhaIcone}>
+            <Utensils size={16} aria-hidden="true" />
+            {item.comanda.mesa
+              ? `Mesa ${item.comanda.mesa.nr_mesa}`
+              : "Mesa não informada"}
+          </p>
+        </div>
+
+        {item.ds_observacao && (
+          <div className={estilos.observacao}>
+            <p className={estilos.rotuloPequeno}>Observações</p>
+            <p>{item.ds_observacao}</p>
+          </div>
+        )}
+
+        <button
+          type="button"
+          className={`${estilos.botao} ${estilos.botaoPrimario} ${estilos.botaoComIcone} ${estilos.larguraCompleta} ${estilos.espacoTopo}`}
+          disabled={processando}
+          onClick={() =>
+            void alterarSituacao(
+              item,
+              item.id_situacao === "AGUARDANDO"
+                ? "EM_PREPARO"
+                : "PRONTO"
+            )
+          }
+        >
+          {processando ? (
+            "Atualizando..."
+          ) : item.id_situacao === "AGUARDANDO" ? (
+            <>
+              <ChefHat size={16} aria-hidden="true" />
+              Iniciar preparo
+            </>
+          ) : (
+            <>
+              <CheckCircle2 size={16} aria-hidden="true" />
+              Marcar como pronto
+            </>
           )}
-
-          <Button
-            className="w-full bg-[#6f2438] hover:bg-[#551b2b]"
-            disabled={processando}
-            onClick={() =>
-              void alterarSituacao(
-                item,
-                item.id_situacao === "AGUARDANDO"
-                  ? "EM_PREPARO"
-                  : "PRONTO"
-              )
-            }
-          >
-            {processando ? (
-              "Atualizando..."
-            ) : item.id_situacao === "AGUARDANDO" ? (
-              <>
-                <ChefHat className="mr-2 size-4" />
-                Iniciar preparo
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="mr-2 size-4" />
-                Marcar como pronto
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+        </button>
+      </article>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f8f4ef] px-4 py-8 md:px-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-wider text-[#77685e]">
-              Painel operacional
-            </p>
+    <div className={estilos.pagina}>
+      <header className={estilos.cabecalhoComAcao}>
+        <div>
+          <p className="sobretitulo">Painel operacional</p>
+          <h1 className={estilos.titulo}>Cozinha</h1>
+          <p className={estilos.descricao}>
+            Acompanhe os pedidos e atualize o preparo dos pratos.
+          </p>
+        </div>
 
-            <h1 className="mt-2 text-3xl font-bold text-[#6f2438]">
-              Cozinha
-            </h1>
+        <button
+          type="button"
+          onClick={() => void carregarPedidos()}
+          disabled={atualizando}
+          className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoComIcone}`}
+        >
+          <RefreshCw size={16} aria-hidden="true" />
+          Atualizar fila
+        </button>
+      </header>
 
-            <p className="mt-2 text-[#77685e]">
-              Acompanhe os pedidos e atualize o preparo dos pratos.
-            </p>
-          </div>
+      {erro && (
+        <div role="alert" className={`${estilos.alerta} ${estilos.alertaErro}`}>
+          {erro}
+        </div>
+      )}
 
-          <Button
-            variant="outline"
-            onClick={() => void carregarPedidos()}
-            disabled={atualizando}
-          >
-            <RefreshCw className="mr-2 size-4" />
-            Atualizar fila
-          </Button>
-        </header>
+      {carregando ? (
+        <div className={`${estilos.cartao} ${estilos.carregando}`}>
+          Carregando pedidos...
+        </div>
+      ) : pedidos.length === 0 ? (
+        <div className={`${estilos.cartao} ${estilos.vazio}`}>
+          <ChefHat size={48} className={estilos.iconeDestaque} aria-hidden="true" />
+          <h2 className={estilos.vazioTitulo}>Nenhum pedido na fila</h2>
+          <p className={estilos.vazioTexto}>
+            Quando houver itens aguardando preparo ou em preparo, eles
+            aparecerão aqui.
+          </p>
+        </div>
+      ) : (
+        <div className={estilos.colunasDuplas}>
+          <section className={estilos.colunaFila}>
+            <div className={estilos.linhaCabecalho}>
+              <h2 className={estilos.tituloCartao}>Aguardando preparo</h2>
+              <span className={`${estilos.seloEstado} ${estilos.seloAguardando}`}>
+                {aguardando.length}
+              </span>
+            </div>
 
-        {erro && (
-          <div
-            role="alert"
-            className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-          >
-            {erro}
-          </div>
-        )}
+            {aguardando.length === 0 ? (
+              <p className={estilos.textoSuave}>Nenhum item aguardando.</p>
+            ) : (
+              aguardando.map(renderizarPedido)
+            )}
+          </section>
 
-        {carregando ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              Carregando pedidos...
-            </CardContent>
-          </Card>
-        ) : pedidos.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
-              <ChefHat className="size-12 text-[#6f2438]" />
-              <h2 className="text-xl font-semibold">
-                Nenhum pedido na fila
-              </h2>
-              <p className="max-w-md text-sm text-[#77685e]">
-                Quando houver itens aguardando preparo ou em preparo,
-                eles aparecerão aqui.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-8 lg:grid-cols-2">
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-[#6f2438]">
-                  Aguardando preparo
-                </h2>
-                <span className="rounded-full bg-[#f5e9dc] px-3 py-1 text-sm font-semibold">
-                  {aguardando.length}
-                </span>
-              </div>
+          <section className={estilos.colunaFila}>
+            <div className={estilos.linhaCabecalho}>
+              <h2 className={estilos.tituloCartao}>Em preparo</h2>
+              <span className={`${estilos.seloEstado} ${estilos.seloEmPreparo}`}>
+                {emPreparo.length}
+              </span>
+            </div>
 
-              {aguardando.length === 0 ? (
-                <p className="text-sm text-[#77685e]">
-                  Nenhum item aguardando.
-                </p>
-              ) : (
-                aguardando.map(renderizarPedido)
-              )}
-            </section>
-
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-[#6f2438]">
-                  Em preparo
-                </h2>
-                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800">
-                  {emPreparo.length}
-                </span>
-              </div>
-
-              {emPreparo.length === 0 ? (
-                <p className="text-sm text-[#77685e]">
-                  Nenhum item em preparo.
-                </p>
-              ) : (
-                emPreparo.map(renderizarPedido)
-              )}
-            </section>
-          </div>
-        )}
-      </div>
-    </main>
+            {emPreparo.length === 0 ? (
+              <p className={estilos.textoSuave}>Nenhum item em preparo.</p>
+            ) : (
+              emPreparo.map(renderizarPedido)
+            )}
+          </section>
+        </div>
+      )}
+    </div>
   );
 }

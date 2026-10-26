@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { apiGet }                       from "@/lib/api";
 import Link                             from "next/link";
 import { ArrowLeft }                    from "lucide-react";
+import estilos                          from "@/componentes/Painel/Painel.module.css";
+import estilosPagina                    from "./page.module.css";
 
 interface Categoria {
   id_categoria: number;
@@ -143,243 +145,214 @@ export default function CardapioClientePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8F4EF] px-4 py-8 text-[#3F302D] sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-7xl">
-        <section className="mb-8 rounded-2xl bg-[#6F2438] p-6 text-[#F5E9DC] shadow-sm sm:p-8">
-          <p className="mb-2 text-sm font-medium uppercase tracking-widest text-[#E8C9B8]">
-            Nosso restaurante
-          </p>
+    <div className={estilos.pagina}>
+      <section className={estilos.destaque}>
+        <p className="sobretitulo">Nosso restaurante</p>
+        <h1 className={estilos.titulo}>Nosso cardápio</h1>
+        <p className={estilos.descricao}>
+          Explore nossos pratos, escolha seus favoritos e monte seu pedido.
+        </p>
+      </section>
 
-          <h1 className="text-3xl font-bold sm:text-4xl">
-            Nosso cardápio
-          </h1>
+      <div>
+        <Link
+          href="/cliente"
+          className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno} ${estilos.botaoComIcone}`}
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Voltar para o início
+        </Link>
+      </div>
 
-          <p className="mt-3 max-w-2xl text-sm text-[#F5E9DC]/90 sm:text-base">
-            Explore nossos pratos, escolha seus favoritos e
-            monte seu pedido.
-          </p>
-        </section>
-        <div className="mb-6 text-[#F5E9DC]" >
-            <Link
-                href="/cliente"
-                className="inline-flex items-center gap-2 rounded-lg border border-[#DED2C8] bg-white px-4 py-2.5 text-sm font-semibold !text-[#6F2438] transition hover:bg-[#F5E9DC]"
-            >
-                <ArrowLeft className="h-4 w-4" />
-                    Voltar para o início
-            </Link>
-        </div>
+      <div className={estilosPagina.busca}>
+        <label htmlFor="busca-cardapio" className={estilos.rotulo}>
+          Buscar no cardápio
+        </label>
 
-        <div className="mb-6">
-          <label
-            htmlFor="busca-cardapio"
-            className="mb-2 block text-sm font-semibold"
+        <input
+          id="busca-cardapio"
+          type="search"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Digite o nome de um prato..."
+          className={estilos.entrada}
+        />
+      </div>
+
+      <div className={estilosPagina.chips}>
+        {["Todas", ...categorias].map((categoria) => (
+          <button
+            key={categoria}
+            type="button"
+            onClick={() => setCategoriaSelecionada(categoria)}
+            aria-pressed={categoriaSelecionada === categoria}
+            className={`${estilosPagina.chip} ${
+              categoriaSelecionada === categoria ? estilosPagina.chipAtivo : ""
+            }`}
           >
-            Buscar no cardápio
-          </label>
+            {categoria}
+          </button>
+        ))}
+      </div>
 
-          <input
-            id="busca-cardapio"
-            type="search"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder="Digite o nome de um prato..."
-            className="w-full rounded-xl border border-[#DED2C8] bg-white px-4 py-3 outline-none transition focus:border-[#6F2438] focus:ring-2 focus:ring-[#6F2438]/15"
-          />
-        </div>
-
-        <div className="mb-8 flex flex-wrap gap-2">
-          {["Todas", ...categorias].map((categoria) => (
-            <button
-              key={categoria}
-              type="button"
-              onClick={() => setCategoriaSelecionada(categoria)}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                categoriaSelecionada === categoria
-                  ? "border-[#6F2438] bg-[#6F2438] text-[#F5E9DC]"
-                  : "border-[#DED2C8] bg-white text-[#6F2438] hover:bg-[#F0E5DC]"
-              }`}
-            >
-              {categoria}
-            </button>
-          ))}
-        </div>
-
-        {carregando ? (
-          <p className="py-12 text-center text-[#77685E]">
-            Carregando cardápio...
+      {carregando ? (
+        <p className={estilos.carregando}>Carregando cardápio...</p>
+      ) : erro ? (
+        <div role="alert" className={`${estilos.cartao} ${estilos.textoCentro}`}>
+          <p className={estilos.textoErro}>
+            Não foi possível carregar os produtos.
           </p>
-        ) : erro ? (
-          <div className="rounded-xl border border-red-200 bg-white p-6 text-center">
-            <p className="font-semibold text-red-700">
-              Não foi possível carregar os produtos.
-            </p>
-            <p className="mt-2 break-words text-sm text-[#77685E]">
-              {erro}
-            </p>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 rounded-lg bg-[#6F2438] px-4 py-2 text-[#F5E9DC]"
-            >
-              Tentar novamente
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <section>
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-xl font-bold">
-                  Nossos produtos
-                </h2>
-                <span className="text-sm text-[#77685E]">
-                  {itensFiltrados.length} encontrado(s)
-                </span>
-              </div>
+          <p className={`${estilos.subtituloCartao} ${estilos.quebraPalavra}`}>
+            {erro}
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className={`${estilos.botao} ${estilos.botaoPrimario} ${estilos.espacoTopo}`}
+          >
+            Tentar novamente
+          </button>
+        </div>
+      ) : (
+        <div className={estilosPagina.layout}>
+          <section>
+            <div className={`${estilos.linhaCabecalho} ${estilos.espacoBaixo}`}>
+              <h2 className={estilos.tituloCartao}>Nossos produtos</h2>
+              <span className={estilos.textoSuave}>
+                {itensFiltrados.length} encontrado(s)
+              </span>
+            </div>
 
-              {itensFiltrados.length === 0 ? (
-                <div className="rounded-xl border border-[#DED2C8] bg-white p-8 text-center">
-                  Nenhum produto disponível encontrado.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {itensFiltrados.map((item) => (
-                    <article
-                      key={item.id_item_cardapio}
-                      className="flex flex-col rounded-2xl border border-[#E8DDD3] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            {itensFiltrados.length === 0 ? (
+              <div className={`${estilos.cartao} ${estilos.textoCentro}`}>
+                Nenhum produto disponível encontrado.
+              </div>
+            ) : (
+              <div className={estilosPagina.gradeProdutos}>
+                {itensFiltrados.map((item) => (
+                  <article
+                    key={item.id_item_cardapio}
+                    className={estilosPagina.produto}
+                  >
+                    <span
+                      className={`${estilos.seloPonto} ${estilosPagina.etiquetaCategoria}`}
                     >
-                      <span className="mb-3 w-fit rounded-full bg-[#F5E9DC] px-3 py-1 text-xs font-semibold text-[#6F2438]">
-                        {item.categoria.nm_categoria}
+                      {item.categoria.nm_categoria}
+                    </span>
+
+                    <h3 className={estilos.tituloItem}>{item.nm_item}</h3>
+
+                    <p className={estilosPagina.produtoDescricao}>
+                      {item.ds_item ||
+                        "Uma opção deliciosa do nosso cardápio."}
+                    </p>
+
+                    <div className={estilosPagina.produtoRodape}>
+                      <span className={estilosPagina.preco}>
+                        {formatarPreco(item.vl_unitario)}
                       </span>
 
-                      <h3 className="text-lg font-bold">
-                        {item.nm_item}
-                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => adicionarAoCarrinho(item)}
+                        className={`${estilos.botao} ${estilos.botaoPrimario} ${estilos.botaoPequeno}`}
+                      >
+                        + Adicionar
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
 
-                      <p className="mt-2 min-h-12 flex-1 text-sm leading-relaxed text-[#77685E]">
-                        {item.ds_item ||
-                          "Uma opção deliciosa do nosso cardápio."}
-                      </p>
+          <aside className={estilosPagina.carrinho}>
+            <div className={estilos.linhaCabecalho}>
+              <h2 className={estilos.tituloCartao}>Seu carrinho</h2>
+              <span className={estilos.seloPonto}>{totalItens}</span>
+            </div>
 
-                      <div className="mt-5 flex items-center justify-between gap-3">
-                        <span className="font-bold text-[#6F2438]">
-                          {formatarPreco(item.vl_unitario)}
+            {carrinho.length === 0 ? (
+              <p className={estilos.carregando}>
+                Seu carrinho está vazio. Adicione um produto para começar!
+              </p>
+            ) : (
+              <>
+                <div className={estilosPagina.linhasCarrinho}>
+                  {carrinho.map((linha) => (
+                    <div
+                      key={linha.item.id_item_cardapio}
+                      className={estilosPagina.linhaCarrinho}
+                    >
+                      <div className={estilosPagina.linhaCarrinhoTopo}>
+                        <div>
+                          <p className={estilos.negrito}>{linha.item.nm_item}</p>
+                          <p className={estilos.subtituloCartao}>
+                            {formatarPreco(linha.item.vl_unitario)} cada
+                          </p>
+                        </div>
+
+                        <p className={`${estilos.negrito} ${estilos.semQuebra}`}>
+                          {formatarPreco(
+                            Number(linha.item.vl_unitario) * linha.quantidade
+                          )}
+                        </p>
+                      </div>
+
+                      <div className={estilosPagina.quantidade}>
+                        <button
+                          type="button"
+                          aria-label={`Diminuir quantidade de ${linha.item.nm_item}`}
+                          onClick={() =>
+                            alterarQuantidade(linha.item.id_item_cardapio, -1)
+                          }
+                          className={estilosPagina.botaoQuantidade}
+                        >
+                          −
+                        </button>
+
+                        <span className={estilosPagina.valorQuantidade}>
+                          {linha.quantidade}
                         </span>
 
                         <button
                           type="button"
-                          onClick={() => adicionarAoCarrinho(item)}
-                          className="rounded-lg bg-[#6F2438] px-3 py-2 text-sm font-semibold text-[#F5E9DC] transition hover:bg-[#541A2A]"
+                          aria-label={`Aumentar quantidade de ${linha.item.nm_item}`}
+                          onClick={() =>
+                            alterarQuantidade(linha.item.id_item_cardapio, 1)
+                          }
+                          className={estilosPagina.botaoQuantidade}
                         >
-                          + Adicionar
+                          +
                         </button>
                       </div>
-                    </article>
+                    </div>
                   ))}
                 </div>
-              )}
-            </section>
 
-            <aside className="rounded-2xl border border-[#E8DDD3] bg-white p-5 shadow-sm lg:sticky lg:top-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Seu carrinho</h2>
-                <span className="rounded-full bg-[#F5E9DC] px-3 py-1 text-sm font-semibold text-[#6F2438]">
-                  {totalItens}
-                </span>
-              </div>
+                <div className={estilos.linhaTotal}>
+                  <span>Total</span>
+                  <span className={estilos.valorDestaque}>
+                    {formatarPreco(valorTotal)}
+                  </span>
+                </div>
 
-              {carrinho.length === 0 ? (
-                <p className="py-8 text-center text-sm text-[#77685E]">
-                  Seu carrinho está vazio. Adicione um produto
-                  para começar!
-                </p>
-              ) : (
-                <>
-                  <div className="mt-5 space-y-4">
-                    {carrinho.map((linha) => (
-                      <div
-                        key={linha.item.id_item_cardapio}
-                        className="border-b border-[#EEE5DD] pb-4"
-                      >
-                        <div className="flex justify-between gap-3">
-                          <div>
-                            <p className="font-semibold">
-                              {linha.item.nm_item}
-                            </p>
-                            <p className="mt-1 text-sm text-[#77685E]">
-                              {formatarPreco(linha.item.vl_unitario)}
-                              {" "}cada
-                            </p>
-                          </div>
-
-                          <p className="whitespace-nowrap text-sm font-semibold">
-                            {formatarPreco(
-                              Number(linha.item.vl_unitario) *
-                                linha.quantidade
-                            )}
-                          </p>
-                        </div>
-
-                        <div className="mt-3 flex items-center gap-3">
-                          <button
-                            type="button"
-                            aria-label={`Diminuir quantidade de ${linha.item.nm_item}`}
-                            onClick={() =>
-                              alterarQuantidade(
-                                linha.item.id_item_cardapio,
-                                -1
-                              )
-                            }
-                            className="h-8 w-8 rounded-lg border border-[#DED2C8] text-lg"
-                          >
-                            −
-                          </button>
-
-                          <span className="min-w-4 text-center text-sm font-semibold">
-                            {linha.quantidade}
-                          </span>
-
-                          <button
-                            type="button"
-                            aria-label={`Aumentar quantidade de ${linha.item.nm_item}`}
-                            onClick={() =>
-                              alterarQuantidade(
-                                linha.item.id_item_cardapio,
-                                1
-                              )
-                            }
-                            className="h-8 w-8 rounded-lg border border-[#DED2C8] text-lg"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-5 flex items-center justify-between gap-3">
-                    <span className="font-semibold">Total</span>
-                    <span className="text-xl font-bold text-[#6F2438]">
-                      {formatarPreco(valorTotal)}
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      alert(
-                        "Carrinho preparado! A próxima etapa será integrar a finalização ao backend."
-                      )
-                    }
-                    className="mt-5 w-full rounded-xl bg-[#6F2438] px-4 py-3 font-semibold text-[#F5E9DC] transition hover:bg-[#541A2A]"
-                  >
-                    Continuar pedido
-                  </button>
-                </>
-              )}
-            </aside>
-          </div>
-        )}
-      </div>
-    </main>
+                <button
+                  type="button"
+                  onClick={() =>
+                    alert(
+                      "Carrinho preparado! A próxima etapa será integrar a finalização ao backend."
+                    )
+                  }
+                  className={`${estilos.botao} ${estilos.botaoPrimario} ${estilos.larguraCompleta} ${estilos.espacoTopo}`}
+                >
+                  Continuar pedido
+                </button>
+              </>
+            )}
+          </aside>
+        </div>
+      )}
+    </div>
   );
 }

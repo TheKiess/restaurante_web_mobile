@@ -5,7 +5,7 @@ export default function ClienteLayout({ children }: LayoutProps<"/cliente">)
 {
   return (
     <LayoutPainel nmArea="Área do cliente" arrLinks={ARR_LINKS_CLIENTE}>
-      {children}
+      <main className="min-w-0 p-5 md:p-8">{children}</main>
     </LayoutPainel>
   );
 }

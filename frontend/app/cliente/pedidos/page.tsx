@@ -1,122 +1,93 @@
+import Link                                                         from "next/link";
+import { ClipboardList, Clock, ArrowRight, ShoppingBag, ArrowLeft } from "lucide-react";
+import estilos                                                      from "@/componentes/Painel/Painel.module.css";
+import estilosPagina                                                from "./page.module.css";
 
-import Link from "next/link";
-import {
-  ClipboardList,
-  Clock,
-  ArrowRight,
-  ShoppingBag,
-  ArrowLeft,
-} from "lucide-react";
-
-import { Card, CardContent } from "@/components/ui/card";
-
-export default function PedidosClientePage() {
+export default function PedidosClientePage()
+{
   return (
-    <main className="min-h-screen bg-[#F8F4EF] px-4 py-8 text-[#3F302D] sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <section className="rounded-2xl bg-[#6F2438] p-8 text-[#F5E9DC] shadow-sm sm:p-10">
-          <div className="flex items-center gap-3">
-            <ClipboardList className="h-8 w-8" />
+    <div className={estilos.pagina}>
+      <section className={estilos.destaque}>
+        <div className={estilosPagina.titulosHero}>
+          <ClipboardList size={32} aria-hidden="true" />
 
-            <div>
-              <p className="text-sm font-medium text-[#E8C9B8]">
-                Área do cliente
-              </p>
-
-              <h1 className="text-3xl font-bold sm:text-4xl">
-                Meus pedidos
-              </h1>
-            </div>
+          <div>
+            <p className="sobretitulo">Área do cliente</p>
+            <h1 className={estilos.titulo}>Meus pedidos</h1>
           </div>
-        </section>
-        <div className="mb-6 text-[#F5E9DC]" >
-            <Link
-                href="/cliente"
-                className="inline-flex items-center gap-2 rounded-lg border border-[#DED2C8] bg-white px-4 py-2.5 text-sm font-semibold !text-[#6F2438] transition hover:bg-[#F5E9DC]"
-            >
-                <ArrowLeft className="h-4 w-4" />
-                    Voltar para o início
-            </Link>
+        </div>
+      </section>
+
+      <div>
+        <Link
+          href="/cliente"
+          className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno} ${estilos.botaoComIcone}`}
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Voltar para o início
+        </Link>
+      </div>
+
+      <div className={estilos.cabecalhoComAcao}>
+        <div>
+          <h2 className={estilos.tituloCartao}>Histórico de pedidos</h2>
+          <p className={estilos.subtituloCartao}>
+            Seus pedidos aparecerão nesta área.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold">
-              Histórico de pedidos
-            </h2>
+        <Link
+          href="/cliente/cardapio"
+          className={`${estilos.botao} ${estilos.botaoPrimario} ${estilos.botaoComIcone}`}
+        >
+          <ShoppingBag size={16} aria-hidden="true" />
+          Fazer pedido
+        </Link>
+      </div>
 
-            <p className="mt-1 text-sm text-[#77685E]">
-              Seus pedidos aparecerão nesta área.
+      <section className={`${estilos.cartao} ${estilos.vazio}`}>
+        <div className={estilosPagina.iconeGrande}>
+          <ClipboardList size={32} aria-hidden="true" />
+        </div>
+
+        <h3 className={estilos.vazioTitulo}>Nenhum pedido por enquanto</h3>
+
+        <Link
+          href="/cliente/cardapio"
+          className={`${estilos.botao} ${estilos.botaoPrimario} ${estilos.botaoComIcone} ${estilos.espacoTopo}`}
+        >
+          Explorar cardápio
+          <ArrowRight size={16} aria-hidden="true" />
+        </Link>
+      </section>
+
+      <div className={estilos.gradeCartoes}>
+        <div className={estilosPagina.cartaoInfo}>
+          <span className={estilos.icone}>
+            <Clock size={20} aria-hidden="true" />
+          </span>
+
+          <div>
+            <h3 className={estilos.tituloItem}>Acompanhe o andamento</h3>
+            <p className={estilos.subtituloCartao}>
+              Acompanhe o status de seus pedidos.
             </p>
           </div>
-
-          <Link
-            href="/cliente/cardapio"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#6F2438] px-4 py-2.5 text-sm font-semibold !text-[#F5E9DC] transition hover:bg-[#541A2A]"
-          >
-            <ShoppingBag className="h-4 w-4" />
-            Fazer pedido
-          </Link>
         </div>
 
-        <Card className="border-[#E8DDD3] bg-white shadow-sm">
-          <CardContent className="flex flex-col items-center px-6 py-12 text-center sm:py-16">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F5E9DC] text-[#6F2438]">
-              <ClipboardList className="h-8 w-8" />
-            </div>
+        <div className={estilosPagina.cartaoInfo}>
+          <span className={estilos.icone}>
+            <ShoppingBag size={20} aria-hidden="true" />
+          </span>
 
-            <h3 className="mt-5 text-xl font-bold">
-              Nenhum pedido por enquanto
-            </h3>
-            <Link
-              href="/cliente/cardapio"
-              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#6F2438] px-5 py-3 font-semibold !text-[#F5E9DC] transition hover:bg-[#541A2A]"
-            >
-              Explorar cardápio
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="border-[#E8DDD3] bg-white shadow-sm">
-            <CardContent className="flex items-start gap-4 p-5">
-              <div className="rounded-xl bg-[#F5E9DC] p-3 text-[#6F2438]">
-                <Clock className="h-5 w-5" />
-              </div>
-
-              <div>
-                <h3 className="font-semibold">
-                  Acompanhe o andamento
-                </h3>
-                <p className="mt-1 text-sm leading-relaxed text-[#77685E]">
-                  Acompanhe o status de seus pedidos.
-                </p>
-
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-[#E8DDD3] bg-white shadow-sm">
-            <CardContent className="flex items-start gap-4 p-5">
-              <div className="rounded-xl bg-[#F5E9DC] p-3 text-[#6F2438]">
-                <ShoppingBag className="h-5 w-5" />
-              </div>
-
-              <div>
-                <h3 className="font-semibold">
-                  Faça seu próximo pedido
-                </h3>
-
-                <p className="mt-1 text-sm leading-relaxed text-[#77685E]">
-                  Explore as opções do cardápio e escolha
-                  seus produtos favoritos.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div>
+            <h3 className={estilos.tituloItem}>Faça seu próximo pedido</h3>
+            <p className={estilos.subtituloCartao}>
+              Explore as opções do cardápio e escolha seus produtos favoritos.
+            </p>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
