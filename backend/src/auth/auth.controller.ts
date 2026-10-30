@@ -1,14 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
-import { AuthService }                                                       from './auth.service.js';
-import { JwtAuthGuard }                                                      from './jwt-auth.guard.js';
-import { LoginDto }                                                          from './dto/login.dto.js';
-import type { RequisicaoAutenticada }                                        from './auth.types.js';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
+import { AuthService } from './auth.service.js';
+import { Public } from './public.decorator.js';
+import { LoginDto } from './dto/login.dto.js';
+import type { RequisicaoAutenticada } from './auth.types.js';
 
 @Controller('auth')
 export class AuthController
 {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   entrar(@Body() loginDto: LoginDto)
@@ -17,7 +18,6 @@ export class AuthController
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   buscarUsuarioLogado(@Req() request: RequisicaoAutenticada)
   {
     return this.authService.buscarUsuarioLogado(request.usuario.sub);

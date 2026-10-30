@@ -4,12 +4,35 @@
 #   docker compose up -d
 #   npx prisma migrate reset      (banco zerado: os ids usados abaixo dependem disso)
 #   npx prisma generate
+#   npm run seed                  (cria o gerente inicial com ADMIN_APELIDO e ADMIN_SENHA do .env)
 #   npm run start:dev
+#
+# O gerente do seed é o usuário 1, então a ana (primeira criada abaixo) é o usuário 2.
+# Toda rota, exceto o login e o cadastro de cliente, pede token. O item 0 entra como
+# gerência e guarda o token em tokenGerencia. Se o seu .env usa outro ADMIN_APELIDO ou
+# ADMIN_SENHA, troque os dois valores do item 0.
 #
 # Rode as requisições de cima para baixo, uma vez. Para repetir tudo, zere o banco
 # de novo com "npx prisma migrate reset".
 
 @host = http://localhost:3000
+@tokenGerencia = {{loginGerencia.response.body.ds_token}}
+
+###
+# ==========================================================================
+# ENTRAR
+# ==========================================================================
+
+### 0. Entrar como gerência (espera 200)
+# Rode este item primeiro: todos os outros usam o token dele.
+# @name loginGerencia
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "gerente",
+  "ds_senha": "troque-esta-senha"
+}
 
 ###
 # ==========================================================================
@@ -19,6 +42,7 @@
 
 ### 1. Criar mesa 1 (espera 201)
 POST {{host}}/mesas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -29,6 +53,7 @@ Content-Type: application/json
 
 ### 2. Criar mesa 2 (espera 201)
 POST {{host}}/mesas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -39,6 +64,7 @@ Content-Type: application/json
 
 ### 3. Criar mesa 3, que vai ser removida mais abaixo (espera 201)
 POST {{host}}/mesas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -49,22 +75,27 @@ Content-Type: application/json
 
 ### 4. Listar (espera 200)
 GET {{host}}/mesas
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 5. Buscar por id (espera 200)
 GET {{host}}/mesas/1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 6. Id inexistente (espera 404)
 GET {{host}}/mesas/9999
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 7. Id não numérico (espera 400)
 GET {{host}}/mesas/abc
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 8. Body inválido (espera 400)
 POST {{host}}/mesas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -76,6 +107,7 @@ Content-Type: application/json
 # O 409 vem do erro P2002 do banco (restrição UNIQUE do nr_mesa), e não de uma
 # verificação em código. A restrição do banco é atômica; a verificação em código não é.
 POST {{host}}/mesas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -86,6 +118,7 @@ Content-Type: application/json
 
 ### 10. Atualizar parcialmente (espera 200)
 PATCH {{host}}/mesas/1
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -97,6 +130,7 @@ Content-Type: application/json
 # O 404 vem da busca que o service faz antes de atualizar. Se o registro sumir no meio
 # da operação, o erro P2025 do banco também vira 404 (filtro global).
 PATCH {{host}}/mesas/9999
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -106,10 +140,12 @@ Content-Type: application/json
 
 ### 12. Remover (espera 204)
 DELETE {{host}}/mesas/3
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 13. Remover de novo (espera 404)
 DELETE {{host}}/mesas/3
+Authorization: Bearer {{tokenGerencia}}
 
 
 ###
@@ -120,6 +156,7 @@ DELETE {{host}}/mesas/3
 
 ### 14. Criar categoria (espera 201)
 POST {{host}}/categorias
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -129,6 +166,7 @@ Content-Type: application/json
 
 ### 15. Criar subcategoria (tem categoria pai) (espera 201)
 POST {{host}}/categorias
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -139,6 +177,7 @@ Content-Type: application/json
 
 ### 16. Categoria pai inexistente (espera 404)
 POST {{host}}/categorias
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -149,6 +188,7 @@ Content-Type: application/json
 
 ### 17. Criar categoria (espera 201)
 POST {{host}}/categorias
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -158,6 +198,7 @@ Content-Type: application/json
 
 ### 18. Sem nome (espera 400)
 POST {{host}}/categorias
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {}
@@ -165,14 +206,17 @@ Content-Type: application/json
 
 ### 19. Listar (espera 200)
 GET {{host}}/categorias
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 20. Buscar por id (traz as subcategorias) (espera 200)
 GET {{host}}/categorias/1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 21. Uma categoria não pode ser pai dela mesma (espera 400)
 PATCH {{host}}/categorias/2
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -188,6 +232,7 @@ Content-Type: application/json
 
 ### 22. Criar prato (PREPARADO, vai para a cozinha) (espera 201)
 POST {{host}}/itens-cardapio
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -200,6 +245,7 @@ Content-Type: application/json
 
 ### 23. Criar bebida (REVENDA, não passa pela cozinha) (espera 201)
 POST {{host}}/itens-cardapio
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -212,6 +258,7 @@ Content-Type: application/json
 
 ### 24. Criar item fora do cardápio (disponivel = false) (espera 201)
 POST {{host}}/itens-cardapio
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -225,6 +272,7 @@ Content-Type: application/json
 
 ### 25. Categoria inexistente (espera 404)
 POST {{host}}/itens-cardapio
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -237,6 +285,7 @@ Content-Type: application/json
 
 ### 26. Tipo de item inválido (espera 400)
 POST {{host}}/itens-cardapio
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -249,6 +298,7 @@ Content-Type: application/json
 
 ### 27. Preço com 3 casas decimais (espera 400)
 POST {{host}}/itens-cardapio
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -261,14 +311,17 @@ Content-Type: application/json
 
 ### 28. Listar (espera 200)
 GET {{host}}/itens-cardapio
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 29. Buscar por id (espera 200)
 GET {{host}}/itens-cardapio/1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 30. Atualizar a descrição (espera 200)
 PATCH {{host}}/itens-cardapio/1
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -285,6 +338,7 @@ Content-Type: application/json
 ### 31. Cadastrar cliente (espera 201)
 # A senha é salva como hash bcrypt e nunca volta na resposta. O perfil padrão é CLIENTE.
 POST {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -299,6 +353,7 @@ Content-Type: application/json
 
 ### 32. Cadastrar garçom (espera 201)
 POST {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -313,6 +368,7 @@ Content-Type: application/json
 # O service confere antes de gravar. Se duas pessoas se cadastrarem ao mesmo tempo, o erro
 # P2002 do banco (índice UNIQUE) também vira 409 pelo filtro global.
 POST {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -324,6 +380,7 @@ Content-Type: application/json
 
 ### 34. E-mail repetido (espera 409)
 POST {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -336,6 +393,7 @@ Content-Type: application/json
 
 ### 35. Dados inválidos (espera 400)
 POST {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -349,18 +407,22 @@ Content-Type: application/json
 
 ### 36. Listar (sem a senha) (espera 200)
 GET {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 37. Buscar por id (espera 200)
-GET {{host}}/usuarios/1
+GET {{host}}/usuarios/2
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 38. Id inexistente (espera 404)
 GET {{host}}/usuarios/9999
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 39. Atualizar telefone e trocar a senha (espera 200)
-PATCH {{host}}/usuarios/1
+PATCH {{host}}/usuarios/2
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -370,7 +432,8 @@ Content-Type: application/json
 
 
 ### 40. Trocar o apelido para o de outro usuário (espera 409)
-PATCH {{host}}/usuarios/1
+PATCH {{host}}/usuarios/2
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -386,6 +449,7 @@ Content-Type: application/json
 
 ### 41. Abrir comanda na mesa 1 (espera 201)
 POST {{host}}/comandas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -396,6 +460,7 @@ Content-Type: application/json
 
 ### 42. Abrir outra comanda na mesma mesa (espera 409)
 POST {{host}}/comandas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -406,6 +471,7 @@ Content-Type: application/json
 
 ### 43. Usuário inexistente (espera 404)
 POST {{host}}/comandas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -415,6 +481,7 @@ Content-Type: application/json
 
 ### 44. Mesa inexistente (espera 404)
 POST {{host}}/comandas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -425,6 +492,7 @@ Content-Type: application/json
 
 ### 45. Body vazio (espera 400)
 POST {{host}}/comandas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {}
@@ -432,6 +500,7 @@ Content-Type: application/json
 
 ### 46. Abrir comanda sem mesa (espera 201)
 POST {{host}}/comandas
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -441,14 +510,17 @@ Content-Type: application/json
 
 ### 47. Listar as comandas abertas (espera 200)
 GET {{host}}/comandas?id_situacao=ABERTA
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 48. Filtro de situação inválido (espera 400)
 GET {{host}}/comandas?id_situacao=XYZ
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 49. Definir a mesa da comanda 2 (espera 200)
 PATCH {{host}}/comandas/2
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -458,6 +530,7 @@ Content-Type: application/json
 
 ### 50. Trocar para uma mesa que já está ocupada (espera 409)
 PATCH {{host}}/comandas/2
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -467,10 +540,12 @@ Content-Type: application/json
 
 ### 51. Buscar o detalhe da comanda (espera 200)
 GET {{host}}/comandas/1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 52. Comanda inexistente (espera 404)
 GET {{host}}/comandas/9999
+Authorization: Bearer {{tokenGerencia}}
 
 
 ###
@@ -482,6 +557,7 @@ GET {{host}}/comandas/9999
 ### 53. Lançar o prato (2 unidades) (espera 201)
 # O prato entra como AGUARDANDO e o preço é copiado do cardápio na hora do pedido.
 POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -495,6 +571,7 @@ Content-Type: application/json
 ### 54. Lançar a bebida (1 unidade) (espera 201)
 # Item de REVENDA já entra como PRONTO, porque não passa pela cozinha.
 POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -506,6 +583,7 @@ Content-Type: application/json
 
 ### 55. Lançar um item fora do cardápio (espera 409)
 POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -517,6 +595,7 @@ Content-Type: application/json
 
 ### 56. Quantidade zero (espera 400)
 POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -528,6 +607,7 @@ Content-Type: application/json
 
 ### 57. Comanda inexistente (espera 404)
 POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -539,18 +619,22 @@ Content-Type: application/json
 
 ### 58. Fila da cozinha (só o que está aguardando ou em preparo) (espera 200)
 GET {{host}}/itens-pedido/fila
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 59. Filtrar o que está pronto numa comanda (espera 200)
 GET {{host}}/itens-pedido?id_situacao=PRONTO&id_comanda=1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 60. Buscar por id (espera 200)
 GET {{host}}/itens-pedido/1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 61. Corrigir a observação (enquanto está aguardando) (espera 200)
 PATCH {{host}}/itens-pedido/1
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -560,6 +644,7 @@ Content-Type: application/json
 
 ### 62. Cozinha: começar a preparar (espera 200)
 PATCH {{host}}/itens-pedido/1/situacao
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -569,6 +654,7 @@ Content-Type: application/json
 
 ### 63. Corrigir depois que a cozinha começou (espera 409)
 PATCH {{host}}/itens-pedido/1
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -578,6 +664,7 @@ Content-Type: application/json
 
 ### 64. Pular uma etapa (EM_PREPARO direto para ENTREGUE) (espera 409)
 PATCH {{host}}/itens-pedido/1/situacao
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -587,6 +674,7 @@ Content-Type: application/json
 
 ### 65. Situação inválida (espera 400)
 PATCH {{host}}/itens-pedido/1/situacao
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -596,6 +684,7 @@ Content-Type: application/json
 
 ### 66. Cozinha: prato pronto (espera 200)
 PATCH {{host}}/itens-pedido/1/situacao
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -607,6 +696,7 @@ Content-Type: application/json
 # Se a cozinha e o garçom mexerem no mesmo item ao mesmo tempo, só um vence e o outro
 # recebe 409: a troca de situação só grava se o item ainda estiver como foi lido.
 PATCH {{host}}/itens-pedido/1/situacao
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -616,6 +706,7 @@ Content-Type: application/json
 
 ### 68. Garçom: entregar a bebida (espera 200)
 PATCH {{host}}/itens-pedido/2/situacao
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -625,6 +716,7 @@ Content-Type: application/json
 
 ### 69. Cancelar um item que já foi entregue (espera 409)
 PATCH {{host}}/itens-pedido/1/situacao
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -641,11 +733,13 @@ Content-Type: application/json
 ### 70. Conferir a conta (espera 200)
 # vl_total deve ser "92.30" (2 x 42.90 + 6.50) e vl_restante também.
 GET {{host}}/comandas/1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 71. Pagar 50,00 em dinheiro (espera 201)
 # Dinheiro e cartão já entram como CONFIRMADO.
 POST {{host}}/pagamentos
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -658,6 +752,7 @@ Content-Type: application/json
 ### 72. Pagar 20,00 no PIX (espera 201)
 # O PIX entra como PENDENTE até alguém confirmar (depois, o webhook vai fazer isso).
 POST {{host}}/pagamentos
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -670,6 +765,7 @@ Content-Type: application/json
 ### 73. Pagar mais do que falta (espera 409)
 # Faltam 22.30, porque o PIX pendente já conta.
 POST {{host}}/pagamentos
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -681,6 +777,7 @@ Content-Type: application/json
 
 ### 74. Valor zero (espera 400)
 POST {{host}}/pagamentos
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -692,6 +789,7 @@ Content-Type: application/json
 
 ### 75. Forma de pagamento inválida (espera 400)
 POST {{host}}/pagamentos
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -703,6 +801,7 @@ Content-Type: application/json
 
 ### 76. Comanda inexistente (espera 404)
 POST {{host}}/pagamentos
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -714,10 +813,12 @@ Content-Type: application/json
 
 ### 77. Fechar com pagamento pendente (espera 409)
 PATCH {{host}}/comandas/1/fechar
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 78. Confirmar o PIX (espera 200)
 PATCH {{host}}/pagamentos/2/situacao
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -727,6 +828,7 @@ Content-Type: application/json
 
 ### 79. Confirmar de novo (espera 409)
 PATCH {{host}}/pagamentos/2/situacao
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -736,10 +838,12 @@ Content-Type: application/json
 
 ### 80. Fechar faltando pagar (espera 409)
 PATCH {{host}}/comandas/1/fechar
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 81. Pagar o resto (22,30) no cartão (espera 201)
 POST {{host}}/pagamentos
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -751,23 +855,28 @@ Content-Type: application/json
 
 ### 82. Listar os pagamentos da comanda (espera 200)
 GET {{host}}/pagamentos?id_comanda=1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 83. Buscar pagamento por id (espera 200)
 GET {{host}}/pagamentos/1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 84. Fechar a comanda (espera 200)
 # A resposta traz a comanda FECHADA com vl_restante "0.00". O fechamento roda em um $transaction.
 PATCH {{host}}/comandas/1/fechar
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 85. Fechar de novo (espera 409)
 PATCH {{host}}/comandas/1/fechar
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 86. Lançar item em comanda fechada (espera 409)
 POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -779,6 +888,7 @@ Content-Type: application/json
 
 ### 87. Pagar uma comanda fechada (espera 409)
 POST {{host}}/pagamentos
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
@@ -796,14 +906,17 @@ Content-Type: application/json
 
 ### 88. Cancelar a comanda 2 (aberta e sem itens) (espera 200)
 PATCH {{host}}/comandas/2/cancelar
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 89. Cancelar de novo (espera 409)
 PATCH {{host}}/comandas/2/cancelar
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 90. Cancelar uma comanda que já foi fechada (espera 409)
 PATCH {{host}}/comandas/1/cancelar
+Authorization: Bearer {{tokenGerencia}}
 
 
 ###
@@ -814,6 +927,7 @@ PATCH {{host}}/comandas/1/cancelar
 
 ### 91. Apagar categoria que ainda tem itens (espera 409)
 DELETE {{host}}/categorias/1
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 [
@@ -823,22 +937,27 @@ Content-Type: application/json
 
 ### 92. Apagar item do cardápio que já foi pedido (espera 409)
 DELETE {{host}}/itens-cardapio/1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 93. Apagar item que nunca foi pedido (espera 204)
 DELETE {{host}}/itens-cardapio/3
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 94. Apagar de novo (espera 404)
 DELETE {{host}}/itens-cardapio/3
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 95. Apagar categoria sem itens (espera 204)
 DELETE {{host}}/categorias/2
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 96. Apagar de novo (espera 404)
 DELETE {{host}}/categorias/2
+Authorization: Bearer {{tokenGerencia}}
 
 
 ###
@@ -855,15 +974,18 @@ DELETE {{host}}/categorias/2
 
 ### 97. As mesas continuam salvas (espera 200)
 GET {{host}}/mesas
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 98. A comanda fechada continua com itens e pagamentos (espera 200)
 # Deve continuar FECHADA, com vl_total "92.30", vl_pago "92.30" e vl_restante "0.00".
 GET {{host}}/comandas/1
+Authorization: Bearer {{tokenGerencia}}
 
 
 ### 99. Os usuários continuam salvos, sem a senha (espera 200)
 GET {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
 
 
 ###
@@ -940,3 +1062,101 @@ GET {{host}}/auth/me
 ### 107. Ver quem está logado com token inválido (espera 401)
 GET {{host}}/auth/me
 Authorization: Bearer token-invalido
+
+
+###
+# ==========================================================================
+# PERMISSÕES POR PERFIL
+# ==========================================================================
+# Gerência: tudo. Garçom: mesas (só ler), comandas, pedidos e pagamentos. Cozinha: a fila e
+# a situação dos itens. Cliente: só ler categorias e cardápio. Todos os perfis podem ler o
+# cardápio. Aqui usamos a ana (cliente, senha do item 39) e o bruno (garçom, item 32).
+
+### 108. Entrar como garçom (espera 200)
+# @name loginBruno
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "bruno",
+  "ds_senha": "garcom123"
+}
+
+###
+@tokenGarcom = {{loginBruno.response.body.ds_token}}
+
+
+### 109. Rota protegida sem token (espera 401)
+GET {{host}}/mesas
+
+
+### 110. Cliente tentando criar uma mesa (espera 403)
+POST {{host}}/mesas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nr_mesa": 50,
+  "qt_lugares": 4
+}
+
+
+### 111. Garçom lendo as mesas (espera 200)
+GET {{host}}/mesas
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 112. Garçom tentando excluir uma mesa (espera 403)
+DELETE {{host}}/mesas/1
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 113. Cliente lendo o cardápio (espera 200)
+GET {{host}}/itens-cardapio
+Authorization: Bearer {{token}}
+
+
+### 114. Cliente tentando ver a fila da cozinha (espera 403)
+GET {{host}}/itens-pedido/fila
+Authorization: Bearer {{token}}
+
+
+### 115. Garçom tentando listar os usuários (espera 403)
+GET {{host}}/usuarios
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 116. Cadastro público sem perfil cria um cliente (espera 201)
+POST {{host}}/usuarios
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Cliente Público",
+  "ds_apelido": "publico1",
+  "ds_senha": "senha123"
+}
+
+
+### 117. Cadastro público pedindo o perfil GERENCIA (espera 403)
+POST {{host}}/usuarios
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Espertinho",
+  "ds_apelido": "espertinho",
+  "ds_senha": "senha123",
+  "perfil": "GERENCIA"
+}
+
+
+### 118. Garçom tentando criar outro garçom (espera 403)
+POST {{host}}/usuarios
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Outro Garçom",
+  "ds_apelido": "garcom2",
+  "ds_senha": "senha123",
+  "perfil": "GARCOM"
+}
