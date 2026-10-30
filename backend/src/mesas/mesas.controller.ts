@@ -1,9 +1,12 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
-import { MesasService } from './mesas.service.js';
-import { CreateMesaDto } from './dto/create-mesa.dto.js';
-import { UpdateMesaDto } from './dto/update-mesa.dto.js';
+import { MesasService }                                                                          from './mesas.service.js';
+import { CreateMesaDto }                                                                         from './dto/create-mesa.dto.js';
+import { UpdateMesaDto }                                                                         from './dto/update-mesa.dto.js';
+import { Roles }                                                                                 from '../auth/roles.decorator.js';
+import { Perfil }                                                                                from '../generated/prisma/enums.js';
 
 @Controller('mesas')
+@Roles(Perfil.GERENCIA)
 export class MesasController
 {
   constructor(private readonly mesasService: MesasService) {}
@@ -14,12 +17,14 @@ export class MesasController
     return this.mesasService.criarMesa(createMesaDto);
   }
 
+  @Roles(Perfil.GERENCIA, Perfil.GARCOM)
   @Get()
   listarMesas()
   {
     return this.mesasService.listarMesas();
   }
 
+  @Roles(Perfil.GERENCIA, Perfil.GARCOM)
   @Get(':id')
   buscarMesaPorId(@Param('id', ParseIntPipe) nrId: number)
   {

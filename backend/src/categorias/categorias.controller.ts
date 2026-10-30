@@ -1,9 +1,12 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
-import { CategoriasService } from './categorias.service.js';
-import { CreateCategoriaDto } from './dto/create-categoria.dto.js';
-import { UpdateCategoriaDto } from './dto/update-categoria.dto.js';
+import { CategoriasService }                                                                     from './categorias.service.js';
+import { CreateCategoriaDto }                                                                    from './dto/create-categoria.dto.js';
+import { UpdateCategoriaDto }                                                                    from './dto/update-categoria.dto.js';
+import { Roles, TODOS_OS_PERFIS }                                                                from '../auth/roles.decorator.js';
+import { Perfil }                                                                                from '../generated/prisma/enums.js';
 
 @Controller('categorias')
+@Roles(Perfil.GERENCIA)
 export class CategoriasController
 {
   constructor(private readonly categoriasService: CategoriasService) {}
@@ -14,12 +17,14 @@ export class CategoriasController
     return this.categoriasService.criarCategoria(createCategoriaDto);
   }
 
+  @Roles(...TODOS_OS_PERFIS)
   @Get()
   listarCategorias()
   {
     return this.categoriasService.listarCategorias();
   }
 
+  @Roles(...TODOS_OS_PERFIS)
   @Get(':id')
   buscarCategoriaPorId(@Param('id', ParseIntPipe) nrId: number)
   {

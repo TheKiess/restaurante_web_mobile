@@ -3,8 +3,11 @@ import { PagamentosService } from './pagamentos.service.js';
 import { CreatePagamentoDto } from './dto/create-pagamento.dto.js';
 import { AlterarSituacaoPagamentoDto } from './dto/alterar-situacao-pagamento.dto.js';
 import { ListarPagamentosQueryDto } from './dto/listar-pagamentos-query.dto.js';
+import { Roles } from '../auth/roles.decorator.js';
+import { Perfil } from '../generated/prisma/enums.js';
 
 @Controller('pagamentos')
+@Roles(Perfil.GERENCIA, Perfil.GARCOM)
 export class PagamentosController
 {
   constructor(private readonly pagamentosService: PagamentosService) {}
@@ -27,6 +30,7 @@ export class PagamentosController
     return this.pagamentosService.buscarPagamentoPorId(nrId);
   }
 
+  @Roles(Perfil.GERENCIA)
   @Patch(':id/situacao')
   alterarSituacaoPagamento(@Param('id', ParseIntPipe) nrId: number,
     @Body() alterarSituacaoPagamentoDto: AlterarSituacaoPagamentoDto

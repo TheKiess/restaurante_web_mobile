@@ -1,10 +1,13 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
-import { ComandasService } from './comandas.service.js';
-import { CreateComandaDto } from './dto/create-comanda.dto.js';
-import { UpdateComandaDto } from './dto/update-comanda.dto.js';
-import { ListarComandasQueryDto } from './dto/listar-comandas-query.dto.js';
+import { ComandasService }                                                from './comandas.service.js';
+import { CreateComandaDto }                                               from './dto/create-comanda.dto.js';
+import { UpdateComandaDto }                                               from './dto/update-comanda.dto.js';
+import { ListarComandasQueryDto }                                         from './dto/listar-comandas-query.dto.js';
+import { Roles }                                                          from '../auth/roles.decorator.js';
+import { Perfil }                                                         from '../generated/prisma/enums.js';
 
 @Controller('comandas')
+@Roles(Perfil.GERENCIA, Perfil.GARCOM)
 export class ComandasController
 {
   constructor(private readonly comandasService: ComandasService) {}
