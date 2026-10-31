@@ -1,8 +1,8 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module.js';
-import { PrismaService } from './prisma/prisma.service.js';
+import { NestFactory }     from '@nestjs/core';
+import { AppModule }       from './app.module.js';
+import { PrismaService }   from './prisma/prisma.service.js';
 import { UsuariosService } from './usuarios/usuarios.service.js';
-import { Perfil } from './generated/prisma/enums.js';
+import { Perfil }          from './generated/prisma/enums.js';
 
 async function criarGerenteInicial()
 {
@@ -16,10 +16,9 @@ async function criarGerenteInicial()
     if (!dsApelido || !dsSenha)
       throw new Error('Informe ADMIN_APELIDO e ADMIN_SENHA no .env para criar o gerente inicial.');
 
-    const prisma = app.get(PrismaService);
-    const existente = await prisma.usuario.findUnique({ where: { ds_apelido: dsApelido } });
+    const usuarioExistente = await app.get(PrismaService).usuario.findUnique({ where: { ds_apelido: dsApelido } });
 
-    if (existente)
+    if (usuarioExistente)
     {
       console.log(`O usuário "${dsApelido}" já existe. Nada foi alterado.`);
       return;
