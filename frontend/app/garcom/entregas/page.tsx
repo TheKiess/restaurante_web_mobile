@@ -1,10 +1,11 @@
 
 "use client";
 
-import Link                                 from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { apiGet, apiPatch }                 from "@/lib/api";
-import estilos                              from "@/componentes/Painel/Painel.module.css";
+import Link                      from "next/link";
+import { useCallback, useState } from "react";
+import { apiGet, apiPatch }      from "@/lib/api";
+import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
+import estilos                   from "@/componentes/Painel/Painel.module.css";
 
 type ItemPedido = {
   id_item_pedido: number;
@@ -53,9 +54,7 @@ export default function EntregasPage()
     }
   }, []);
 
-  useEffect(() => {
-    void carregarPedidos();
-  }, [carregarPedidos]);
+  useCarregarAoMontar(carregarPedidos);
 
   async function marcarComoEntregue(idItemPedido: number)
   {
@@ -65,10 +64,7 @@ export default function EntregasPage()
 
     try
     {
-      await apiPatch(
-        `itens-pedido/${idItemPedido}/situacao`,
-        { id_situacao: "ENTREGUE" }
-      );
+      await apiPatch(`itens-pedido/${idItemPedido}/situacao`, { id_situacao: "ENTREGUE" });
 
       setPedidos((anteriores) => anteriores.filter((pedido) => pedido.id_item_pedido !== idItemPedido));
       setSucesso("Pedido marcado como entregue com sucesso.");

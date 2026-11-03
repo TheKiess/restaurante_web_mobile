@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useCallback, useEffect, useState }     from "react";
+import { useCallback, useState }                from "react";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
+import { useCarregarAoMontar }                  from "@/lib/useCarregarAoMontar";
 import estilos                                  from "@/componentes/Painel/Painel.module.css";
 
 type Categoria = {
@@ -89,9 +90,7 @@ export default function CardapioPage() {
     }
   }, []);
 
-  useEffect(() => {
-    void carregarDados();
-  }, [carregarDados]);
+  useCarregarAoMontar(carregarDados);
 
   function alterarCampo<K extends keyof Formulario>(
     campo: K,

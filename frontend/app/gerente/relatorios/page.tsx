@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -10,12 +10,13 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-}                    from "recharts";
-import jsPDF         from "jspdf";
-import html2canvas   from "html2canvas";
-import { apiGet }    from "@/lib/api";
-import estilos       from "@/componentes/Painel/Painel.module.css";
-import estilosPagina from "./page.module.css";
+}                              from "recharts";
+import jsPDF                   from "jspdf";
+import html2canvas             from "html2canvas";
+import { apiGet }              from "@/lib/api";
+import { useCarregarAoMontar } from "@/lib/useCarregarAoMontar";
+import estilos                 from "@/componentes/Painel/Painel.module.css";
+import estilosPagina           from "./page.module.css";
 
 type ItemPedidoApi = {
   id_item_pedido: number;
@@ -38,83 +39,93 @@ type ItemPedidoApi = {
 type Periodo = "hoje" | "seteDias" | "trintaDias" | "mes" | "personalizado";
 
 const moeda = (valor: number) => valor.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+  style: "currency",
+  currency: "BRL",
+});
 
 const dataLocal = (data: Date) => {
   const ano = data.getFullYear();
   const mes = String(data.getMonth() + 1).padStart(2, "0");
   const dia = String(data.getDate()).padStart(2, "0");
+
   return `${ano}-${mes}-${dia}`;
 };
 
-const inicioDoDia = (valor: string) => new Date(`${valor}T00:00:00`);
-
+const inicioDoDia  = (valor: string) => new Date(`${valor}T00:00:00`);
 const formatarData = (valor: string) => {
-  if (!valor) return "—";
+
+  if (!valor)
+    return "—";
+
   return new Date(`${valor}T12:00:00`).toLocaleDateString("pt-BR");
 };
 
-export default function PaginaRelatorios() {
-  const hoje = dataLocal(new Date());
+export default function PaginaRelatorios()
+{
+  const hoje           = dataLocal(new Date());
   const primeiroDiaMes = `${hoje.slice(0, 7)}-01`;
-
-  const [itens, setItens] = useState<ItemPedidoApi[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
-  const [periodo, setPeriodo] = useState<Periodo>("hoje");
+  const [itens,          setItens]          = useState<ItemPedidoApi[]>([]);
+  const [carregando,     setCarregando]     = useState(true);
+  const [erro,           setErro]           = useState("");
+  const [periodo,        setPeriodo]        = useState<Periodo>("hoje");
   const [mesSelecionado, setMesSelecionado] = useState(hoje.slice(0, 7));
-  const [dataInicio, setDataInicio] = useState(primeiroDiaMes);
-  const [dataFim, setDataFim] = useState(hoje);
-
-  const relatorioRef = useRef<HTMLDivElement>(null);
-
-  const carregarItens = useCallback(async () => {
-    try {
+  const [dataInicio,     setDataInicio]     = useState(primeiroDiaMes);
+  const [dataFim,        setDataFim]        = useState(hoje);
+  const relatorioRef                        = useRef<HTMLDivElement>(null);
+  const carregarItens                       = useCallback(async () => {
+    try
+    {
       setCarregando(true);
       setErro("");
 
       const resposta = await apiGet<ItemPedidoApi[]>("itens-pedido");
       setItens(Array.isArray(resposta) ? resposta : []);
-    } catch (e) {
-      console.error("Erro ao carregar relatórios:", e);
-      setErro(
-        "Não foi possível carregar os dados. Verifique se o backend está em execução."
-      );
-    } finally {
+    }
+    catch (error)
+    {
+      console.error("Erro ao carregar relatórios:", error);
+      setErro("Não foi possível carregar os dados. Verifique se o backend está em execução.");
+    }
+    finally
+    {
       setCarregando(false);
     }
-  }, []);
+  }, [setCarregando, setErro, setItens]);
 
-  useEffect(() => {
-    void carregarItens();
-  }, [carregarItens]);
+  useCarregarAoMontar(carregarItens);
 
   const intervalo = useMemo(() => {
     const agora = new Date();
     let inicio: Date;
     let fim = inicioDoDia(hoje);
 
-    if (periodo === "hoje") {
+    if (periodo === "hoje")
       inicio = inicioDoDia(hoje);
-    } else if (periodo === "seteDias") {
+    else if (periodo === "seteDias")
+    {
       inicio = new Date(fim);
       inicio.setDate(inicio.getDate() - 6);
-    } else if (periodo === "trintaDias") {
+    }
+    else if (periodo === "trintaDias")
+    {
       inicio = new Date(fim);
       inicio.setDate(inicio.getDate() - 29);
-    } else if (periodo === "mes") {
+    }
+    else if (periodo === "mes")
+    {
       inicio = inicioDoDia(`${mesSelecionado}-01`);
       const [ano, mes] = mesSelecionado.split("-").map(Number);
       fim = new Date(ano, mes, 0);
-    } else {
+    }
+    else
+    {
       inicio = inicioDoDia(dataInicio);
       fim = inicioDoDia(dataFim);
     }
 
     // Não permite incluir datas futuras no período selecionado.
-    if (fim > inicioDoDia(hoje)) fim = inicioDoDia(hoje);
+    if (fim > inicioDoDia(hoje))
+      fim = inicioDoDia(hoje);
 
     return {
       inicio: dataLocal(inicio),
@@ -126,10 +137,12 @@ export default function PaginaRelatorios() {
   }, [periodo, hoje, mesSelecionado, dataInicio, dataFim]);
 
   const itensDoPeriodo = useMemo(() => {
-    if (intervalo.dataFim < intervalo.dataInicio) return [];
+    if (intervalo.dataFim < intervalo.dataInicio)
+      return [];
 
     return itens.filter((item) => {
-      if (!item.dt_pedido) return false;
+      if (!item.dt_pedido)
+        return false;
 
       const data = dataLocal(new Date(item.dt_pedido));
 
@@ -137,84 +150,54 @@ export default function PaginaRelatorios() {
     });
   }, [itens, intervalo]);
 
-  const itensValidos = useMemo(
-    () => itensDoPeriodo.filter((item) => item.id_situacao !== "CANCELADO"),
-    [itensDoPeriodo]
-  );
+  const itensValidos = useMemo(() => itensDoPeriodo.filter((item) => item.id_situacao !== "CANCELADO"), [itensDoPeriodo]);
 
-  const totalVendido = itensValidos.reduce(
-    (total, item) =>
-      total + item.qt_quantidade * Number(item.vl_unitario),
+  const totalVendido = itensValidos.reduce((total, item) =>
+    total + item.qt_quantidade * Number(item.vl_unitario),
     0
   );
 
-  const totalItens = itensValidos.reduce(
-    (total, item) => total + item.qt_quantidade,
-    0
-  );
+  const totalItens = itensValidos.reduce((total, item) => total + item.qt_quantidade, 0);
 
-  const totalComandas = new Set(
-    itensValidos.map((item) => item.id_comanda)
-  ).size;
+  const totalComandas = new Set(itensValidos.map((item) => item.id_comanda)).size;
 
-  const itensCancelados = itensDoPeriodo.filter(
-    (item) => item.id_situacao === "CANCELADO"
-  );
+  const itensCancelados = itensDoPeriodo.filter((item) => item.id_situacao === "CANCELADO");
 
-  const totalCancelados = itensCancelados.reduce(
-    (total, item) => total + item.qt_quantidade,
-    0
-  );
+  const totalCancelados = itensCancelados.reduce((total, item) => total + item.qt_quantidade, 0);
 
-  const totalAguardando = itensDoPeriodo.filter(
-    (item) => item.id_situacao === "AGUARDANDO"
-  ).length;
+  const totalAguardando = itensDoPeriodo.filter((item) => item.id_situacao === "AGUARDANDO").length;
 
-  const totalEmPreparo = itensDoPeriodo.filter(
-    (item) => item.id_situacao === "EM_PREPARO"
-  ).length;
+  const totalEmPreparo = itensDoPeriodo.filter((item) => item.id_situacao === "EM_PREPARO").length;
 
-  const totalProntos = itensDoPeriodo.filter(
-    (item) => item.id_situacao === "PRONTO"
-  ).length;
+  const totalProntos = itensDoPeriodo.filter((item) => item.id_situacao === "PRONTO").length;
 
-  const totalEntregues = itensDoPeriodo.filter(
-    (item) => item.id_situacao === "ENTREGUE"
-  ).length;
+  const totalEntregues = itensDoPeriodo.filter((item) => item.id_situacao === "ENTREGUE").length;
 
   const produtosAgrupados = useMemo(() => {
-    const agrupados = new Map<
-      string,
-      { nome: string; quantidade: number; total: number }
-    >();
+    const agrupados = new Map<string, { nome: string; quantidade: number; total: number }>();
 
     itensValidos.forEach((item) => {
-      const nome = item.item_cardapio?.nm_item ?? "Produto sem nome";
-      const atual = agrupados.get(nome) ?? {
+      const nome  = item.item_cardapio?.nm_item ?? "Produto sem nome";
+      const atual = agrupados.get(nome)         ?? {
         nome,
         quantidade: 0,
         total: 0,
       };
 
       atual.quantidade += item.qt_quantidade;
-      atual.total += item.qt_quantidade * Number(item.vl_unitario);
+      atual.total      += item.qt_quantidade * Number(item.vl_unitario);
 
       agrupados.set(nome, atual);
     });
 
-    return Array.from(agrupados.values()).sort(
-      (a, b) => b.quantidade - a.quantidade
-    );
+    return Array.from(agrupados.values()).sort((a, b) => b.quantidade - a.quantidade);
   }, [itensValidos]);
 
   const dadosGrafico = useMemo(() => {
-    const porDia = new Map<
-      string,
-      { data: string; valor: number; pedidos: Set<number> }
-    >();
+    const porDia = new Map<string, { data: string; valor: number; pedidos: Set<number> }>();
 
     itensValidos.forEach((item) => {
-      const chave = dataLocal(new Date(item.dt_pedido));
+      const chave    = dataLocal(new Date(item.dt_pedido));
       const registro = porDia.get(chave) ?? {
         data: chave,
         valor: 0,
@@ -226,8 +209,7 @@ export default function PaginaRelatorios() {
       porDia.set(chave, registro);
     });
 
-    return Array.from(porDia.values())
-      .sort((a, b) => a.data.localeCompare(b.data))
+    return Array.from(porDia.values()).sort((a, b) => a.data.localeCompare(b.data))
       .map((registro) => ({
         data: formatarData(registro.data),
         vendas: Number(registro.valor.toFixed(2)),
@@ -236,16 +218,21 @@ export default function PaginaRelatorios() {
   }, [itensValidos]);
 
   const tituloPeriodo = useMemo(() => {
-    if (periodo === "hoje") return "Hoje";
-    if (periodo === "seteDias") return "Últimos 7 dias";
-    if (periodo === "trintaDias") return "Últimos 30 dias";
-    if (periodo === "mes") {
+    if (periodo === "hoje")
+      return "Hoje";
+    if (periodo === "seteDias")
+      return "Últimos 7 dias";
+    if (periodo === "trintaDias")
+      return "Últimos 30 dias";
+    if (periodo === "mes")
+    {
       const [ano, mes] = mesSelecionado.split("-").map(Number);
       return new Date(ano, mes - 1, 1).toLocaleDateString("pt-BR", {
         month: "long",
         year: "numeric",
       });
     }
+
     return `${formatarData(dataInicio)} até ${formatarData(dataFim)}`;
   }, [periodo, mesSelecionado, dataInicio, dataFim]);
 
@@ -267,49 +254,45 @@ export default function PaginaRelatorios() {
       ["Quantidade de itens cancelados", String(totalCancelados)],
     ];
 
-    const csv = "\uFEFF" + linhas
-      .map((linha) =>
+    const csv = "\uFEFF" + linhas.map((linha) =>
         linha.map((valor) => `"${String(valor).replace(/"/g, '""')}"`).join(";")
-      )
-      .join("\r\n");
+      ).join("\r\n");
 
-    const arquivo = new Blob([csv], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    const url = URL.createObjectURL(arquivo);
-    const link = document.createElement("a");
-    link.href = url;
+    const arquivo = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url     = URL.createObjectURL(arquivo);
+    const link    = document.createElement("a");
+    link.href     = url;
     link.download = "relatorio-restaurante.csv";
     link.click();
     URL.revokeObjectURL(url);
   };
 
   const exportarPDF = async () => {
-    if (!relatorioRef.current) return;
+    if (!relatorioRef.current)
+      return;
 
-    try {
+    try
+    {
       const canvas = await html2canvas(relatorioRef.current, {
         scale: 2,
         backgroundColor: "#f8f2e8",
         useCORS: true,
       });
 
-      const imagem = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-
+      const imagem        = canvas.toDataURL("image/png");
+      const pdf           = new jsPDF("p", "mm", "a4");
       const larguraPagina = pdf.internal.pageSize.getWidth();
-      const alturaPagina = pdf.internal.pageSize.getHeight();
+      const alturaPagina  = pdf.internal.pageSize.getHeight();
       const larguraImagem = larguraPagina;
-      const alturaImagem = (canvas.height * larguraImagem) / canvas.width;
-
-      let restante = alturaImagem;
-      let posicao = 0;
+      const alturaImagem  = (canvas.height * larguraImagem) / canvas.width;
+      let restante        = alturaImagem;
+      let posicao         = 0;
 
       pdf.addImage(imagem, "PNG", 0, posicao, larguraImagem, alturaImagem, undefined, "FAST");
       restante -= alturaPagina;
 
-      while (restante > 0) {
+      while (restante > 0)
+      {
         posicao = restante - alturaImagem;
         pdf.addPage();
         pdf.addImage(imagem, "PNG", 0, posicao, larguraImagem, alturaImagem, undefined, "FAST");
@@ -317,7 +300,9 @@ export default function PaginaRelatorios() {
       }
 
       pdf.save("relatorio-restaurante.pdf");
-    } catch (e) {
+    }
+    catch (e)
+    {
       console.error("Erro ao gerar PDF:", e);
       setErro("Não foi possível gerar o PDF. Tente novamente.");
     }
@@ -349,10 +334,10 @@ export default function PaginaRelatorios() {
 
         <div className={`${estilos.botoes} ${estilos.espacoTopo}`}>
           {[
-            { valor: "hoje",          texto: "Hoje" },
-            { valor: "seteDias",      texto: "7 dias" },
-            { valor: "trintaDias",    texto: "30 dias" },
-            { valor: "mes",           texto: "Por mês" },
+            { valor: "hoje", texto: "Hoje" },
+            { valor: "seteDias", texto: "7 dias" },
+            { valor: "trintaDias", texto: "30 dias" },
+            { valor: "mes", texto: "Por mês" },
             { valor: "personalizado", texto: "Personalizado" },
           ].map((opcao) => (
             <button

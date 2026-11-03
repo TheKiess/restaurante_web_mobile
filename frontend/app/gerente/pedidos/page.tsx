@@ -1,10 +1,11 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { apiGet, apiPatch }                 from "@/lib/api";
-import estilos                              from "@/componentes/Painel/Painel.module.css";
-import estilosPagina                        from "./page.module.css";
+import { useCallback, useState } from "react";
+import { apiGet, apiPatch }      from "@/lib/api";
+import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
+import estilos                   from "@/componentes/Painel/Painel.module.css";
+import estilosPagina             from "./page.module.css";
 
 type Situacao =
   | "AGUARDANDO"
@@ -117,14 +118,16 @@ export default function PedidosPage()
     }
   }, []);
 
-  useEffect(() => { void carregarPedidos(); }, [carregarPedidos]);
+  useCarregarAoMontar(carregarPedidos);
 
   async function alterarSituacao(
     item: ItemPedido,
     novaSituacao: Situacao
   )
   {
-    if (!proximasSituacoes[item.id_situacao].includes(novaSituacao))
+    const permitidas = proximasSituacoes[item.id_situacao];
+
+    if (!permitidas.includes(novaSituacao))
     {
       setErro("Essa alteração de situação não é permitida.");
       return;
@@ -155,15 +158,14 @@ export default function PedidosPage()
     }
   }
 
-  const itensFiltrados = filtro === "TODOS"
-    ? itens
-    : itens.filter((item) => item.id_situacao === filtro);
+  const itensFiltrados = filtro === "TODOS" ? itens : itens.filter((item) => item.id_situacao === filtro);
+  const grupos         = new Map<number, ItemPedido[]>();
 
-  const grupos = new Map<number, ItemPedido[]>();
-
-  for (const item of itensFiltrados) {
+  for (const item of itensFiltrados)
+  {
     const idComanda = item.comanda?.id_comanda ?? item.id_comanda;
-    const grupo = grupos.get(idComanda) ?? [];
+    const grupo     = grupos.get(idComanda)    ?? [];
+
     grupo.push(item);
     grupos.set(idComanda, grupo);
   }

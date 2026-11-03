@@ -1,9 +1,10 @@
 "use client";
 
-import Link                                 from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { apiGet, apiPost }                  from "@/lib/api";
-import estilos                              from "@/componentes/Painel/Painel.module.css";
+import Link                      from "next/link";
+import { useCallback, useState } from "react";
+import { apiGet, apiPost }       from "@/lib/api";
+import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
+import estilos                   from "@/componentes/Painel/Painel.module.css";
 
 type Mesa = {
   id_mesa: number;
@@ -55,21 +56,21 @@ function obterSubtotal(item: ItemPedido)
 
 export default function PedidosPage()
 {
-  const [comandas, setComandas]                           = useState<Comanda[]>([]);
-  const [mesas, setMesas]                                 = useState<Mesa[]>([]);
-  const [itens, setItens]                                 = useState<ItemCardapio[]>([]);
-  const [itensPedido, setItensPedido]                     = useState<ItemPedido[]>([]);
-  const [tipoAtendimento, setTipoAtendimento]             = useState<TipoAtendimento>("MESA");
-  const [mesaSelecionada, setMesaSelecionada]             = useState("");
-  const [comandaSelecionada, setComandaSelecionada]       = useState<number | null>(null);
-  const [produtoSelecionado, setProdutoSelecionado]       = useState("");
-  const [quantidade, setQuantidade]                       = useState("1");
-  const [observacao, setObservacao]                       = useState("");
-  const [carregando, setCarregando]                       = useState(true);
+  const [comandas,              setComandas]              = useState<Comanda[]>([]);
+  const [mesas,                 setMesas]                 = useState<Mesa[]>([]);
+  const [itens,                 setItens]                 = useState<ItemCardapio[]>([]);
+  const [itensPedido,           setItensPedido]           = useState<ItemPedido[]>([]);
+  const [tipoAtendimento,       setTipoAtendimento]       = useState<TipoAtendimento>("MESA");
+  const [mesaSelecionada,       setMesaSelecionada]       = useState("");
+  const [comandaSelecionada,    setComandaSelecionada]    = useState<number | null>(null);
+  const [produtoSelecionado,    setProdutoSelecionado]    = useState("");
+  const [quantidade,            setQuantidade]            = useState("1");
+  const [observacao,            setObservacao]            = useState("");
+  const [carregando,            setCarregando]            = useState(true);
   const [carregandoItensPedido, setCarregandoItensPedido] = useState(false);
-  const [enviandoPedido, setEnviandoPedido]               = useState(false);
-  const [erro, setErro]                                   = useState("");
-  const [sucesso, setSucesso]                             = useState("");
+  const [enviandoPedido,        setEnviandoPedido]        = useState(false);
+  const [erro,                  setErro]                  = useState("");
+  const [sucesso,               setSucesso]               = useState("");
   const carregarDados                                     = useCallback(async () => {
     setCarregando(true);
     setErro("");
@@ -84,12 +85,9 @@ export default function PedidosPage()
         ]);
 
       setComandas(dadosComandas);
-
       setMesas([...dadosMesas].sort((a, b) => a.nr_mesa - b.nr_mesa));
 
-      setItens(dadosItens.filter((item) => item.disponivel)
-        .sort((a, b) => a.nm_item.localeCompare(b.nm_item, "pt-BR"))
-      );
+      setItens(dadosItens.filter((item) => item.disponivel).sort((a, b) => a.nm_item.localeCompare(b.nm_item, "pt-BR")));
 
       setMesaSelecionada((selecionada) => {
         const mesaAtual = dadosMesas.find((mesa) => String(mesa.id_mesa) === selecionada);
@@ -98,14 +96,11 @@ export default function PedidosPage()
           return selecionada;
 
         const ocupada = dadosComandas.some((comanda) => comanda.mesa?.id_mesa === mesaAtual.id_mesa);
-
         return ocupada ? "" : selecionada;
       });
 
       setComandaSelecionada((selecionada) => {
-        if (selecionada !== null &&
-          !dadosComandas.some((comanda) => comanda.id_comanda === selecionada)
-        )
+        if (selecionada !== null && !dadosComandas.some((comanda) => comanda.id_comanda === selecionada))
         {
           setItensPedido([]);
           return null;
@@ -116,10 +111,7 @@ export default function PedidosPage()
     }
     catch (error)
     {
-      setErro(error instanceof Error
-        ? error.message
-        : "Não foi possível carregar os dados."
-      );
+      setErro(error instanceof Error ? error.message : "Não foi possível carregar os dados.");
     }
     finally
     {
@@ -135,15 +127,11 @@ export default function PedidosPage()
     try
     {
       const dados = await apiGet<ItemPedido[]>(`itens-pedido?id_comanda=${idComanda}`);
-
       setItensPedido(dados);
     }
     catch (error)
     {
-      setErro(error instanceof Error
-        ? error.message
-        : "Não foi possível carregar os itens da comanda."
-      );
+      setErro(error instanceof Error ? error.message : "Não foi possível carregar os itens da comanda.");
       setItensPedido([]);
     }
     finally
@@ -152,9 +140,7 @@ export default function PedidosPage()
     }
   }, []);
 
-  useEffect(() => {
-    void carregarDados();
-  }, [carregarDados]);
+  useCarregarAoMontar(carregarDados);
 
   const mesasOcupadas = new Set(comandas.map((comanda) => comanda.mesa?.id_mesa)
     .filter((id): id is number => id !== undefined)
@@ -260,10 +246,7 @@ export default function PedidosPage()
     }
     catch (error)
     {
-      setErro(error instanceof Error
-        ? error.message
-        : "Não foi possível adicionar o item à comanda."
-      );
+      setErro(error instanceof Error ? error.message : "Não foi possível adicionar o item à comanda.");
     }
     finally
     {

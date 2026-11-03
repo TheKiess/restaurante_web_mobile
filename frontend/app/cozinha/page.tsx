@@ -8,10 +8,17 @@
  */
 "use client";
 
-import { useCallback, useEffect, useState }                  from "react";
-import { apiGet, apiPatch }                                  from "@/lib/api";
-import estilos                                               from "@/componentes/Painel/Painel.module.css";
-import { ChefHat, Clock, RefreshCw, CheckCircle2, Utensils } from "lucide-react";
+import { useCallback, useState } from "react";
+import { apiGet, apiPatch }      from "@/lib/api";
+import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
+import estilos                   from "@/componentes/Painel/Painel.module.css";
+import {
+  ChefHat,
+  Clock,
+  RefreshCw,
+  CheckCircle2,
+  Utensils,
+} from "lucide-react";
 
 type SituacaoItem =
   | "AGUARDANDO"
@@ -52,11 +59,11 @@ function formatarHorario(data: string)
 
 export default function CozinhaPage()
 {
-  const [pedidos, setPedidos]                     = useState<ItemPedido[]>([]);
-  const [carregando, setCarregando]               = useState(true);
-  const [atualizando, setAtualizando]             = useState(false);
+  const [pedidos,           setPedidos]           = useState<ItemPedido[]>([]);
+  const [carregando,        setCarregando]        = useState(true);
+  const [atualizando,       setAtualizando]       = useState(false);
   const [itemEmAtualizacao, setItemEmAtualizacao] = useState<number | null>(null);
-  const [erro, setErro]                           = useState("");
+  const [erro,              setErro]              = useState("");
   const carregarPedidos                           = useCallback(async () => {
     try
     {
@@ -64,7 +71,6 @@ export default function CozinhaPage()
       setAtualizando(true);
 
       const dados = await apiGet<ItemPedido[]>("itens-pedido/fila");
-
       setPedidos(dados);
     }
     catch (error)
@@ -81,9 +87,7 @@ export default function CozinhaPage()
     }
   }, []);
 
-  useEffect(() => {
-    void carregarPedidos();
-  }, [carregarPedidos]);
+  useCarregarAoMontar(carregarPedidos);
 
   async function alterarSituacao(
     item: ItemPedido,
@@ -118,7 +122,8 @@ export default function CozinhaPage()
   const aguardando = pedidos.filter((item) => item.id_situacao === "AGUARDANDO");
   const emPreparo  = pedidos.filter((item) => item.id_situacao === "EM_PREPARO");
 
-  function renderizarPedido(item: ItemPedido) {
+  function renderizarPedido(item: ItemPedido)
+  {
     const processando = itemEmAtualizacao === item.id_item_pedido;
 
     return (

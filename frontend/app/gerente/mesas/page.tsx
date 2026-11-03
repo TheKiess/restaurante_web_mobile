@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useCallback, useEffect, useState }     from "react";
+import { useCallback, useState }                from "react";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
+import { useCarregarAoMontar }                  from "@/lib/useCarregarAoMontar";
 import estilos                                  from "@/componentes/Painel/Painel.module.css";
 
 type Mesa = {
@@ -23,21 +24,22 @@ const formularioInicial: FormularioMesa = {
 
 export default function MesasPage()
 {
-  const [mesas, setMesas]               = useState<Mesa[]>([]);
-  const [formulario, setFormulario]     = useState<FormularioMesa>(formularioInicial);
+  const [mesas,        setMesas]        = useState<Mesa[]>([]);
+  const [formulario,   setFormulario]   = useState<FormularioMesa>(formularioInicial);
   const [mesaEditando, setMesaEditando] = useState<number | null>(null);
-  const [carregando, setCarregando]     = useState(true);
-  const [salvando, setSalvando]         = useState(false);
-  const [erro, setErro]                 = useState("");
-  const [sucesso, setSucesso]           = useState("");
-  const carregarMesas                   = useCallback(async () => {
+  const [carregando,   setCarregando]   = useState(true);
+  const [salvando,     setSalvando]     = useState(false);
+  const [erro,         setErro]         = useState("");
+  const [sucesso,      setSucesso]      = useState("");
+
+  const carregarMesas = useCallback(async () => {
+    setCarregando(true);
+    setErro("");
+
     try
     {
       const dados = await apiGet<Mesa[]>("mesas");
-
-      setMesas(
-        [...dados].sort((a, b) => a.nr_mesa - b.nr_mesa)
-      );
+      setMesas([...dados].sort((a, b) => a.nr_mesa - b.nr_mesa));
     }
     catch (error)
     {
@@ -52,15 +54,11 @@ export default function MesasPage()
     }
   }, []);
 
-  useEffect(() => {
-    void Promise.resolve().then(carregarMesas);
-  }, [carregarMesas]);
+  useCarregarAoMontar(carregarMesas);
 
-  function alterarCampo(campo: keyof FormularioMesa,
-    valor: string
-  )
+  function alterarCampo(campo: keyof FormularioMesa, valor: string)
   {
-    setFormulario((atual) => ({...atual, [campo]: valor }));
+    setFormulario((atual) => ({...atual, [campo]: valor, }));
   }
 
   function limparFormulario()
@@ -110,7 +108,6 @@ export default function MesasPage()
 
       setFormulario(formularioInicial);
       setMesaEditando(null);
-      setCarregando(true);
       await carregarMesas();
     }
     catch (error)
@@ -129,7 +126,8 @@ export default function MesasPage()
   function editarMesa(mesa: Mesa)
   {
     setMesaEditando(mesa.id_mesa);
-    setFormulario({nr_mesa: String(mesa.nr_mesa),
+    setFormulario({
+      nr_mesa: String(mesa.nr_mesa),
       qt_lugares: String(mesa.qt_lugares),
     });
     setErro("");
@@ -160,7 +158,6 @@ export default function MesasPage()
         setMesaEditando(null);
       }
 
-      setCarregando(true);
       await carregarMesas();
     }
     catch (error)
@@ -290,11 +287,7 @@ export default function MesasPage()
 
           <button
             type="button"
-            onClick={() => {
-              setErro("");
-              setCarregando(true);
-              void carregarMesas();
-            }}
+            onClick={() => void carregarMesas()}
             disabled={carregando}
             className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno}`}
           >

@@ -545,7 +545,7 @@
 }
 
 .tituloSecao {
-  margin: 0 0 16px;
+  margin-bottom: 16px;
   color: var(--vinho-800);
   font-size: 1.2rem;
 }
@@ -890,4 +890,18 @@
   color: var(--vinho-800);
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+.tituloBloco {
+  margin: 24px 0 12px;
+  color: var(--vinho-800);
+  font-size: 1.1rem;
+}
+
+.linhaTotal + .linhaTotal {
+  margin-top: 8px;
+}
+
+.linhaTotal + .linhaTotal {
+  margin-top: 8px;
 }

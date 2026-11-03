@@ -1,9 +1,10 @@
 
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { apiDelete, apiGet, apiPatch, apiPost }             from "@/lib/api";
-import estilos                                              from "@/componentes/Painel/Painel.module.css";
+import { useCallback, useState, type FormEvent } from "react";
+import { apiDelete, apiGet, apiPatch, apiPost }  from "@/lib/api";
+import { useCarregarAoMontar }                   from "@/lib/useCarregarAoMontar";
+import estilos                                   from "@/componentes/Painel/Painel.module.css";
 
 type Categoria = {
   id_categoria: number;
@@ -24,16 +25,14 @@ const formularioInicial: FormularioCategoria = {
 export default function CategoriasPage()
 {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [formulario, setFormulario] =
-    useState<FormularioCategoria>(formularioInicial);
+  const [formulario, setFormulario] = useState<FormularioCategoria>(formularioInicial);
   const [idEditando, setIdEditando] = useState<number | null>(null);
-  const [busca, setBusca] = useState("");
+  const [busca,      setBusca]      = useState("");
   const [carregando, setCarregando] = useState(true);
-  const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState("");
-
-  const carregarCategorias = useCallback(async () => {
+  const [salvando,   setSalvando]   = useState(false);
+  const [erro,       setErro]       = useState("");
+  const [sucesso,    setSucesso]    = useState("");
+  const carregarCategorias          = useCallback(async () => {
     setCarregando(true);
     setErro("");
 
@@ -56,9 +55,7 @@ export default function CategoriasPage()
     }
   }, []);
 
-  useEffect(() => {
-    void carregarCategorias();
-  }, [carregarCategorias]);
+  useCarregarAoMontar(carregarCategorias);
 
   function limparFormulario()
   {
@@ -78,7 +75,6 @@ export default function CategoriasPage()
           ? ""
           : String(categoria.id_categoria_pai),
     });
-
     setErro("");
     setSucesso("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -134,10 +130,7 @@ export default function CategoriasPage()
     }
     catch (error)
     {
-      setErro(error instanceof Error
-        ? error.message
-        : "Não foi possível salvar a categoria."
-      );
+      setErro(error instanceof Error ? error.message : "Não foi possível salvar a categoria.");
     }
     finally
     {
@@ -148,8 +141,7 @@ export default function CategoriasPage()
   async function excluirCategoria(categoria: Categoria)
   {
     const possuiFilhas = categorias.some((item) => item.id_categoria_pai === categoria.id_categoria);
-
-    const mensagem = possuiFilhas
+    const mensagem     = possuiFilhas
       ? `A categoria "${categoria.nm_categoria}" possui subcategorias. Remova ou reorganize as subcategorias antes de excluí-la. Deseja tentar excluir mesmo assim?`
       : `Deseja realmente excluir a categoria "${categoria.nm_categoria}"?`;
 
@@ -192,10 +184,7 @@ export default function CategoriasPage()
     if (categoria.id_categoria_pai == null)
       return "Categoria principal";
 
-    return (categorias.find(
-        (item) => item.id_categoria === categoria.id_categoria_pai
-      )?.nm_categoria ?? "Categoria não encontrada"
-    );
+    return (categorias.find((item) => item.id_categoria === categoria.id_categoria_pai)?.nm_categoria ?? "Categoria não encontrada");
   };
 
   const subcategorias = categorias.filter(

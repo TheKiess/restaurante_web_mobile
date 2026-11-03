@@ -9,7 +9,7 @@ export const DS_EMAIL    = "contato@exemplo.com.br";
 export const ARR_HORARIOS = [
   { nmDias: "Terça a quinta", dsHorario: "18h às 23h" },
   { nmDias: "Sexta e sábado", dsHorario: "12h às 00h" },
-  { nmDias: "Domingo",        dsHorario: "12h às 17h" },
+  { nmDias: "Domingo",        dsHorario: "12h às 17h" }
 ];
 
 export const ARR_LINKS_NAVEGACAO = [
@@ -17,20 +17,20 @@ export const ARR_LINKS_NAVEGACAO = [
   { nmRotulo: "Sobre",    dsCaminho: "/#sobre" },
   { nmRotulo: "Cardápio", dsCaminho: "/#cardapio" },
   { nmRotulo: "Horários", dsCaminho: "/#horarios" },
-  { nmRotulo: "Contato",  dsCaminho: "/#contato" },
+  { nmRotulo: "Contato",  dsCaminho: "/#contato" }
 ];
 
 export const ARR_CATEGORIAS_CARDAPIO = [
   { nmCategoria: "Entradas",          dsCategoria: "Porções e petiscos para começar a refeição com calma." },
   { nmCategoria: "Pratos principais", dsCategoria: "Pratos preparados na hora, com opções para todos os gostos." },
   { nmCategoria: "Sobremesas",        dsCategoria: "Doces para fechar a refeição com um toque especial." },
-  { nmCategoria: "Bebidas",           dsCategoria: "Sucos, refrigerantes, cervejas e vinhos para acompanhar." },
+  { nmCategoria: "Bebidas",           dsCategoria: "Sucos, refrigerantes, cervejas e vinhos para acompanhar." }
 ];
 
 export const ARR_DIFERENCIAIS = [
   { nmTitulo: "Ingredientes frescos",  dsTexto: "Pratos feitos na hora, com ingredientes selecionados." },
   { nmTitulo: "Ambiente acolhedor",    dsTexto: "Um espaço confortável para reunir família e amigos." },
-  { nmTitulo: "Atendimento atencioso", dsTexto: "Uma equipe pronta para cuidar de cada detalhe do seu pedido." },
+  { nmTitulo: "Atendimento atencioso", dsTexto: "Uma equipe pronta para cuidar de cada detalhe do seu pedido." }
 ];
 
 export const ARR_LINKS_GERENTE = [
@@ -39,7 +39,7 @@ export const ARR_LINKS_GERENTE = [
   { nmRotulo: "Mesas",      dsCaminho: "/gerente/mesas" },
   { nmRotulo: "Cardápio",   dsCaminho: "/gerente/cardapio" },
   { nmRotulo: "Categorias", dsCaminho: "/gerente/categorias" },
-  { nmRotulo: "Relatórios", dsCaminho: "/gerente/relatorios" },
+  { nmRotulo: "Relatórios", dsCaminho: "/gerente/relatorios" }
 ];
 
 export const ARR_LINKS_GARCOM = [
@@ -47,17 +47,17 @@ export const ARR_LINKS_GARCOM = [
   { nmRotulo: "Pedidos",    dsCaminho: "/garcom/pedidos" },
   { nmRotulo: "Entregas",   dsCaminho: "/garcom/entregas" },
   { nmRotulo: "Comandas",   dsCaminho: "/garcom/comandas" },
-  { nmRotulo: "Pagamentos", dsCaminho: "/garcom/pagamentos" },
+  { nmRotulo: "Pagamentos", dsCaminho: "/garcom/pagamentos" }
 ];
 
 export const ARR_LINKS_COZINHA = [
-  { nmRotulo: "Fila de preparo", dsCaminho: "/cozinha" },
+  { nmRotulo: "Fila de preparo", dsCaminho: "/cozinha" }
 ];
 
 export const ARR_LINKS_CLIENTE = [
   { nmRotulo: "Início",       dsCaminho: "/cliente" },
   { nmRotulo: "Cardápio",     dsCaminho: "/cliente/cardapio" },
-  { nmRotulo: "Meus pedidos", dsCaminho: "/cliente/pedidos" },
+  { nmRotulo: "Meus pedidos", dsCaminho: "/cliente/pedidos" }
 ];
 
 export type Perfil = "GERENCIA" | "GARCOM" | "COZINHA" | "CLIENTE";
@@ -76,4 +76,24 @@ export const OBJ_PERFIS_POR_AREA: Record<string, Perfil[]> = {
   "/garcom": ["GARCOM"],
   "/cozinha": ["COZINHA"],
   "/cliente": ["CLIENTE"],
+};
+
+export const OBJ_NOMES_SITUACAO_ITEM: Record<string, string> = {
+  AGUARDANDO: "Aguardando",
+  EM_PREPARO: "Em preparo",
+  PRONTO: "Pronto",
+  ENTREGUE: "Entregue",
+  CANCELADO: "Cancelado"
+};
+
+export const OBJ_NOMES_SITUACAO_PAGAMENTO: Record<string, string> = {
+  PENDENTE: "Pendente",
+  CONFIRMADO: "Confirmado",
+  RECUSADO: "Recusado"
+};
+
+export const OBJ_NOMES_FORMA_PAGAMENTO: Record<string, string> = {
+  DINHEIRO: "Dinheiro",
+  CARTAO: "Cartão",
+  PIX: "Pix"
 };
