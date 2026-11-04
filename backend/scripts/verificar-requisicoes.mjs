@@ -1,5 +1,7 @@
 // Quem fez esse arquivo de verificação de requisição foi o claude também.
 // Roda todas as requisições de um arquivo .http e confere o status esperado de cada uma.
+// Entende as variáveis do arquivo (@nome = valor) e as respostas guardadas com "# @name",
+// como {{loginGerencia.response.body.ds_token}}.
 // Uso (com a API rodando): node scripts/verificar-requisicoes.mjs [requisicoes.http]
 
 import { readFileSync } from 'node:fs';
@@ -45,6 +47,77 @@ function montarRequisicao(bloco, dsHost)
   return { dsMetodo, dsUrl: dsDestino.replace('{{host}}', dsHost), objCabecalhos, dsCorpo };
 }
 
+function lerVariaveis(dsConteudo)
+{
+  const objVariaveis = {};
+
+  for (const [, dsNome, dsValor] of dsConteudo.matchAll(/^@(\w+)\s*=\s*(.+)$/gm))
+    objVariaveis[dsNome] = dsValor.trim();
+
+  return objVariaveis;
+}
+
+function lerNomeDaRequisicao(bloco)
+{
+  for (const dsLinha of bloco.arrLinhas)
+  {
+    const arrNome = dsLinha.match(/^#\s*@name\s+(\w+)/);
+
+    if (arrNome)
+      return arrNome[1];
+  }
+
+  return null;
+}
+
+function buscarNoCaminho(objOrigem, dsCaminho)
+{
+  return dsCaminho.split('.').reduce((objAtual, dsParte) => objAtual?.[dsParte], objOrigem);
+}
+
+const OBJ_MILISSEGUNDOS_POR_UNIDADE = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000, w: 604_800_000 };
+
+// Entende {{$datetime iso8601 3 d}}, como o REST Client do VS Code (unidades: s, m, h, d, w).
+function gerarDataRelativa(dsExpressao)
+{
+  const arrPartes     = dsExpressao.split(/\s+/);
+  const nrDeslocamento = Number(arrPartes[2] ?? 0);
+  const nrUnidade      = OBJ_MILISSEGUNDOS_POR_UNIDADE[arrPartes[3] ?? 's'];
+
+  return new Date(Date.now() + nrDeslocamento * nrUnidade).toISOString();
+}
+
+function resolver(dsTexto, objVariaveis, objRespostas)
+{
+  return dsTexto.replace(/\{\{([^}]+)\}\}/g, (dsOriginal, dsExpressao) =>
+  {
+    const dsChave = dsExpressao.trim();
+
+    if (dsChave.startsWith('$datetime'))
+      return gerarDataRelativa(dsChave);
+
+    if (dsChave in objVariaveis)
+      return resolver(objVariaveis[dsChave], objVariaveis, objRespostas);
+
+    const arrResposta  = dsChave.match(/^(\w+)\.response\.body\.(.+)$/);
+    const vlEncontrado = arrResposta ? buscarNoCaminho(objRespostas[arrResposta[1]]?.body, arrResposta[2]) : undefined;
+
+    return vlEncontrado === undefined ? dsOriginal : String(vlEncontrado);
+  });
+}
+
+async function perguntar(leitor, dsPergunta)
+{
+  try
+  {
+    await leitor.question(dsPergunta);
+  }
+  catch
+  {
+    // sem teclado (entrada fechada): segue sem esperar
+  }
+}
+
 async function aguardarApi(dsHost)
 {
   for (let nrTentativa = 0; nrTentativa < 30; nrTentativa++)
@@ -74,7 +147,9 @@ async function verificar()
     process.exit(1);
   }
 
-  const leitor = createInterface({ input: process.stdin, output: process.stdout });
+  const objVariaveis = lerVariaveis(dsConteudo);
+  const objRespostas = {};
+  const leitor       = createInterface({ input: process.stdin, output: process.stdout });
   let qtRequisicoes = 0;
   let qtFalhas      = 0;
 
@@ -86,22 +161,28 @@ async function verificar()
     {
       if (/reinicie a api/i.test(bloco.dsTitulo))
       {
-        await leitor.question('\nReinicie a API agora (Ctrl+C e npm run start:dev) e aperte Enter para continuar... ');
+        await perguntar(leitor, '\nReinicie a API agora (Ctrl+C e npm run start:dev) e aperte Enter para continuar... ');
         console.log('');
         await aguardarApi(dsHost);
       }
       continue;
     }
 
-    const nrEsperado = Number(bloco.dsTitulo.match(/espera (\d{3})/)?.[1]);
-    const resposta   = await fetch(requisicao.dsUrl, {
+    const nrEsperado   = Number(bloco.dsTitulo.match(/espera (\d{3})/)?.[1]);
+    const objCabecalho = Object.fromEntries(Object.entries(requisicao.objCabecalhos).map(([dsNome, dsValor]) => [dsNome, resolver(dsValor, objVariaveis, objRespostas)]));
+    const dsCorpo      = resolver(requisicao.dsCorpo, objVariaveis, objRespostas);
+    const resposta     = await fetch(resolver(requisicao.dsUrl, objVariaveis, objRespostas), {
       method: requisicao.dsMetodo,
-      headers: requisicao.objCabecalhos,
-      body: requisicao.dsCorpo || undefined,
+      headers: objCabecalho,
+      body: dsCorpo || undefined,
     });
-    const dsResposta = await resposta.text();
-    const flOk = resposta.status === nrEsperado;
+    const dsResposta     = await resposta.text();
+    const dsNomeGuardado = lerNomeDaRequisicao(bloco);
 
+    if (dsNomeGuardado)
+      objRespostas[dsNomeGuardado] = { status: resposta.status, body: dsResposta ? JSON.parse(dsResposta) : null };
+
+    const flOk = resposta.status === nrEsperado;
     qtRequisicoes++;
 
     if (!flOk)
