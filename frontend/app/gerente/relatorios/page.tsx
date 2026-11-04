@@ -15,8 +15,9 @@ import jsPDF                   from "jspdf";
 import html2canvas             from "html2canvas";
 import { apiGet }              from "@/lib/api";
 import { useCarregarAoMontar } from "@/lib/useCarregarAoMontar";
-import estilos                 from "@/componentes/Painel/Painel.module.css";
+import estilos                 from "@/estilos/Painel.module.css";
 import estilosPagina           from "./page.module.css";
+import { formatarMoeda }       from "@/lib/formatar";
 
 type ItemPedidoApi = {
   id_item_pedido: number;
@@ -37,11 +38,6 @@ type ItemPedidoApi = {
 };
 
 type Periodo = "hoje" | "seteDias" | "trintaDias" | "mes" | "personalizado";
-
-const moeda = (valor: number) => valor.toLocaleString("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 const dataLocal = (data: Date) => {
   const ano = data.getFullYear();
@@ -420,7 +416,7 @@ export default function PaginaRelatorios()
           <div className={estilos.cartao}>
             <p className={estilos.estatisticaRotulo}>Valor dos pedidos válidos</p>
             <p className={estilos.estatisticaValor}>
-              {carregando ? "..." : moeda(totalVendido)}
+              {carregando ? "..." : formatarMoeda(totalVendido)}
             </p>
             <p className={estilos.textoPequeno}>Itens não cancelados</p>
           </div>
@@ -494,7 +490,7 @@ export default function PaginaRelatorios()
                     }
                   />
                   <Tooltip
-                    formatter={(valor) => moeda(Number(valor))}
+                    formatter={(valor) => formatarMoeda(Number(valor))}
                     labelStyle={{ color: "#2a1a1c" }}
                   />
                   <Bar
@@ -542,7 +538,7 @@ export default function PaginaRelatorios()
                         {produto.quantidade}
                       </td>
                       <td className={estilos.alinharDireita}>
-                        {moeda(produto.total)}
+                        {formatarMoeda(produto.total)}
                       </td>
                     </tr>
                   ))
@@ -561,7 +557,7 @@ export default function PaginaRelatorios()
             </p>
             <p>
               <strong>Valor dos itens não cancelados:</strong>{" "}
-              {carregando ? "Carregando..." : moeda(totalVendido)}
+              {carregando ? "Carregando..." : formatarMoeda(totalVendido)}
             </p>
             <p>
               <strong>Produtos diferentes vendidos:</strong>{" "}

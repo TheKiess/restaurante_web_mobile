@@ -12,8 +12,9 @@
 import { useEffect, useState } from "react";
 import Link                    from "next/link";
 import { apiGet }              from "@/lib/api";
-import estilos                 from "@/componentes/Painel/Painel.module.css";
+import estilos                 from "@/estilos/Painel.module.css";
 import estilosPagina           from "./page.module.css";
+import { formatarMoeda }       from "@/lib/formatar";
 
 type ItemPedidoApi = {
   id_item_pedido: number;
@@ -35,13 +36,6 @@ const indicadoresVazios: Indicadores = {
   pedidos: 0,
   ticketMedio: 0,
 };
-
-function formatarMoeda(valor: number) {
-  return valor.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
 
 function calcularIndicadores(
   itens: ItemPedidoApi[]

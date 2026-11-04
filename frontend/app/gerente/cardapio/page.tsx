@@ -4,7 +4,8 @@
 import { useCallback, useState }                from "react";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useCarregarAoMontar }                  from "@/lib/useCarregarAoMontar";
-import estilos                                  from "@/componentes/Painel/Painel.module.css";
+import estilos                                  from "@/estilos/Painel.module.css";
+import { formatarMoeda }                        from "@/lib/formatar";
 
 type Categoria = {
   id_categoria: number;
@@ -40,13 +41,6 @@ const formularioInicial: Formulario = {
   tipo_item: "PREPARADO",
   disponivel: true,
 };
-
-function formatarPreco(valor: number | string) {
-  return Number(valor).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
 
 export default function CardapioPage() {
   const [itens, setItens] = useState<ItemCardapio[]>([]);
@@ -535,7 +529,7 @@ export default function CardapioPage() {
                         : "Revenda"}
                     </td>
                     <td className={`${estilos.negrito} ${estilos.semQuebra}`}>
-                      {formatarPreco(item.vl_unitario)}
+                      {formatarMoeda(item.vl_unitario)}
                     </td>
                     <td>
                       <span

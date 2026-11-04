@@ -4,7 +4,9 @@ import Link                      from "next/link";
 import { useCallback, useState } from "react";
 import { apiGet, apiPost }       from "@/lib/api";
 import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
-import estilos                   from "@/componentes/Painel/Painel.module.css";
+import { useSessao }             from "@/lib/useSessao";
+import estilos                   from "@/estilos/Painel.module.css";
+import { formatarMoeda }         from "@/lib/formatar";
 
 type Mesa = {
   id_mesa: number;
@@ -42,13 +44,6 @@ type ItemPedido = {
 
 type TipoAtendimento = "MESA" | "RETIRADA";
 
-function formatarPreco(valor: number | string) {
-  return Number(valor).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
-
 function obterSubtotal(item: ItemPedido)
 {
   return Number(item.vl_unitario) * item.qt_quantidade;
@@ -56,6 +51,7 @@ function obterSubtotal(item: ItemPedido)
 
 export default function PedidosPage()
 {
+  const usuario                                           = useSessao();
   const [comandas,              setComandas]              = useState<Comanda[]>([]);
   const [mesas,                 setMesas]                 = useState<Mesa[]>([]);
   const [itens,                 setItens]                 = useState<ItemCardapio[]>([]);
@@ -69,6 +65,7 @@ export default function PedidosPage()
   const [carregando,            setCarregando]            = useState(true);
   const [carregandoItensPedido, setCarregandoItensPedido] = useState(false);
   const [enviandoPedido,        setEnviandoPedido]        = useState(false);
+  const [abrindoComanda,        setAbrindoComanda]        = useState(false);
   const [erro,                  setErro]                  = useState("");
   const [sucesso,               setSucesso]               = useState("");
   const carregarDados                                     = useCallback(async () => {
@@ -167,14 +164,50 @@ export default function PedidosPage()
     setSucesso("");
   }
 
-  function prepararAbertura() {
+  async function abrirComanda()
+  {
     setErro("");
     setSucesso("");
+
+    if (!usuario)
+    {
+      setErro("Aguarde o carregamento da sessão e tente de novo.");
+      return;
+    }
 
     if (tipoAtendimento === "MESA" && !mesaSelecionada)
     {
       setErro("Selecione uma mesa disponível.");
       return;
+    }
+
+    setAbrindoComanda(true);
+
+    try
+    {
+      const novaComanda = await apiPost<Comanda>("comandas", {
+        id_usuario: usuario.id_usuario,
+        ...(tipoAtendimento === "MESA" ? { id_mesa: Number(mesaSelecionada) } : {}),
+      });
+
+      await carregarDados();
+
+      setMesaSelecionada("");
+      setComandaSelecionada(novaComanda.id_comanda);
+      setItensPedido([]);
+      setProdutoSelecionado("");
+      setQuantidade("1");
+      setObservacao("");
+      setSucesso(`Comanda #${novaComanda.id_comanda} aberta. Já pode lançar os itens.`);
+    }
+    catch (error)
+    {
+      await carregarDados();
+      setErro(error instanceof Error ? error.message : "Não foi possível abrir a comanda.");
+    }
+    finally
+    {
+      setAbrindoComanda(false);
     }
   }
 
@@ -302,7 +335,7 @@ export default function PedidosPage()
             <h2 className={estilos.tituloCartao}>Nova comanda</h2>
 
             <p className={estilos.subtituloCartao}>
-              Escolha o tipo de atendimento para preparar a abertura.
+              Escolha o tipo de atendimento e abra a comanda.
             </p>
 
             <div className={estilos.gradeCartoes}>
@@ -367,16 +400,17 @@ export default function PedidosPage()
 
             {tipoAtendimento === "RETIRADA" && (
               <p className={`${estilos.observacao} ${estilos.espacoTopo}`}>
-                A comanda será criada sem informar o campo id_mesa.
+                A comanda será aberta sem mesa.
               </p>
             )}
 
             <button
               type="button"
-              onClick={prepararAbertura}
+              onClick={() => void abrirComanda()}
+              disabled={abrindoComanda || !usuario}
               className={`${estilos.botao} ${estilos.botaoPrimario} ${estilos.espacoTopo}`}
             >
-              Preparar abertura da comanda
+              {abrindoComanda ? "Abrindo..." : "Abrir comanda"}
             </button>
           </section>
 
@@ -467,7 +501,7 @@ export default function PedidosPage()
 
                     {itens.map((item) => (
                       <option key={item.id_item_cardapio} value={item.id_item_cardapio}>
-                        {item.nm_item} — {formatarPreco(item.vl_unitario)}
+                        {item.nm_item} — {formatarMoeda(item.vl_unitario)}
                       </option>
                     ))}
                   </select>
@@ -477,7 +511,7 @@ export default function PedidosPage()
                   <div className={`${estilos.observacao} ${estilos.larguraTotal}`}>
                     <p className={estilos.negrito}>{produtoEscolhido.nm_item}</p>
                     <p className={estilos.subtituloCartao}>
-                      Preço unitário: {formatarPreco(produtoEscolhido.vl_unitario)}
+                      Preço unitário: {formatarMoeda(produtoEscolhido.vl_unitario)}
                     </p>
                     <p className={estilos.subtituloCartao}>
                       {produtoEscolhido.tipo_item === "PREPARADO"
@@ -529,7 +563,7 @@ export default function PedidosPage()
                 <p className={`${estilos.textoDireita} ${estilos.subtituloCartao} ${estilos.espacoTopo}`}>
                   Subtotal estimado:{" "}
                   <span className={estilos.valorDestaque}>
-                    {formatarPreco(
+                    {formatarMoeda(
                       Number(produtoEscolhido.vl_unitario) * (Number(quantidade) || 0)
                     )}
                   </span>
@@ -576,7 +610,7 @@ export default function PedidosPage()
                             </h4>
 
                             <p className={estilos.subtituloCartao}>
-                              {item.qt_quantidade} × {formatarPreco(item.vl_unitario)}
+                              {item.qt_quantidade} × {formatarMoeda(item.vl_unitario)}
                             </p>
 
                             {item.ds_observacao && (
@@ -591,7 +625,7 @@ export default function PedidosPage()
                           </div>
 
                           <p className={estilos.valorDestaque}>
-                            {formatarPreco(obterSubtotal(item))}
+                            {formatarMoeda(obterSubtotal(item))}
                           </p>
                         </article>
                       ))}
@@ -600,7 +634,7 @@ export default function PedidosPage()
                     <div className={estilos.linhaTotal}>
                       <span>Total dos itens lançados</span>
                       <span className={estilos.valorDestaque}>
-                        {formatarPreco(totalComanda)}
+                        {formatarMoeda(totalComanda)}
                       </span>
                     </div>
                   </>
@@ -631,7 +665,7 @@ export default function PedidosPage()
                     )}
 
                     <p className={`${estilos.valorDestaque} ${estilos.espacoTopo}`}>
-                      {formatarPreco(item.vl_unitario)}
+                      {formatarMoeda(item.vl_unitario)}
                     </p>
 
                     <p className={estilos.textoPequeno}>

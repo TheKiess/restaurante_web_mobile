@@ -11,7 +11,7 @@
 import { useCallback, useState } from "react";
 import { apiGet, apiPatch }      from "@/lib/api";
 import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
-import estilos                   from "@/componentes/Painel/Painel.module.css";
+import estilos                   from "@/estilos/Painel.module.css";
 import {
   ChefHat,
   Clock,

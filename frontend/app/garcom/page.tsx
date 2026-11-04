@@ -1,6 +1,6 @@
 import Link                                                            from "next/link";
 import { ArrowRight, ClipboardList, Utensils, PackageCheck, Banknote } from "lucide-react";
-import estilos                                                         from "@/componentes/Painel/Painel.module.css";
+import estilos                                                         from "@/estilos/Painel.module.css";
 
 const ARR_ATALHOS = [
   {

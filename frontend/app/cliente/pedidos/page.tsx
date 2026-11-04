@@ -1,6 +1,6 @@
 import Link                                                         from "next/link";
 import { ClipboardList, Clock, ArrowRight, ShoppingBag, ArrowLeft } from "lucide-react";
-import estilos                                                      from "@/componentes/Painel/Painel.module.css";
+import estilos                                                      from "@/estilos/Painel.module.css";
 import estilosPagina                                                from "./page.module.css";
 
 export default function PedidosClientePage()

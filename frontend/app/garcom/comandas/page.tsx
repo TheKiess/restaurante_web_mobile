@@ -10,7 +10,7 @@ import {
 }                                          from "@/lib/constantes";
 import { formatarDataHora, formatarMoeda } from "@/lib/formatar";
 import { useCarregarAoMontar }             from "@/lib/useCarregarAoMontar";
-import estilos                             from "@/componentes/Painel/Painel.module.css";
+import estilos                             from "@/estilos/Painel.module.css";
 
 type Situacao = "ABERTA" | "FECHADA" | "CANCELADA";
 type Filtro = Situacao | "TODAS";

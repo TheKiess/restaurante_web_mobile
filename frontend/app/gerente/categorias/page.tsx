@@ -4,7 +4,7 @@
 import { useCallback, useState, type FormEvent } from "react";
 import { apiDelete, apiGet, apiPatch, apiPost }  from "@/lib/api";
 import { useCarregarAoMontar }                   from "@/lib/useCarregarAoMontar";
-import estilos                                   from "@/componentes/Painel/Painel.module.css";
+import estilos                                   from "@/estilos/Painel.module.css";
 
 type Categoria = {
   id_categoria: number;
@@ -38,7 +38,7 @@ export default function CategoriasPage()
 
     try
     {
-      const dados = await apiGet<Categoria[]>("/categorias");
+      const dados = await apiGet<Categoria[]>("categorias");
       setCategorias(dados);
     }
     catch (error)
@@ -115,12 +115,12 @@ export default function CategoriasPage()
     {
       if (idEditando !== null)
       {
-        await apiPatch(`/categorias/${idEditando}`, dados);
+        await apiPatch(`categorias/${idEditando}`, dados);
         setSucesso("Categoria atualizada com sucesso!");
       }
       else
       {
-        await apiPost("/categorias", dados);
+        await apiPost("categorias", dados);
         setSucesso("Categoria cadastrada com sucesso!");
       }
 
@@ -153,7 +153,7 @@ export default function CategoriasPage()
 
     try
     {
-      await apiDelete(`/categorias/${categoria.id_categoria}`);
+      await apiDelete(`categorias/${categoria.id_categoria}`);
 
       if (idEditando === categoria.id_categoria)
         limparFormulario();

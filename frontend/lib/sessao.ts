@@ -52,3 +52,9 @@ export function navegarComRecarga(dsDestino: string): void
 
   window.location.assign(dsDestino);
 }
+
+export async function sairDaSessao(): Promise<void>
+{
+  await encerrarSessao();
+  navegarComRecarga("/login");
+}

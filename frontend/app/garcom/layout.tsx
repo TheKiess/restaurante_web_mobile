@@ -5,7 +5,7 @@ export default function GarcomLayout({ children }: LayoutProps<"/garcom">)
 {
   return (
     <LayoutPainel nmArea="Área do garçom" arrLinks={ARR_LINKS_GARCOM}>
-      <main className="min-w-0 p-5 md:p-8">{children}</main>
+      <main className="painelPrincipal">{children}</main>
     </LayoutPainel>
   );
 }

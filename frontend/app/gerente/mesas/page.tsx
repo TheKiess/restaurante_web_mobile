@@ -4,7 +4,7 @@
 import { useCallback, useState }                from "react";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useCarregarAoMontar }                  from "@/lib/useCarregarAoMontar";
-import estilos                                  from "@/componentes/Painel/Painel.module.css";
+import estilos                                  from "@/estilos/Painel.module.css";
 
 type Mesa = {
   id_mesa: number;

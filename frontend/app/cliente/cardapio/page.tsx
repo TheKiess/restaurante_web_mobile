@@ -5,8 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { apiGet }                       from "@/lib/api";
 import Link                             from "next/link";
 import { ArrowLeft }                    from "lucide-react";
-import estilos                          from "@/componentes/Painel/Painel.module.css";
+import estilos                          from "@/estilos/Painel.module.css";
 import estilosPagina                    from "./page.module.css";
+import { formatarMoeda }                from "@/lib/formatar";
 
 interface Categoria {
   id_categoria: number;
@@ -25,13 +26,6 @@ interface ItemCardapio {
 interface ItemCarrinho {
   item: ItemCardapio;
   quantidade: number;
-}
-
-function formatarPreco(valor: number | string) {
-  return Number(valor).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
 }
 
 export default function CardapioClientePage() {
@@ -249,7 +243,7 @@ export default function CardapioClientePage() {
 
                     <div className={estilosPagina.produtoRodape}>
                       <span className={estilosPagina.preco}>
-                        {formatarPreco(item.vl_unitario)}
+                        {formatarMoeda(item.vl_unitario)}
                       </span>
 
                       <button
@@ -288,12 +282,12 @@ export default function CardapioClientePage() {
                         <div>
                           <p className={estilos.negrito}>{linha.item.nm_item}</p>
                           <p className={estilos.subtituloCartao}>
-                            {formatarPreco(linha.item.vl_unitario)} cada
+                            {formatarMoeda(linha.item.vl_unitario)} cada
                           </p>
                         </div>
 
                         <p className={`${estilos.negrito} ${estilos.semQuebra}`}>
-                          {formatarPreco(
+                          {formatarMoeda(
                             Number(linha.item.vl_unitario) * linha.quantidade
                           )}
                         </p>
@@ -333,7 +327,7 @@ export default function CardapioClientePage() {
                 <div className={estilos.linhaTotal}>
                   <span>Total</span>
                   <span className={estilos.valorDestaque}>
-                    {formatarPreco(valorTotal)}
+                    {formatarMoeda(valorTotal)}
                   </span>
                 </div>
 

@@ -4,8 +4,9 @@
 import { useCallback, useState } from "react";
 import { apiGet, apiPatch }      from "@/lib/api";
 import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
-import estilos                   from "@/componentes/Painel/Painel.module.css";
+import estilos                   from "@/estilos/Painel.module.css";
 import estilosPagina             from "./page.module.css";
+import { formatarMoeda }         from "@/lib/formatar";
 
 type Situacao =
   | "AGUARDANDO"
@@ -64,13 +65,6 @@ const proximasSituacoes: Record<Situacao, Situacao[]> = {
   ENTREGUE: [],
   CANCELADO: [],
 };
-
-function moeda(valor: number) {
-  return valor.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
 
 function dataHora(valor: string) {
   const data = new Date(valor);
@@ -310,7 +304,7 @@ export default function PedidosPage()
                       <p className={estilos.subtituloCartao}>
                         Total dos itens exibidos
                       </p>
-                      <p className={estilos.comandaTotalValor}>{moeda(total)}</p>
+                      <p className={estilos.comandaTotalValor}>{formatarMoeda(total)}</p>
                     </div>
                   </header>
 
@@ -337,7 +331,7 @@ export default function PedidosPage()
                             <p className={estilos.itemComandaTexto}>
                               Pedido #{item.id_item_pedido} · Quantidade:{" "}
                               {item.qt_quantidade} · Unitário:{" "}
-                              {moeda(Number(item.vl_unitario) || 0)}
+                              {formatarMoeda(Number(item.vl_unitario) || 0)}
                             </p>
 
                             <p className={estilos.itemComandaTexto}>
