@@ -1,11 +1,12 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { Prisma } from '../generated/prisma/client.js';
+import { ConflictException, Injectable, NotFoundException }   from '@nestjs/common';
+import { PrismaService }                                      from '../prisma/prisma.service.js';
+import { travarComanda }                                      from '../prisma/travas.js';
+import { Prisma }                                             from '../generated/prisma/client.js';
 import { FormaPagamento, SituacaoComanda, SituacaoPagamento } from '../generated/prisma/enums.js';
-import { calcularTotais } from '../comandas/calcular-totais.js';
-import { CreatePagamentoDto } from './dto/create-pagamento.dto.js';
-import { AlterarSituacaoPagamentoDto } from './dto/alterar-situacao-pagamento.dto.js';
-import { ListarPagamentosQueryDto } from './dto/listar-pagamentos-query.dto.js';
+import { calcularTotais }                                     from '../comandas/calcular-totais.js';
+import { CreatePagamentoDto }                                 from './dto/create-pagamento.dto.js';
+import { AlterarSituacaoPagamentoDto }                        from './dto/alterar-situacao-pagamento.dto.js';
+import { ListarPagamentosQueryDto }                           from './dto/listar-pagamentos-query.dto.js';
 
 @Injectable()
 export class PagamentosService
@@ -15,35 +16,38 @@ export class PagamentosService
   async registrarPagamento(createPagamentoDto: CreatePagamentoDto)
   {
     const { id_comanda, vl_pago, forma_pagamento } = createPagamentoDto;
-    const comanda = await this.prisma.comanda.findUnique({
-      where: {
-        id_comanda },
-        include: {
-          itens: true,
-          pagamentos: true
-        }
+
+    return this.prisma.$transaction(async (transacao) => {
+      await travarComanda(transacao, id_comanda);
+
+      const comanda = await transacao.comanda.findUnique({
+        where: { id_comanda },
+        include: { itens: true, pagamentos: true },
       });
 
-    if (!comanda)
-      throw new NotFoundException(`Comanda ${id_comanda} não encontrada!`);
-  
-    if (comanda.id_situacao !== SituacaoComanda.ABERTA)
-      throw new ConflictException('Só é possível registrar pagamento em uma comanda aberta!');
+      if (!comanda)
+        throw new NotFoundException(`Comanda ${id_comanda} não encontrada!`);
 
-    const { vlTotal, vlPago, vlPendente } = calcularTotais(comanda.itens, comanda.pagamentos);
-    const vlDisponivel                    = vlTotal.minus(vlPago).minus(vlPendente);
+      if (comanda.id_situacao !== SituacaoComanda.ABERTA)
+        throw new ConflictException('Só é possível registrar pagamento em uma comanda aberta!');
 
-    if (new Prisma.Decimal(vl_pago).gt(vlDisponivel)) throw new ConflictException(`Valor maior que o que falta pagar (${vlDisponivel.toFixed(2)})`);
+      const { vlTotal, vlPago, vlPendente } = calcularTotais(comanda.itens, comanda.pagamentos);
+      const vlDisponivel                    = vlTotal.minus(vlPago).minus(vlPendente);
 
-    const confirmadoNaHora = forma_pagamento !== FormaPagamento.PIX;
-    return this.prisma.pagamento.create({
-      data: {
-        id_comanda,
-        vl_pago,
-        forma_pagamento,
-        id_situacao: confirmadoNaHora ? SituacaoPagamento.CONFIRMADO : SituacaoPagamento.PENDENTE,
-        dt_pagamento: confirmadoNaHora ? new Date() : null,
-      },
+      if (new Prisma.Decimal(vl_pago).gt(vlDisponivel))
+        throw new ConflictException(`Valor maior que o que falta pagar (${vlDisponivel.toFixed(2)})`);
+
+      const confirmadoNaHora = forma_pagamento !== FormaPagamento.PIX;
+
+      return transacao.pagamento.create({
+        data: {
+          id_comanda,
+          vl_pago,
+          forma_pagamento,
+          id_situacao: confirmadoNaHora ? SituacaoPagamento.CONFIRMADO : SituacaoPagamento.PENDENTE,
+          dt_pagamento: confirmadoNaHora ? new Date() : null,
+        },
+      });
     });
   }
 
