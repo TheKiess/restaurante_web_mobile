@@ -20,3 +20,13 @@ export function formatarDataHora(dsData: string | null | undefined): string
 
   return data.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
+
+export function formatarQuantidade(valor: number | string | null | undefined): string
+{
+  const vlNumero = Number(valor);
+
+  if (valor === null || valor === undefined || Number.isNaN(vlNumero))
+    return "—";
+
+  return vlNumero.toLocaleString("pt-BR", { maximumFractionDigits: 3 });
+}

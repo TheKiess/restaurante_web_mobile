@@ -47,7 +47,7 @@ function calcularIndicadores(
   );
 
   const faturamento = itensValidos.reduce((total, item) => {
-    return total + (Number(item.qt_quantidade) || 0 * Number(item.vl_unitario) || 0);
+    return total + (Number(item.qt_quantidade) || 0) * (Number(item.vl_unitario) || 0);
   }, 0);
 
   const comandas = new Set(itensValidos.map((item) => String(item.id_comanda)));
@@ -94,6 +94,30 @@ const atalhos = [
     simbolo: "04",
     acao: "Ver relatórios",
   },
+  {
+    titulo: "Reservas",
+    descricao:
+      "Veja as mesas reservadas, registre reservas e faça o check-in dos clientes.",
+    href: "/gerente/reservas",
+    simbolo: "05",
+    acao: "Gerenciar reservas",
+  },
+  {
+    titulo: "Estoque",
+    descricao:
+      "Controle os insumos, registre compras e perdas e veja o que está acabando.",
+    href: "/gerente/insumos",
+    simbolo: "06",
+    acao: "Gerenciar estoque",
+  },
+  {
+    titulo: "Receitas",
+    descricao:
+      "Defina quanto de cada insumo os itens do cardápio consomem.",
+    href: "/gerente/receitas",
+    simbolo: "07",
+    acao: "Gerenciar receitas",
+  }
 ];
 
 export default function GerentePage() {

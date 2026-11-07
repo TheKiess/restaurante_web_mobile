@@ -37,8 +37,11 @@ export const ARR_LINKS_GERENTE = [
   { nmRotulo: "Início",     dsCaminho: "/gerente" },
   { nmRotulo: "Pedidos",    dsCaminho: "/gerente/pedidos" },
   { nmRotulo: "Mesas",      dsCaminho: "/gerente/mesas" },
+  { nmRotulo: "Reservas",   dsCaminho: "/gerente/reservas" },
   { nmRotulo: "Cardápio",   dsCaminho: "/gerente/cardapio" },
   { nmRotulo: "Categorias", dsCaminho: "/gerente/categorias" },
+  { nmRotulo: "Estoque",    dsCaminho: "/gerente/insumos" },
+  { nmRotulo: "Receitas",   dsCaminho: "/gerente/receitas" },
   { nmRotulo: "Relatórios", dsCaminho: "/gerente/relatorios" }
 ];
 
@@ -96,4 +99,30 @@ export const OBJ_NOMES_FORMA_PAGAMENTO: Record<string, string> = {
   DINHEIRO: "Dinheiro",
   CARTAO: "Cartão",
   PIX: "Pix"
+};
+
+export const OBJ_ROTULOS_UNIDADE: Record<string, string> = {
+  UN: "un",
+  KG: "kg",
+  G: "g",
+  L: "L",
+  ML: "mL"
+};
+
+export const OBJ_NOMES_TIPO_MOVIMENTO: Record<string, string> = {
+  ENTRADA: "Entrada",
+  SAIDA: "Saída",
+  PERDA: "Perda"
+};
+
+export const OBJ_NOMES_SITUACAO_RESERVA: Record<string, string> = {
+  CONFIRMADA: "Confirmada",
+  CHECKIN: "Check-in feito",
+  CANCELADA: "Cancelada",
+  EXPIRADA: "Expirada"
+};
+
+export const OBJ_NOMES_TIPO_ITEM: Record<string, string> = {
+  PREPARADO: "Preparado",
+  REVENDA: "Revenda"
 };
