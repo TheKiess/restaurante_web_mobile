@@ -33,3 +33,13 @@ export async function travarInsumos(transacao: Prisma.TransactionClient, arrIdsI
      WHERE "id_insumo" IN (${Prisma.join(arrIdsInsumo)})
      ORDER BY "id_insumo" FOR UPDATE`;
 }
+
+// Trava todos os gerentes ativos, para duas pessoas não tirarem o acesso uma da outra ao mesmo tempo.
+export async function travarGerentesAtivos(transacao: Prisma.TransactionClient): Promise<void>
+{
+  await transacao.$queryRaw`
+    SELECT "id_usuario"
+      FROM "Usuario"
+     WHERE "perfil" = 'GERENCIA' AND "id_ativo" = true
+     ORDER BY "id_usuario" FOR UPDATE`;
+}

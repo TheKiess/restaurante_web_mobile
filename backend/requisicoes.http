@@ -17,6 +17,9 @@
 
 @host = http://localhost:3000
 @tokenGerencia = {{loginGerencia.response.body.ds_token}}
+@tokenCliente  = {{loginCliente.response.body.ds_token}}
+@tokenCozinha  = {{loginCozinha.response.body.ds_token}}
+@tokenPaulo    = {{loginPaulo.response.body.ds_token}}
 
 ###
 # ==========================================================================
@@ -1160,3 +1163,928 @@ Content-Type: application/json
   "ds_senha": "senha123",
   "perfil": "GARCOM"
 }
+
+
+###
+# ==========================================================================
+# RESERVAS
+# ==========================================================================
+# Regras: a reserva segura a mesa por 2 horas (outra reserva perto desse horário conflita),
+# o check-in abre 15 min antes do horário e vai até 15 min depois (limite de check-in).
+# Depois do limite a reserva vira EXPIRADA e a mesa fica livre. Sem id_mesa, o sistema
+# escolhe a menor mesa livre que comporta o grupo. As datas usam {{$datetime ...}} (relativas a agora).
+
+### 119. Criar mesa 20 (2 lugares) para as reservas (espera 201)
+# @name mesaReserva1
+POST {{host}}/mesas
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nr_mesa": 20,
+  "qt_lugares": 2
+}
+
+
+### 120. Criar mesa 21 (6 lugares) para as reservas (espera 201)
+# @name mesaReserva2
+POST {{host}}/mesas
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nr_mesa": 21,
+  "qt_lugares": 6
+}
+
+
+
+### 121. Entrar como cliente (o cadastro público do item 116) (espera 200)
+# @name loginCliente
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "publico1",
+  "ds_senha": "senha123"
+}
+
+
+### 122. Cliente reserva sem escolher a mesa, o sistema escolhe (espera 201)
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "qt_pessoas": 2,
+  "dt_reserva": "{{$datetime iso8601 3 d}}"
+}
+
+
+### 123. Cliente reserva a mesa 21 para 4 pessoas (espera 201)
+# @name reservaMesa21
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaReserva2.response.body.id_mesa}},
+  "qt_pessoas": 4,
+  "dt_reserva": "{{$datetime iso8601 4 d}}"
+}
+
+
+### 124. Mesma mesa e mesmo horário (espera 409)
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaReserva2.response.body.id_mesa}},
+  "qt_pessoas": 2,
+  "dt_reserva": "{{$datetime iso8601 4 d}}"
+}
+
+
+### 125. Mesma mesa 1 hora depois (dentro da duração da reserva) (espera 409)
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaReserva2.response.body.id_mesa}},
+  "qt_pessoas": 2,
+  "dt_reserva": "{{$datetime iso8601 97 h}}"
+}
+
+
+### 126. Grupo maior que a mesa (5 pessoas na mesa 20) (espera 409)
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaReserva1.response.body.id_mesa}},
+  "qt_pessoas": 5,
+  "dt_reserva": "{{$datetime iso8601 5 d}}"
+}
+
+
+### 127. Data no passado (espera 400)
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "qt_pessoas": 2,
+  "dt_reserva": "{{$datetime iso8601 -1 d}}"
+}
+
+
+### 128. Data com mais de 60 dias (espera 400)
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "qt_pessoas": 2,
+  "dt_reserva": "{{$datetime iso8601 90 d}}"
+}
+
+
+### 129. Garçom reserva sem dizer quem é o cliente (espera 400)
+POST {{host}}/reservas
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "qt_pessoas": 2,
+  "dt_reserva": "{{$datetime iso8601 6 d}}"
+}
+
+
+### 130. Cliente lista as próprias reservas (espera 200)
+GET {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+
+
+### 131. Gerência filtra por mesa e situação (painel) (espera 200)
+GET {{host}}/reservas?id_mesa={{mesaReserva2.response.body.id_mesa}}&id_situacao=CONFIRMADA
+Authorization: Bearer {{tokenGerencia}}
+
+
+### 132. Gerência vê o detalhe da reserva (espera 200)
+GET {{host}}/reservas/{{reservaMesa21.response.body.id_reserva}}
+Authorization: Bearer {{tokenGerencia}}
+
+
+### 133. Cliente tentando fazer check-in (espera 403)
+POST {{host}}/reservas/{{reservaMesa21.response.body.id_reserva}}/checkin
+Authorization: Bearer {{tokenCliente}}
+
+
+### 134. Garçom tentando check-in cedo demais (reserva daqui a 4 dias) (espera 409)
+POST {{host}}/reservas/{{reservaMesa21.response.body.id_reserva}}/checkin
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 135. Cliente cancela a reserva da mesa 21 (espera 200)
+PATCH {{host}}/reservas/{{reservaMesa21.response.body.id_reserva}}/cancelar
+Authorization: Bearer {{tokenCliente}}
+
+
+### 136. Cancelar de novo (espera 409)
+PATCH {{host}}/reservas/{{reservaMesa21.response.body.id_reserva}}/cancelar
+Authorization: Bearer {{tokenCliente}}
+
+
+### 137. Horário cancelado volta a ficar livre (espera 201)
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaReserva2.response.body.id_mesa}},
+  "qt_pessoas": 4,
+  "dt_reserva": "{{$datetime iso8601 4 d}}"
+}
+
+
+### 138. Reserva para daqui a 10 minutos na mesa 20 (espera 201)
+# @name reservaAgora
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaReserva1.response.body.id_mesa}},
+  "qt_pessoas": 2,
+  "dt_reserva": "{{$datetime iso8601 10 m}}"
+}
+
+
+### 139. Comanda avulsa na mesa reservada é bloqueada (espera 409)
+POST {{host}}/comandas
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_usuario": 1,
+  "id_mesa": {{mesaReserva1.response.body.id_mesa}}
+}
+
+
+### 140. Garçom faz o check-in: abre a comanda da reserva (espera 201)
+# @name comandaCheckin
+POST {{host}}/reservas/{{reservaAgora.response.body.id_reserva}}/checkin
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 141. Check-in repetido (espera 409)
+POST {{host}}/reservas/{{reservaAgora.response.body.id_reserva}}/checkin
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 142. Cancelar reserva que já fez check-in (espera 409)
+PATCH {{host}}/reservas/{{reservaAgora.response.body.id_reserva}}/cancelar
+Authorization: Bearer {{tokenCliente}}
+
+
+### 143. Cancelar a comanda aberta pelo check-in (espera 200)
+PATCH {{host}}/comandas/{{comandaCheckin.response.body.id_comanda}}/cancelar
+Authorization: Bearer {{tokenGarcom}}
+
+###
+# ==========================================================================
+# INSUMOS E ESTOQUE
+# ==========================================================================
+# O estoque só muda por movimento: ENTRADA (compra), PERDA (manual) e SAIDA (automática).
+# Itens REVENDA dão baixa ao lançar o pedido. Itens PREPARADO dão baixa quando a cozinha começa o preparo.
+# Cancelar uma revenda devolve ao estoque. Preparado que já começou não devolve (a comida foi feita).
+
+### 144. Criar insumo Carne moída (10 kg, mínimo 2) (espera 201)
+# @name insumoCarne
+POST {{host}}/insumos
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_insumo": "Carne moída",
+  "unidade_medida": "KG",
+  "qt_estoque_inicial": 10,
+  "qt_estoque_minimo": 2
+}
+
+
+### 145. Criar insumo Pão de hambúrguer (20 un, mínimo 5) (espera 201)
+# @name insumoPao
+POST {{host}}/insumos
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_insumo": "Pão de hambúrguer",
+  "unidade_medida": "UN",
+  "qt_estoque_inicial": 20,
+  "qt_estoque_minimo": 5
+}
+
+
+### 146. Criar insumo Refrigerante lata (5 un) (espera 201)
+# @name insumoRefri
+POST {{host}}/insumos
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_insumo": "Refrigerante lata",
+  "unidade_medida": "UN",
+  "qt_estoque_inicial": 5,
+  "qt_estoque_minimo": 2
+}
+
+
+### 147. Nome de insumo repetido (espera 409)
+POST {{host}}/insumos
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_insumo": "Carne moída",
+  "unidade_medida": "KG"
+}
+
+
+### 148. Unidade de medida inválida (espera 400)
+POST {{host}}/insumos
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_insumo": "Sal",
+  "unidade_medida": "XX"
+}
+
+
+### 149. Garçom tentando criar insumo (espera 403)
+POST {{host}}/insumos
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "nm_insumo": "Sal",
+  "unidade_medida": "KG"
+}
+
+
+### 150. Listar insumos (espera 200)
+GET {{host}}/insumos
+Authorization: Bearer {{tokenGerencia}}
+
+
+### 151. Entrada de 5 kg de carne (espera 201)
+POST {{host}}/movimentos-estoque
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_insumo": {{insumoCarne.response.body.id_insumo}},
+  "tipo_movimento": "ENTRADA",
+  "qt_movimento": 5
+}
+
+
+### 152. Perda de 1 kg de carne, com motivo (espera 201)
+POST {{host}}/movimentos-estoque
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_insumo": {{insumoCarne.response.body.id_insumo}},
+  "tipo_movimento": "PERDA",
+  "qt_movimento": 1,
+  "ds_motivo": "Passou da validade"
+}
+
+
+### 153. Perda sem motivo (espera 400)
+POST {{host}}/movimentos-estoque
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_insumo": {{insumoCarne.response.body.id_insumo}},
+  "tipo_movimento": "PERDA",
+  "qt_movimento": 1
+}
+
+
+### 154. Perda maior que o estoque (espera 409)
+POST {{host}}/movimentos-estoque
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_insumo": {{insumoCarne.response.body.id_insumo}},
+  "tipo_movimento": "PERDA",
+  "qt_movimento": 99,
+  "ds_motivo": "Teste"
+}
+
+
+### 155. Saída manual não existe (só automática) (espera 400)
+POST {{host}}/movimentos-estoque
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_insumo": {{insumoCarne.response.body.id_insumo}},
+  "tipo_movimento": "SAIDA",
+  "qt_movimento": 1
+}
+
+
+### 156. Movimento de insumo que não existe (espera 404)
+POST {{host}}/movimentos-estoque
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_insumo": 99999,
+  "tipo_movimento": "ENTRADA",
+  "qt_movimento": 1
+}
+
+
+### 157. Listar movimentos da carne (espera 200)
+GET {{host}}/movimentos-estoque?id_insumo={{insumoCarne.response.body.id_insumo}}
+Authorization: Bearer {{tokenGerencia}}
+
+###
+# ==========================================================================
+# RECEITAS (o que cada item do cardápio consome)
+# ==========================================================================
+
+### 158. Criar categoria Lanches do estoque (espera 201)
+# @name categoriaEstoque
+POST {{host}}/categorias
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_categoria": "Lanches do estoque"
+}
+
+
+### 159. Criar item Hambúrguer (PREPARADO) (espera 201)
+# @name itemHamburguer
+POST {{host}}/itens-cardapio
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_categoria": {{categoriaEstoque.response.body.id_categoria}},
+  "nm_item": "Hambúrguer da casa",
+  "vl_unitario": 32,
+  "tipo_item": "PREPARADO"
+}
+
+
+### 160. Criar item Refrigerante lata (REVENDA) (espera 201)
+# @name itemRefri
+POST {{host}}/itens-cardapio
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_categoria": {{categoriaEstoque.response.body.id_categoria}},
+  "nm_item": "Refrigerante lata",
+  "vl_unitario": 8,
+  "tipo_item": "REVENDA"
+}
+
+
+### 161. Definir a receita do hambúrguer (0,2 kg de carne e 1 pão) (espera 200)
+PUT {{host}}/itens-cardapio/{{itemHamburguer.response.body.id_item_cardapio}}/receita
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "ingredientes": [
+    {
+      "id_insumo": {{insumoCarne.response.body.id_insumo}},
+      "qt_insumo": 0.2
+    },
+    {
+      "id_insumo": {{insumoPao.response.body.id_insumo}},
+      "qt_insumo": 1
+    }
+  ]
+}
+
+
+### 162. Definir a receita do refrigerante (1 lata) (espera 200)
+PUT {{host}}/itens-cardapio/{{itemRefri.response.body.id_item_cardapio}}/receita
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "ingredientes": [
+    {
+      "id_insumo": {{insumoRefri.response.body.id_insumo}},
+      "qt_insumo": 1
+    }
+  ]
+}
+
+
+### 163. Insumo repetido na mesma receita (espera 400)
+PUT {{host}}/itens-cardapio/{{itemHamburguer.response.body.id_item_cardapio}}/receita
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "ingredientes": [
+    {
+      "id_insumo": {{insumoPao.response.body.id_insumo}},
+      "qt_insumo": 1
+    },
+    {
+      "id_insumo": {{insumoPao.response.body.id_insumo}},
+      "qt_insumo": 2
+    }
+  ]
+}
+
+
+### 164. Insumo que não existe na receita (espera 404)
+PUT {{host}}/itens-cardapio/{{itemHamburguer.response.body.id_item_cardapio}}/receita
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "ingredientes": [
+    {
+      "id_insumo": 99999,
+      "qt_insumo": 1
+    }
+  ]
+}
+
+
+### 165. Quantidade zero na receita (espera 400)
+PUT {{host}}/itens-cardapio/{{itemHamburguer.response.body.id_item_cardapio}}/receita
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "ingredientes": [
+    {
+      "id_insumo": {{insumoPao.response.body.id_insumo}},
+      "qt_insumo": 0
+    }
+  ]
+}
+
+
+### 166. Garçom tentando mudar receita (espera 403)
+PUT {{host}}/itens-cardapio/{{itemHamburguer.response.body.id_item_cardapio}}/receita
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "ingredientes": []
+}
+
+
+### 167. Ver a receita do hambúrguer (espera 200)
+GET {{host}}/itens-cardapio/{{itemHamburguer.response.body.id_item_cardapio}}/receita
+Authorization: Bearer {{tokenGerencia}}
+
+###
+# ==========================================================================
+# ESTOQUE NOS PEDIDOS
+# ==========================================================================
+
+
+### 168. Criar um usuário da cozinha (espera 201)
+POST {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Cozinheira Estoque",
+  "ds_apelido": "cozinha_estoque",
+  "ds_senha": "senha123",
+  "perfil": "COZINHA"
+}
+
+
+### 169. Entrar como cozinha (espera 200)
+# @name loginCozinha
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "cozinha_estoque",
+  "ds_senha": "senha123"
+}
+
+
+### 170. Cozinha pode ver os insumos (espera 200)
+GET {{host}}/insumos
+Authorization: Bearer {{tokenCozinha}}
+
+
+### 171. Cozinha não cria insumo (espera 403)
+POST {{host}}/insumos
+Authorization: Bearer {{tokenCozinha}}
+Content-Type: application/json
+
+{
+  "nm_insumo": "Sal",
+  "unidade_medida": "KG"
+}
+
+
+### 172. Abrir uma comanda sem mesa (espera 201)
+# @name comandaEstoque
+POST {{host}}/comandas
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_usuario": 1
+}
+
+
+### 173. Lançar 99 hambúrgueres: avisa que falta estoque (espera 409)
+POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_comanda": {{comandaEstoque.response.body.id_comanda}},
+  "id_item_cardapio": {{itemHamburguer.response.body.id_item_cardapio}},
+  "qt_quantidade": 99
+}
+
+
+### 174. Lançar 2 hambúrgueres (ainda não baixa o estoque) (espera 201)
+# @name pedidoHamburguer
+POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_comanda": {{comandaEstoque.response.body.id_comanda}},
+  "id_item_cardapio": {{itemHamburguer.response.body.id_item_cardapio}},
+  "qt_quantidade": 2
+}
+
+
+### 175. Cozinha começa o preparo (baixa 0,4 kg de carne e 2 pães) (espera 200)
+PATCH {{host}}/itens-pedido/{{pedidoHamburguer.response.body.id_item_pedido}}/situacao
+Authorization: Bearer {{tokenCozinha}}
+Content-Type: application/json
+
+{
+  "id_situacao": "EM_PREPARO"
+}
+
+
+### 176. Ver as saídas de carne ligadas ao pedido (espera 200)
+GET {{host}}/movimentos-estoque?id_insumo={{insumoCarne.response.body.id_insumo}}&tipo_movimento=SAIDA
+Authorization: Bearer {{tokenGerencia}}
+
+
+### 177. Lançar 2 refrigerantes (revenda baixa na hora) (espera 201)
+# @name pedidoRefri
+POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_comanda": {{comandaEstoque.response.body.id_comanda}},
+  "id_item_cardapio": {{itemRefri.response.body.id_item_cardapio}},
+  "qt_quantidade": 2
+}
+
+
+### 178. Lançar 4 refrigerantes: só restam 3 (espera 409)
+POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_comanda": {{comandaEstoque.response.body.id_comanda}},
+  "id_item_cardapio": {{itemRefri.response.body.id_item_cardapio}},
+  "qt_quantidade": 4
+}
+
+
+### 179. Cancelar os refrigerantes: voltam ao estoque (espera 200)
+PATCH {{host}}/itens-pedido/{{pedidoRefri.response.body.id_item_pedido}}/situacao
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_situacao": "CANCELADO"
+}
+
+
+### 180. Ver o estorno do refrigerante (espera 200)
+GET {{host}}/movimentos-estoque?id_insumo={{insumoRefri.response.body.id_insumo}}&tipo_movimento=ENTRADA
+Authorization: Bearer {{tokenGerencia}}
+
+
+### 181. Lista de estoque baixo (espera 200)
+GET {{host}}/insumos/estoque-baixo
+Authorization: Bearer {{tokenGerencia}}
+
+
+### 182. Apagar insumo que já tem histórico (espera 409)
+DELETE {{host}}/insumos/{{insumoCarne.response.body.id_insumo}}
+Authorization: Bearer {{tokenGerencia}}
+
+
+### 183. Cancelar a comanda de teste (espera 200)
+PATCH {{host}}/comandas/{{comandaEstoque.response.body.id_comanda}}/cancelar
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 184. Atualizar o estoque mínimo da carne (espera 200)
+PATCH {{host}}/insumos/{{insumoCarne.response.body.id_insumo}}
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "qt_estoque_minimo": 3
+}
+
+
+### 185. Criar um insumo que ainda não foi usado (espera 201)
+# @name insumoSal
+POST {{host}}/insumos
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_insumo": "Sal fino",
+  "unidade_medida": "KG"
+}
+
+
+### 186. Apagar insumo sem histórico (espera 204)
+DELETE {{host}}/insumos/{{insumoSal.response.body.id_insumo}}
+Authorization: Bearer {{tokenGerencia}}
+
+
+###
+# ==========================================================================
+# PAINEL DO SALÃO
+# ==========================================================================
+# Cada mesa vem com a situação: LIVRE, OCUPADA (tem comanda aberta) ou RESERVADA (reserva
+# confirmada dentro da janela de check-in), a comanda aberta e a próxima reserva.
+
+### 187. Gerência abre o painel do salão (espera 200)
+GET {{host}}/mesas/painel
+Authorization: Bearer {{tokenGerencia}}
+
+### 188. Garçom abre o painel do salão (espera 200)
+GET {{host}}/mesas/painel
+Authorization: Bearer {{tokenGarcom}}
+
+### 189. Cozinha não abre o painel do salão (espera 403)
+GET {{host}}/mesas/painel
+Authorization: Bearer {{tokenCozinha}}
+
+### 190. Cliente não abre o painel do salão (espera 403)
+GET {{host}}/mesas/painel
+Authorization: Bearer {{tokenCliente}}
+
+
+###
+# ==========================================================================
+# FUNCIONÁRIOS
+# ==========================================================================
+# Funcionário é um usuário com função GERENCIA, GARCOM ou COZINHA. Quem saiu é inativado:
+# perde o acesso na hora (inclusive com um token antigo), e o histórico de comandas fica guardado.
+# Regras: a gerência não inativa a própria conta e o último gerente ativo não pode ser rebaixado.
+
+### 191. Gerência cadastra um garçom (espera 201)
+# @name funcionarioPaulo
+POST {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Paulo Souza",
+  "ds_apelido": "paulosouza",
+  "ds_senha": "senha123",
+  "perfil": "GARCOM",
+  "ds_email": "paulo.func@restaurante.com",
+  "ds_telefone": "54999998888"
+}
+
+
+### 192. Login de funcionário repetido (espera 409)
+POST {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Outro Paulo",
+  "ds_apelido": "paulosouza",
+  "ds_senha": "senha123",
+  "perfil": "GARCOM"
+}
+
+
+### 193. CPF com tamanho inválido (espera 400)
+POST {{host}}/usuarios
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Cpf Errado",
+  "ds_apelido": "cpferrado",
+  "ds_senha": "senha123",
+  "perfil": "GARCOM",
+  "ds_cnpj_cpf": "123"
+}
+
+
+### 194. Cadastro público não cria garçom (espera 403)
+POST {{host}}/usuarios
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Intruso",
+  "ds_apelido": "intruso1",
+  "ds_senha": "senha123",
+  "perfil": "GARCOM"
+}
+
+
+### 195. Cozinha não lista usuários (espera 403)
+GET {{host}}/usuarios?funcionarios=true
+Authorization: Bearer {{tokenCozinha}}
+
+
+### 196. Listar só os funcionários (sem clientes) (espera 200)
+GET {{host}}/usuarios?funcionarios=true
+Authorization: Bearer {{tokenGerencia}}
+
+
+### 197. Filtrar por função (espera 200)
+GET {{host}}/usuarios?perfil=GARCOM
+Authorization: Bearer {{tokenGerencia}}
+
+
+### 198. Função inválida no filtro (espera 400)
+GET {{host}}/usuarios?perfil=DONO
+Authorization: Bearer {{tokenGerencia}}
+
+
+### 199. Editar o nome e limpar o e-mail (espera 200)
+PATCH {{host}}/usuarios/{{funcionarioPaulo.response.body.id_usuario}}
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Paulo Silva",
+  "ds_email": null
+}
+
+
+### 200. Trocar a senha do funcionário (espera 200)
+PATCH {{host}}/usuarios/{{funcionarioPaulo.response.body.id_usuario}}
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "ds_senha": "novasenha1"
+}
+
+
+### 201. Senha antiga deixa de valer (espera 401)
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "paulosouza",
+  "ds_senha": "senha123"
+}
+
+
+### 202. Entrar com a senha nova (espera 200)
+# @name loginPaulo
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "paulosouza",
+  "ds_senha": "novasenha1"
+}
+
+
+### 203. Gerência inativa o funcionário (espera 200)
+PATCH {{host}}/usuarios/{{funcionarioPaulo.response.body.id_usuario}}
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_ativo": false
+}
+
+
+### 204. Funcionário inativo não consegue entrar (espera 401)
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "ds_login": "paulosouza",
+  "ds_senha": "novasenha1"
+}
+
+
+### 205. O token que ele já tinha para de valer na hora (espera 401)
+GET {{host}}/mesas
+Authorization: Bearer {{tokenPaulo}}
+
+
+### 206. Gerência reativa o funcionário (espera 200)
+PATCH {{host}}/usuarios/{{funcionarioPaulo.response.body.id_usuario}}
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_ativo": true
+}
+
+
+### 207. Com a conta reativada o token volta a valer (espera 200)
+GET {{host}}/mesas
+Authorization: Bearer {{tokenPaulo}}
+
+
+### 208. Gerência não inativa a própria conta (espera 409)
+PATCH {{host}}/usuarios/{{loginGerencia.response.body.usuario.id_usuario}}
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_ativo": false
+}
+
+
+### 209. Editar usuário que não existe (espera 404)
+PATCH {{host}}/usuarios/99999
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nm_pessoa": "Ninguém"
+}
+

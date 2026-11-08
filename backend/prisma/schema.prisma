@@ -27,6 +27,7 @@ model Usuario {
   ds_apelido String   @unique
   ds_senha   String
   perfil     Perfil   @default(CLIENTE)
+  id_ativo   Boolean  @default(true)
   dt_criacao DateTime @default(now())
   pessoa     Pessoa   @relation(fields: [id_pessoa], references: [id_pessoa])
   comandas   Comanda[]

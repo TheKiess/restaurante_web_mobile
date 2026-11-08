@@ -34,20 +34,23 @@ export const ARR_DIFERENCIAIS = [
 ];
 
 export const ARR_LINKS_GERENTE = [
-  { nmRotulo: "Início",     dsCaminho: "/gerente" },
-  { nmRotulo: "Pedidos",    dsCaminho: "/gerente/pedidos" },
-  { nmRotulo: "Mesas",      dsCaminho: "/gerente/mesas" },
-  { nmRotulo: "Reservas",   dsCaminho: "/gerente/reservas" },
-  { nmRotulo: "Cardápio",   dsCaminho: "/gerente/cardapio" },
-  { nmRotulo: "Categorias", dsCaminho: "/gerente/categorias" },
-  { nmRotulo: "Estoque",    dsCaminho: "/gerente/insumos" },
-  { nmRotulo: "Receitas",   dsCaminho: "/gerente/receitas" },
-  { nmRotulo: "Relatórios", dsCaminho: "/gerente/relatorios" }
+  { nmRotulo: "Início",       dsCaminho: "/gerente" },
+  { nmRotulo: "Pedidos",      dsCaminho: "/gerente/pedidos" },
+  { nmRotulo: "Salão",        dsCaminho: "/gerente/salao" },
+  { nmRotulo: "Mesas",        dsCaminho: "/gerente/mesas" },
+  { nmRotulo: "Reservas",     dsCaminho: "/gerente/reservas" },
+  { nmRotulo: "Cardápio",     dsCaminho: "/gerente/cardapio" },
+  { nmRotulo: "Categorias",   dsCaminho: "/gerente/categorias" },
+  { nmRotulo: "Estoque",      dsCaminho: "/gerente/insumos" },
+  { nmRotulo: "Receitas",     dsCaminho: "/gerente/receitas" },
+  { nmRotulo: "Funcionários", dsCaminho: "/gerente/funcionarios" },
+  { nmRotulo: "Relatórios",   dsCaminho: "/gerente/relatorios" }
 ];
 
 export const ARR_LINKS_GARCOM = [
   { nmRotulo: "Início",     dsCaminho: "/garcom" },
   { nmRotulo: "Pedidos",    dsCaminho: "/garcom/pedidos" },
+  { nmRotulo: "Salão",      dsCaminho: "/garcom/salao" },
   { nmRotulo: "Entregas",   dsCaminho: "/garcom/entregas" },
   { nmRotulo: "Comandas",   dsCaminho: "/garcom/comandas" },
   { nmRotulo: "Pagamentos", dsCaminho: "/garcom/pagamentos" }
@@ -125,4 +128,11 @@ export const OBJ_NOMES_SITUACAO_RESERVA: Record<string, string> = {
 export const OBJ_NOMES_TIPO_ITEM: Record<string, string> = {
   PREPARADO: "Preparado",
   REVENDA: "Revenda"
+};
+
+export const OBJ_NOMES_PERFIL: Record<string, string> = {
+  GERENCIA: "Gerência",
+  GARCOM: "Garçom",
+  COZINHA: "Cozinha",
+  CLIENTE: "Cliente"
 };
