@@ -1,11 +1,12 @@
 
 "use client";
 
-import Link                      from "next/link";
-import { useCallback, useState } from "react";
-import { apiGet, apiPatch }      from "@/lib/api";
-import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
-import estilos                   from "@/estilos/Painel.module.css";
+import Link                              from "next/link";
+import { useCallback, useRef, useState } from "react";
+import { apiGet, apiPatch }              from "@/lib/api";
+import { useAtualizacaoAutomatica }      from "@/lib/useAtualizacaoAutomatica";
+import { useCarregarAoMontar }           from "@/lib/useCarregarAoMontar";
+import estilos                           from "@/estilos/Painel.module.css";
 
 type ItemPedido = {
   id_item_pedido: number;
@@ -26,26 +27,44 @@ type ItemPedido = {
 
 export default function EntregasPage()
 {
-  const [pedidos, setPedidos]                     = useState<ItemPedido[]>([]);
-  const [carregando, setCarregando]               = useState(true);
-  const [pedidoAtualizando, setPedidoAtualizando] = useState<number | null>(null);
-  const [erro, setErro]                           = useState("");
-  const [sucesso, setSucesso]                     = useState("");
-  const carregarPedidos                           = useCallback(async () => {
-    setCarregando(true);
-    setErro("");
+  const [pedidos, setPedidos]                         = useState<ItemPedido[]>([]);
+  const [carregando, setCarregando]                   = useState(true);
+  const [pedidoAtualizando, setPedidoAtualizando]     = useState<number | null>(null);
+  const [erro, setErro]                               = useState("");
+  const [sucesso, setSucesso]                         = useState("");
+  const [dtUltimaAtualizacao, setDtUltimaAtualizacao] = useState<Date | null>(null);
+  const refRequisicao                                 = useRef(0);
+  const refErroDaAtualizacao                          = useRef(false);
+  const carregarPedidos                               = useCallback(async (flSilencioso = false) => {
+  const nrRequisicao                                  = ++refRequisicao.current;
+
+    if (!flSilencioso)
+    {
+      setCarregando(true);
+      setErro("");
+    }
 
     try
     {
-      const dados = await apiGet<ItemPedido[]>(
-        "itens-pedido?id_situacao=PRONTO"
-      );
+      const dados = await apiGet<ItemPedido[]>("itens-pedido?id_situacao=PRONTO");
+
+      // Resposta antiga que chegou depois de uma mais nova é descartada.
+      if (nrRequisicao !== refRequisicao.current)
+        return;
 
       setPedidos(Array.isArray(dados) ? dados : []);
+      setDtUltimaAtualizacao(new Date());
+
+      if (refErroDaAtualizacao.current)
+      {
+        setErro("");
+        refErroDaAtualizacao.current = false;
+      }
     }
     catch (error)
     {
       console.error("Erro ao carregar pedidos prontos:", error);
+      refErroDaAtualizacao.current = flSilencioso;
       setErro("Não foi possível carregar os pedidos. Tente novamente.");
     }
     finally
@@ -55,6 +74,7 @@ export default function EntregasPage()
   }, []);
 
   useCarregarAoMontar(carregarPedidos);
+  useAtualizacaoAutomatica(useCallback(() => carregarPedidos(true), [carregarPedidos]), 5);
 
   async function marcarComoEntregue(idItemPedido: number)
   {
@@ -105,6 +125,10 @@ export default function EntregasPage()
             <h2 className={estilos.tituloCartao}>Pedidos prontos</h2>
             <p className={estilos.subtituloCartao}>
               Pedidos aguardando entrega aos clientes.
+            </p>
+            <p className={estilos.textoSuave}>
+              A lista atualiza sozinha a cada 5 segundos.
+              {dtUltimaAtualizacao && ` Última atualização: ${dtUltimaAtualizacao.toLocaleTimeString("pt-BR")}.`}
             </p>
           </div>
 

@@ -16,6 +16,7 @@ type Mesa = {
 type Usuario = {
   id_usuario: number;
   perfil: string;
+  id_ativo: boolean;
   pessoa: { nm_pessoa: string };
 };
 
@@ -101,7 +102,7 @@ export default function ReservasPage()
 
       setArrReservas(arrReservasApi);
       setArrMesas([...arrMesasApi].sort((mesaA, mesaB) => mesaA.nr_mesa - mesaB.nr_mesa));
-      setArrClientes(arrUsuariosApi.filter((usuario) => usuario.perfil === "CLIENTE"));
+      setArrClientes(arrUsuariosApi.filter((usuario) => usuario.perfil === "CLIENTE" && usuario.id_ativo));
     }
     catch (erro)
     {

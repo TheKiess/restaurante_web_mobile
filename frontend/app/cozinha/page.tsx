@@ -8,10 +8,11 @@
  */
 "use client";
 
-import { useCallback, useState } from "react";
-import { apiGet, apiPatch }      from "@/lib/api";
-import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
-import estilos                   from "@/estilos/Painel.module.css";
+import { useCallback, useRef, useState } from "react";
+import { apiGet, apiPatch }              from "@/lib/api";
+import { useAtualizacaoAutomatica }      from "@/lib/useAtualizacaoAutomatica";
+import { useCarregarAoMontar }           from "@/lib/useCarregarAoMontar";
+import estilos                           from "@/estilos/Painel.module.css";
 import {
   ChefHat,
   Clock,
@@ -59,22 +60,43 @@ function formatarHorario(data: string)
 
 export default function CozinhaPage()
 {
-  const [pedidos,           setPedidos]           = useState<ItemPedido[]>([]);
-  const [carregando,        setCarregando]        = useState(true);
-  const [atualizando,       setAtualizando]       = useState(false);
-  const [itemEmAtualizacao, setItemEmAtualizacao] = useState<number | null>(null);
-  const [erro,              setErro]              = useState("");
-  const carregarPedidos                           = useCallback(async () => {
+  const [pedidos,           setPedidos]               = useState<ItemPedido[]>([]);
+  const [carregando,        setCarregando]            = useState(true);
+  const [atualizando,       setAtualizando]           = useState(false);
+  const [itemEmAtualizacao, setItemEmAtualizacao]     = useState<number | null>(null);
+  const [erro,              setErro]                  = useState("");
+  const [dtUltimaAtualizacao, setDtUltimaAtualizacao] = useState<Date | null>(null);
+  const refRequisicao                                 = useRef(0);
+  const refErroDaAtualizacao                          = useRef(false);
+  const carregarPedidos                               = useCallback(async (flSilencioso = false) => {
+  const nrRequisicao                                  = ++refRequisicao.current;
+
     try
     {
-      setErro("");
-      setAtualizando(true);
+      if (!flSilencioso)
+      {
+        setErro("");
+        setAtualizando(true);
+      }
 
       const dados = await apiGet<ItemPedido[]>("itens-pedido/fila");
+
+      // Resposta antiga que chegou depois de uma mais nova é descartada.
+      if (nrRequisicao !== refRequisicao.current)
+        return;
+
       setPedidos(dados);
+      setDtUltimaAtualizacao(new Date());
+
+      if (refErroDaAtualizacao.current)
+      {
+        setErro("");
+        refErroDaAtualizacao.current = false;
+      }
     }
     catch (error)
     {
+      refErroDaAtualizacao.current = flSilencioso;
       setErro(error instanceof Error
         ? error.message
         : "Não foi possível carregar a fila da cozinha."
@@ -83,11 +105,14 @@ export default function CozinhaPage()
     finally
     {
       setCarregando(false);
-      setAtualizando(false);
+
+      if (!flSilencioso)
+        setAtualizando(false);
     }
   }, []);
 
   useCarregarAoMontar(carregarPedidos);
+  useAtualizacaoAutomatica(useCallback(() => carregarPedidos(true), [carregarPedidos]), 5);
 
   async function alterarSituacao(
     item: ItemPedido,
@@ -204,6 +229,10 @@ export default function CozinhaPage()
           <h1 className={estilos.titulo}>Cozinha</h1>
           <p className={estilos.descricao}>
             Acompanhe os pedidos e atualize o preparo dos pratos.
+          </p>
+          <p className={estilos.textoSuave}>
+            A fila atualiza sozinha a cada 5 segundos.
+            {dtUltimaAtualizacao && ` Última atualização: ${dtUltimaAtualizacao.toLocaleTimeString("pt-BR")}.`}
           </p>
         </div>
 

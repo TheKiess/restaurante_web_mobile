@@ -117,6 +117,22 @@ const atalhos = [
     href: "/gerente/receitas",
     simbolo: "07",
     acao: "Gerenciar receitas",
+  },
+  {
+    titulo: "Painel do salão",
+    descricao:
+      "Veja quais mesas estão livres, ocupadas ou reservadas, em tempo real.",
+    href: "/gerente/salao",
+    simbolo: "08",
+    acao: "Abrir painel do salão",
+  },
+  {
+    titulo: "Funcionários",
+    descricao:
+      "Cadastre garçons, cozinha e gerentes, troque senhas e inative quem saiu.",
+    href: "/gerente/funcionarios",
+    simbolo: "09",
+    acao: "Gerenciar funcionários",
   }
 ];
 

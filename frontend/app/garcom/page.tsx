@@ -1,6 +1,6 @@
-import Link                                                            from "next/link";
-import { ArrowRight, ClipboardList, Utensils, PackageCheck, Banknote } from "lucide-react";
-import estilos                                                         from "@/estilos/Painel.module.css";
+import Link                                                                        from "next/link";
+import { ArrowRight, ClipboardList, LayoutGrid, Utensils, PackageCheck, Banknote } from "lucide-react";
+import estilos                                                                     from "@/estilos/Painel.module.css";
 
 const ARR_ATALHOS = [
   {
@@ -31,6 +31,13 @@ const ARR_ATALHOS = [
     acao: "Consultar comandas",
     Icone: ClipboardList,
   },
+  {
+    href: "/garcom/salao",
+    titulo: "Salão",
+    descricao: "Veja as mesas livres, ocupadas e reservadas e o andamento de cada comanda.",
+    acao: "Abrir painel do salão",
+    Icone: LayoutGrid,
+  }
 ];
 
 export default function GarcomPage()
