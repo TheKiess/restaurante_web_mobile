@@ -11,7 +11,7 @@ type Funcionario = {
   id_usuario: number;
   ds_apelido: string;
   perfil: string;
-  ativo: boolean;
+  id_ativo: boolean;
   pessoa: {
     nm_pessoa: string;
     ds_email: string | null;
@@ -217,7 +217,7 @@ export default function FuncionariosPage()
 
     try
     {
-      await apiPatch(`usuarios/${funcionario.id_usuario}`, { ativo: flAtivo });
+      await apiPatch(`usuarios/${funcionario.id_usuario}`, { id_ativo: flAtivo });
 
       if (nrIdEditando === funcionario.id_usuario)
         limparFormulario();
@@ -231,11 +231,11 @@ export default function FuncionariosPage()
     }
   }
 
-  const arrAtivos        = arrFuncionarios.filter((funcionario) => funcionario.ativo);
+  const arrAtivos        = arrFuncionarios.filter((funcionario) => funcionario.id_ativo);
   const nrInativos       = arrFuncionarios.length - arrAtivos.length;
   const dsBuscaMinuscula = dsBusca.trim().toLowerCase();
   const arrFiltrados     = arrFuncionarios.filter((funcionario) => {
-    if (!flMostrarInativos && !funcionario.ativo)
+    if (!flMostrarInativos && !funcionario.id_ativo)
       return false;
 
     if (dsFiltroPerfil && funcionario.perfil !== dsFiltroPerfil)
@@ -494,8 +494,8 @@ export default function FuncionariosPage()
                           {[funcionario.pessoa.ds_telefone, funcionario.pessoa.ds_email].filter(Boolean).join(" · ") || "Sem contato"}
                         </td>
                         <td>
-                          <span className={`${estilos.seloEstado} ${funcionario.ativo ? estilos.seloSucesso : estilos.seloCancelado}`}>
-                            {funcionario.ativo ? "Ativo" : "Inativo"}
+                          <span className={`${estilos.seloEstado} ${funcionario.id_ativo ? estilos.seloSucesso : estilos.seloCancelado}`}>
+                            {funcionario.id_ativo ? "Ativo" : "Inativo"}
                           </span>
                         </td>
                         <td>
@@ -508,7 +508,7 @@ export default function FuncionariosPage()
                               Editar
                             </button>
 
-                            {funcionario.ativo ? (
+                            {funcionario.id_ativo ? (
                               !flEhVoce && (
                                 <button
                                   type="button"
