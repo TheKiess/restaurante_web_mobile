@@ -43,6 +43,7 @@ CREATE TABLE "Usuario" (
     "ds_apelido" TEXT NOT NULL,
     "ds_senha" TEXT NOT NULL,
     "perfil" "Perfil" NOT NULL DEFAULT 'CLIENTE',
+    "id_ativo" BOOLEAN NOT NULL DEFAULT true,
     "dt_criacao" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Usuario_pkey" PRIMARY KEY ("id_usuario")
