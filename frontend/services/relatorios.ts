@@ -10,10 +10,7 @@ export type IndicadoresVendas = {
 
 export type PeriodoRelatorio = "hoje" | "seteDias" | "trintaDias";
 
-export async function buscarIndicadores(
-  periodo: PeriodoRelatorio
-): Promise<IndicadoresVendas> {
-  return apiGet<IndicadoresVendas>(
-    `relatorios/indicadores?periodo=${encodeURIComponent(periodo)}`
-  );
+export async function buscarIndicadores(periodo: PeriodoRelatorio): Promise<IndicadoresVendas>
+{
+  return apiGet<IndicadoresVendas>(`relatorios/indicadores?periodo=${encodeURIComponent(periodo)}`);
 }

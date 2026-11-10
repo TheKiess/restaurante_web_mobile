@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "OrigemPedido" AS ENUM ('SALAO', 'APP');
+
+-- CreateEnum
 CREATE TYPE "Perfil" AS ENUM ('GERENCIA', 'GARCOM', 'COZINHA', 'CLIENTE');
 
 -- CreateEnum
@@ -132,6 +135,7 @@ CREATE TABLE "MovimentoEstoque" (
 CREATE TABLE "Comanda" (
     "id_comanda" SERIAL NOT NULL,
     "id_usuario" INTEGER NOT NULL,
+    "id_cliente" INTEGER,
     "id_mesa" INTEGER,
     "id_reserva" INTEGER,
     "id_situacao" "SituacaoComanda" NOT NULL DEFAULT 'ABERTA',
@@ -146,6 +150,8 @@ CREATE TABLE "ItemPedido" (
     "id_item_pedido" SERIAL NOT NULL,
     "id_comanda" INTEGER NOT NULL,
     "id_item_cardapio" INTEGER NOT NULL,
+    "id_usuario" INTEGER,
+    "id_origem" "OrigemPedido" NOT NULL DEFAULT 'SALAO',
     "qt_quantidade" INTEGER NOT NULL,
     "vl_unitario" DECIMAL(10,2) NOT NULL,
     "ds_observacao" TEXT,
@@ -196,6 +202,9 @@ CREATE UNIQUE INDEX "Comanda_id_reserva_key" ON "Comanda"("id_reserva");
 CREATE INDEX "Comanda_id_usuario_idx" ON "Comanda"("id_usuario");
 
 -- CreateIndex
+CREATE INDEX "Comanda_id_cliente_idx" ON "Comanda"("id_cliente");
+
+-- CreateIndex
 CREATE INDEX "Comanda_dt_abertura_idx" ON "Comanda"("dt_abertura");
 
 -- CreateIndex
@@ -232,6 +241,9 @@ ALTER TABLE "MovimentoEstoque" ADD CONSTRAINT "MovimentoEstoque_id_item_pedido_f
 ALTER TABLE "Comanda" ADD CONSTRAINT "Comanda_id_usuario_fkey" FOREIGN KEY ("id_usuario") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Comanda" ADD CONSTRAINT "Comanda_id_cliente_fkey" FOREIGN KEY ("id_cliente") REFERENCES "Usuario"("id_usuario") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Comanda" ADD CONSTRAINT "Comanda_id_mesa_fkey" FOREIGN KEY ("id_mesa") REFERENCES "Mesa"("id_mesa") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -239,6 +251,9 @@ ALTER TABLE "Comanda" ADD CONSTRAINT "Comanda_id_reserva_fkey" FOREIGN KEY ("id_
 
 -- AddForeignKey
 ALTER TABLE "ItemPedido" ADD CONSTRAINT "ItemPedido_id_comanda_fkey" FOREIGN KEY ("id_comanda") REFERENCES "Comanda"("id_comanda") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ItemPedido" ADD CONSTRAINT "ItemPedido_id_usuario_fkey" FOREIGN KEY ("id_usuario") REFERENCES "Usuario"("id_usuario") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ItemPedido" ADD CONSTRAINT "ItemPedido_id_item_cardapio_fkey" FOREIGN KEY ("id_item_cardapio") REFERENCES "ItemCardapio"("id_item_cardapio") ON DELETE RESTRICT ON UPDATE CASCADE;

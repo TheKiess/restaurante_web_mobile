@@ -456,7 +456,6 @@ Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
-  "id_usuario": 1,
   "id_mesa": 1
 }
 
@@ -467,18 +466,17 @@ Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
-  "id_usuario": 1,
   "id_mesa": 1
 }
 
 
-### 43. Usuário inexistente (espera 404)
+### 43. Cliente inexistente (espera 404)
 POST {{host}}/comandas
 Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
-  "id_usuario": 9999
+  "id_cliente": 9999
 }
 
 
@@ -488,17 +486,18 @@ Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 {
-  "id_usuario": 1,
   "id_mesa": 9999
 }
 
 
-### 45. Body vazio (espera 400)
+### 45. id_cliente inválido (espera 400)
 POST {{host}}/comandas
 Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
-{}
+{
+  "id_cliente": "abc"
+}
 
 
 ### 46. Abrir comanda sem mesa (espera 201)
@@ -506,9 +505,7 @@ POST {{host}}/comandas
 Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
-{
-  "id_usuario": 1
-}
+{}
 
 
 ### 47. Listar as comandas abertas (espera 200)
@@ -1369,7 +1366,6 @@ Authorization: Bearer {{tokenGarcom}}
 Content-Type: application/json
 
 {
-  "id_usuario": 1,
   "id_mesa": {{mesaReserva1.response.body.id_mesa}}
 }
 
@@ -1753,9 +1749,7 @@ POST {{host}}/comandas
 Authorization: Bearer {{tokenGarcom}}
 Content-Type: application/json
 
-{
-  "id_usuario": 1
-}
+{}
 
 
 ### 173. Lançar 99 hambúrgueres: avisa que falta estoque (espera 409)
@@ -2087,4 +2081,199 @@ Content-Type: application/json
 {
   "nm_pessoa": "Ninguém"
 }
+
+
+###
+# ==========================================================================
+# CLIENTE DA COMANDA E PEDIDO PELO APP
+# ==========================================================================
+# A comanda guarda duas pessoas: quem abriu (funcionário, vem do login) e o cliente (opcional).
+# O cliente chega na comanda pelo check-in da reserva ou por vínculo feito pela equipe.
+# Pelo app (/minhas-comandas) o cliente só enxerga e pede na comanda aberta no nome dele.
+# Cada item guarda quem lançou e a origem: SALAO (equipe) ou APP (cliente).
+
+### 210. Garçom busca o cliente pelo login (espera 200)
+GET {{host}}/usuarios/clientes?busca=publico
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 211. Busca com uma letra só (espera 400)
+GET {{host}}/usuarios/clientes?busca=p
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 212. Cozinha não busca clientes (espera 403)
+GET {{host}}/usuarios/clientes?busca=publico
+Authorization: Bearer {{tokenCozinha}}
+
+
+### 213. Cliente não busca clientes (espera 403)
+GET {{host}}/usuarios/clientes?busca=publico
+Authorization: Bearer {{tokenCliente}}
+
+
+### 214. Abrir comanda já no nome do cliente (espera 201)
+# @name comandaDoCliente
+POST {{host}}/comandas
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_cliente": {{loginCliente.response.body.usuario.id_usuario}}
+}
+
+
+### 215. Vincular outro cliente que não existe (espera 404)
+PATCH {{host}}/comandas/{{comandaDoCliente.response.body.id_comanda}}/cliente
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_cliente": 99999
+}
+
+
+### 216. Comanda sem cliente, aberta pelo garçom (espera 201)
+# @name comandaSemCliente
+POST {{host}}/comandas
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{}
+
+
+### 217. Vincular o cliente depois (espera 200)
+PATCH {{host}}/comandas/{{comandaSemCliente.response.body.id_comanda}}/cliente
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_cliente": {{loginCliente.response.body.usuario.id_usuario}}
+}
+
+
+### 218. Tirar o cliente da comanda (null) (espera 200)
+PATCH {{host}}/comandas/{{comandaSemCliente.response.body.id_comanda}}/cliente
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_cliente": null
+}
+
+
+### 219. Cliente não vincula cliente (espera 403)
+PATCH {{host}}/comandas/{{comandaSemCliente.response.body.id_comanda}}/cliente
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_cliente": {{loginCliente.response.body.usuario.id_usuario}}
+}
+
+
+### 220. Filtrar comandas por cliente (espera 200)
+GET {{host}}/comandas?id_cliente={{loginCliente.response.body.usuario.id_usuario}}
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 221. Cliente lista as comandas dele (app) (espera 200)
+GET {{host}}/minhas-comandas
+Authorization: Bearer {{tokenCliente}}
+
+
+### 222. Cliente vê a comanda dele (app) (espera 200)
+GET {{host}}/minhas-comandas/{{comandaDoCliente.response.body.id_comanda}}
+Authorization: Bearer {{tokenCliente}}
+
+
+### 223. Cliente não vê comanda de outra pessoa (espera 404)
+GET {{host}}/minhas-comandas/{{comandaSemCliente.response.body.id_comanda}}
+Authorization: Bearer {{tokenCliente}}
+
+
+### 224. Garçom não usa as rotas do app (espera 403)
+GET {{host}}/minhas-comandas
+Authorization: Bearer {{tokenGarcom}}
+
+
+### 225. Criar item do cardápio para o teste do app (espera 201)
+# @name itemDoApp
+POST {{host}}/itens-cardapio
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "id_categoria": {{categoriaEstoque.response.body.id_categoria}},
+  "nm_item": "Suco do app",
+  "vl_unitario": 9,
+  "tipo_item": "PREPARADO"
+}
+
+
+### 226. Cliente pede pelo app (espera 201)
+# @name pedidoDoApp
+POST {{host}}/minhas-comandas/{{comandaDoCliente.response.body.id_comanda}}/itens
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_item_cardapio": {{itemDoApp.response.body.id_item_cardapio}},
+  "qt_quantidade": 2
+}
+
+
+### 227. Cliente pede em comanda que não é dele (espera 404)
+POST {{host}}/minhas-comandas/{{comandaSemCliente.response.body.id_comanda}}/itens
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_item_cardapio": {{itemDoApp.response.body.id_item_cardapio}},
+  "qt_quantidade": 1
+}
+
+
+### 228. Quantidade inválida no pedido do app (espera 400)
+POST {{host}}/minhas-comandas/{{comandaDoCliente.response.body.id_comanda}}/itens
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_item_cardapio": {{itemDoApp.response.body.id_item_cardapio}},
+  "qt_quantidade": 0
+}
+
+
+### 229. Cliente cancela o item que pediu (aguardando) (espera 200)
+PATCH {{host}}/minhas-comandas/{{comandaDoCliente.response.body.id_comanda}}/itens/{{pedidoDoApp.response.body.id_item_pedido}}/cancelar
+Authorization: Bearer {{tokenCliente}}
+
+
+### 230. Cancelar de novo (espera 409)
+PATCH {{host}}/minhas-comandas/{{comandaDoCliente.response.body.id_comanda}}/itens/{{pedidoDoApp.response.body.id_item_pedido}}/cancelar
+Authorization: Bearer {{tokenCliente}}
+
+
+### 231. Garçom lança um item na comanda do cliente (espera 201)
+# @name pedidoDoSalao
+POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_comanda": {{comandaDoCliente.response.body.id_comanda}},
+  "id_item_cardapio": {{itemDoApp.response.body.id_item_cardapio}},
+  "qt_quantidade": 1
+}
+
+
+### 232. Cliente não cancela o item que o garçom lançou (espera 403)
+PATCH {{host}}/minhas-comandas/{{comandaDoCliente.response.body.id_comanda}}/itens/{{pedidoDoSalao.response.body.id_item_pedido}}/cancelar
+Authorization: Bearer {{tokenCliente}}
+
+
+### 233. Painel do salão mostra o cliente e quem abriu (espera 200)
+GET {{host}}/mesas/painel
+Authorization: Bearer {{tokenGerencia}}
 
