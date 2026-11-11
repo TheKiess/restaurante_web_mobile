@@ -3,6 +3,7 @@
 import { useCallback, useState }           from "react";
 import Link                                from "next/link";
 import { apiGet, apiPatch }                from "@/lib/api";
+import BuscaCliente, { type ClienteBusca } from "@/componentes/BuscaCliente/BuscaCliente";
 import {
   OBJ_NOMES_FORMA_PAGAMENTO,
   OBJ_NOMES_SITUACAO_ITEM,
@@ -21,6 +22,7 @@ interface Comanda {
   dt_abertura: string;
   dt_fechamento: string | null;
   mesa: { nr_mesa: number } | null;
+  cliente: { pessoa: { nm_pessoa: string } } | null;
 }
 
 interface ComandaDetalhe extends Comanda
@@ -31,6 +33,7 @@ interface ComandaDetalhe extends Comanda
     qt_quantidade: number;
     vl_unitario: string;
     id_situacao: string;
+    id_origem: string;
     ds_observacao: string | null;
     item_cardapio: { nm_item: string };
   }[];
@@ -71,16 +74,17 @@ function lerMensagemDoErro(erro: unknown, dsPadrao: string): string
 
 export default function ComandasPage()
 {
-  const [arrComandas, setArrComandas]             = useState<Comanda[]>([]);
-  const [dsFiltro, setDsFiltro]                   = useState<Filtro>("ABERTA");
-  const [carregando, setCarregando]               = useState(true);
-  const [dsErro, setDsErro]                       = useState("");
-  const [dsSucesso, setDsSucesso]                 = useState("");
-  const [nrComandaAberta, setNrComandaAberta]     = useState<number | null>(null);
-  const [detalhe, setDetalhe]                     = useState<ComandaDetalhe | null>(null);
-  const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
-  const [nrComandaEmAcao, setNrComandaEmAcao]     = useState<number | null>(null);
-  const carregarComandas                          = useCallback(async () => {
+  const [arrComandas, setArrComandas]                 = useState<Comanda[]>([]);
+  const [dsFiltro, setDsFiltro]                       = useState<Filtro>("ABERTA");
+  const [carregando, setCarregando]                   = useState(true);
+  const [dsErro, setDsErro]                           = useState("");
+  const [dsSucesso, setDsSucesso]                     = useState("");
+  const [nrComandaAberta, setNrComandaAberta]         = useState<number | null>(null);
+  const [detalhe, setDetalhe]                         = useState<ComandaDetalhe | null>(null);
+  const [carregandoDetalhe, setCarregandoDetalhe]     = useState(false);
+  const [nrComandaEmAcao, setNrComandaEmAcao]         = useState<number | null>(null);
+  const [clienteParaVincular, setClienteParaVincular] = useState<ClienteBusca | null>(null);
+  const carregarComandas                              = useCallback(async () => {
     setCarregando(true);
     setDsErro("");
 
@@ -162,6 +166,35 @@ export default function ComandasPage()
     catch (erro)
     {
       setDsErro(lerMensagemDoErro(erro, "Não foi possível alterar a comanda."));
+    }
+    finally
+    {
+      setNrComandaEmAcao(null);
+    }
+  }
+
+  async function vincularCliente(comanda: Comanda, nrIdCliente: number | null)
+  {
+    if (nrComandaEmAcao !== null)
+      return;
+
+    setDsErro("");
+    setDsSucesso("");
+    setNrComandaEmAcao(comanda.id_comanda);
+
+    try
+    {
+      await apiPatch(`comandas/${comanda.id_comanda}/cliente`, { id_cliente: nrIdCliente });
+      setDsSucesso(nrIdCliente === null
+        ? `Cliente removido da comanda #${comanda.id_comanda}.`
+        : `Cliente vinculado à comanda #${comanda.id_comanda}.`);
+      setClienteParaVincular(null);
+      await carregarComandas();
+      await carregarDetalhe(comanda.id_comanda);
+    }
+    catch (erro)
+    {
+      setDsErro(lerMensagemDoErro(erro, "Não foi possível vincular o cliente."));
     }
     finally
     {
@@ -255,7 +288,8 @@ export default function ComandasPage()
                   <div>
                     <h2 className={estilos.comandaTitulo}>Comanda #{comanda.id_comanda}</h2>
                     <p className={estilos.subtituloCartao}>
-                      {comanda.mesa ? `Mesa ${comanda.mesa.nr_mesa}` : "Retirada / sem mesa"} · aberta
+                      {comanda.mesa ? `Mesa ${comanda.mesa.nr_mesa}` : "Retirada / sem mesa"}
+                      {comanda.cliente && ` · cliente ${comanda.cliente.pessoa.nm_pessoa}`} · aberta
                       em {formatarDataHora(comanda.dt_abertura)}
                       {comanda.dt_fechamento && ` · encerrada em ${formatarDataHora(comanda.dt_fechamento)}`}
                     </p>
@@ -286,8 +320,43 @@ export default function ComandasPage()
                     ) : (
                       <>
                         <p className={estilos.subtituloCartao}>
-                          Atendida por {detalhe.usuario?.pessoa.nm_pessoa ?? "usuário não informado"}
+                          Aberta por {detalhe.usuario?.pessoa.nm_pessoa ?? "usuário não informado"}
+                          {" · "}
+                          {detalhe.cliente ? `Cliente: ${detalhe.cliente.pessoa.nm_pessoa}` : "Sem cliente vinculado"}
                         </p>
+
+                        {comanda.id_situacao === "ABERTA" && (
+                          <div className={estilos.espacoTopo}>
+                            <BuscaCliente
+                              idCampo={`vincular_cliente_${comanda.id_comanda}`}
+                              nmRotulo={detalhe.cliente ? "Trocar o cliente" : "Vincular um cliente"}
+                              clienteEscolhido={clienteParaVincular}
+                              aoEscolher={setClienteParaVincular}
+                            />
+
+                            <div className={`${estilos.botoes} ${estilos.espacoTopo}`}>
+                              <button
+                                type="button"
+                                onClick={() => clienteParaVincular && void vincularCliente(comanda, clienteParaVincular.id_usuario)}
+                                disabled={!clienteParaVincular || nrComandaEmAcao !== null}
+                                className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno}`}
+                              >
+                                Salvar cliente
+                              </button>
+
+                              {detalhe.cliente && (
+                                <button
+                                  type="button"
+                                  onClick={() => void vincularCliente(comanda, null)}
+                                  disabled={nrComandaEmAcao !== null}
+                                  className={`${estilos.botao} ${estilos.botaoPerigo} ${estilos.botaoPequeno}`}
+                                >
+                                  Remover cliente
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                         <h3 className={estilos.tituloBloco}>Itens</h3>
 
@@ -298,7 +367,10 @@ export default function ComandasPage()
                             {detalhe.itens.map((item) => (
                               <div key={item.id_item_pedido} className={estilos.itemLancado}>
                                 <div>
-                                  <p className={estilos.negrito}>{item.item_cardapio.nm_item}</p>
+                                  <p className={estilos.negrito}>
+                                    {item.item_cardapio.nm_item}
+                                    {item.id_origem === "APP" && " (pedido pelo app)"}
+                                  </p>
                                   <p className={estilos.subtituloCartao}>
                                     {item.qt_quantidade} × {formatarMoeda(item.vl_unitario)}
                                   </p>

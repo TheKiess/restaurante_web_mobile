@@ -11,7 +11,8 @@ import estilosMesa                         from "./PainelSalao.module.css";
 type ComandaDaMesa = {
   id_comanda: number;
   dt_abertura: string;
-  nm_responsavel: string | null;
+  nm_cliente: string | null;
+  nm_aberta_por: string;
   vl_total: string;
   vl_restante: string;
   qt_itens: number;
@@ -197,8 +198,9 @@ export default function PainelSalao({ nrSegundos = 10 }: { nrSegundos?: number }
                       <div className={estilosMesa.detalhes}>
                         <p>
                           <span className={estilosMesa.rotuloDetalhe}>Comanda #{mesa.comanda.id_comanda}</span>
-                          {mesa.comanda.nm_responsavel ? ` de ${mesa.comanda.nm_responsavel}` : ""}
+                          {mesa.comanda.nm_cliente ? ` de ${mesa.comanda.nm_cliente}` : " sem cliente vinculado"}
                         </p>
+                        <p>Aberta por {mesa.comanda.nm_aberta_por}</p>
                         <p>Aberta às {formatarHora(mesa.comanda.dt_abertura)}</p>
                         <p>
                           {mesa.comanda.qt_itens} item(ns)

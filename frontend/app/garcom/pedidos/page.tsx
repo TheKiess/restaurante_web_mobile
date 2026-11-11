@@ -1,12 +1,12 @@
 "use client";
 
-import Link                      from "next/link";
-import { useCallback, useState } from "react";
-import { apiGet, apiPost }       from "@/lib/api";
-import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
-import { useSessao }             from "@/lib/useSessao";
-import estilos                   from "@/estilos/Painel.module.css";
-import { formatarMoeda }         from "@/lib/formatar";
+import Link                                from "next/link";
+import { useCallback, useState }           from "react";
+import { apiGet, apiPost }                 from "@/lib/api";
+import { useCarregarAoMontar }             from "@/lib/useCarregarAoMontar";
+import BuscaCliente, { type ClienteBusca } from "@/componentes/BuscaCliente/BuscaCliente";
+import estilos                             from "@/estilos/Painel.module.css";
+import { formatarMoeda }                   from "@/lib/formatar";
 
 type Mesa = {
   id_mesa: number;
@@ -18,6 +18,7 @@ type Comanda = {
   id_comanda: number;
   id_situacao: string;
   mesa?: Mesa | null;
+  cliente?: { pessoa: { nm_pessoa: string } } | null;
 };
 
 type ItemCardapio = {
@@ -51,13 +52,13 @@ function obterSubtotal(item: ItemPedido)
 
 export default function PedidosPage()
 {
-  const usuario                                           = useSessao();
   const [comandas,              setComandas]              = useState<Comanda[]>([]);
   const [mesas,                 setMesas]                 = useState<Mesa[]>([]);
   const [itens,                 setItens]                 = useState<ItemCardapio[]>([]);
   const [itensPedido,           setItensPedido]           = useState<ItemPedido[]>([]);
   const [tipoAtendimento,       setTipoAtendimento]       = useState<TipoAtendimento>("MESA");
   const [mesaSelecionada,       setMesaSelecionada]       = useState("");
+  const [clienteEscolhido,      setClienteEscolhido]      = useState<ClienteBusca | null>(null);
   const [comandaSelecionada,    setComandaSelecionada]    = useState<number | null>(null);
   const [produtoSelecionado,    setProdutoSelecionado]    = useState("");
   const [quantidade,            setQuantidade]            = useState("1");
@@ -169,12 +170,6 @@ export default function PedidosPage()
     setErro("");
     setSucesso("");
 
-    if (!usuario)
-    {
-      setErro("Aguarde o carregamento da sessão e tente de novo.");
-      return;
-    }
-
     if (tipoAtendimento === "MESA" && !mesaSelecionada)
     {
       setErro("Selecione uma mesa disponível.");
@@ -186,13 +181,14 @@ export default function PedidosPage()
     try
     {
       const novaComanda = await apiPost<Comanda>("comandas", {
-        id_usuario: usuario.id_usuario,
         ...(tipoAtendimento === "MESA" ? { id_mesa: Number(mesaSelecionada) } : {}),
+        ...(clienteEscolhido ? { id_cliente: clienteEscolhido.id_usuario } : {}),
       });
 
       await carregarDados();
 
       setMesaSelecionada("");
+      setClienteEscolhido(null);
       setComandaSelecionada(novaComanda.id_comanda);
       setItensPedido([]);
       setProdutoSelecionado("");
@@ -404,10 +400,21 @@ export default function PedidosPage()
               </p>
             )}
 
+            <div className={estilos.espacoTopo}>
+              <BuscaCliente
+                idCampo="cliente_nova_comanda"
+                clienteEscolhido={clienteEscolhido}
+                aoEscolher={setClienteEscolhido}
+              />
+              <p className={`${estilos.observacao} ${estilos.espacoTopo}`}>
+                Vincular o cliente deixa a comanda disponível para ele acompanhar e pedir pelo aplicativo.
+              </p>
+            </div>
+
             <button
               type="button"
               onClick={() => void abrirComanda()}
-              disabled={abrindoComanda || !usuario}
+              disabled={abrindoComanda}
               className={`${estilos.botao} ${estilos.botaoPrimario} ${estilos.espacoTopo}`}
             >
               {abrindoComanda ? "Abrindo..." : "Abrir comanda"}
@@ -457,6 +464,12 @@ export default function PedidosPage()
                         {comanda.mesa
                           ? `Mesa ${comanda.mesa.nr_mesa}`
                           : "Retirada / sem mesa"}
+                      </p>
+
+                      <p className={estilos.subtituloCartao}>
+                        {comanda.cliente
+                          ? `Cliente: ${comanda.cliente.pessoa.nm_pessoa}`
+                          : "Sem cliente vinculado"}
                       </p>
 
                       <button

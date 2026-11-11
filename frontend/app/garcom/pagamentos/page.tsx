@@ -15,6 +15,7 @@ import estilos                       from "@/estilos/Painel.module.css";
 type Comanda = {
   id_comanda: number;
   mesa?: { nr_mesa: number } | null;
+  cliente?: { pessoa: { nm_pessoa: string } } | null;
 };
 
 type Pagamento = {
@@ -50,7 +51,9 @@ function arredondar(vlValor: number): number
 
 function descreverComanda(comanda: Comanda): string
 {
-  return comanda.mesa ? `Mesa ${comanda.mesa.nr_mesa}` : "Retirada / sem mesa";
+  const dsLocal = comanda.mesa ? `Mesa ${comanda.mesa.nr_mesa}` : "Retirada / sem mesa";
+
+  return comanda.cliente ? `${dsLocal} · ${comanda.cliente.pessoa.nm_pessoa}` : dsLocal;
 }
 
 export default function PagamentosPage()
