@@ -99,3 +99,18 @@ export async function apiDelete<T>(endpoint: string): Promise<T>
 
   return tratarResposta<T>(resposta);
 }
+
+export async function apiPut<T>(endpoint: string, dados: unknown): Promise<T>
+{
+  const resposta = await fetch(obterUrl(endpoint), {
+    method: "PUT",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(dados),
+    cache: "no-store"
+  });
+
+  return tratarResposta<T>(resposta);
+}

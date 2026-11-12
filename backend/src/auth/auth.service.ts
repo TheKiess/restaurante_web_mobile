@@ -6,7 +6,8 @@ import type { Perfil }                       from '../generated/prisma/enums.js'
 import { LoginDto }                          from './dto/login.dto.js';
 import type { PayloadToken }                 from './auth.types.js';
 
-const MSG_LOGIN_INVALIDO = 'Apelido, e-mail ou senha inválidos!';
+const MSG_LOGIN_INVALIDO  = 'Apelido, e-mail ou senha inválidos!';
+const MSG_USUARIO_INATIVO = 'Usuário inativo! Procure a gerência.';
 
 interface UsuarioComPessoa
 {
@@ -22,7 +23,7 @@ export class AuthService
   constructor(
     private readonly prisma: PrismaService,
     private readonly cryptService: CryptService,
-    private readonly jwtService: JwtService,
+    private readonly jwtService: JwtService
   ) {}
 
   async entrar(loginDto: LoginDto)
@@ -43,6 +44,9 @@ export class AuthService
 
     if (!await this.cryptService.compararSenha(loginDto.ds_senha, usuario.ds_senha))
       throw new UnauthorizedException(MSG_LOGIN_INVALIDO);
+
+    if (!usuario.id_ativo)
+      throw new UnauthorizedException(MSG_USUARIO_INATIVO);
 
     const payload: PayloadToken = {
       sub: usuario.id_usuario,

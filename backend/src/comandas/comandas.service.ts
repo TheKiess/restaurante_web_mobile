@@ -1,25 +1,37 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { SituacaoComanda, SituacaoItemPedido, SituacaoPagamento } from '../generated/prisma/enums.js';
-import { calcularTotais } from './calcular-totais.js';
-import { CreateComandaDto } from './dto/create-comanda.dto.js';
-import { UpdateComandaDto } from './dto/update-comanda.dto.js';
-import { ListarComandasQueryDto } from './dto/listar-comandas-query.dto.js';
+import { ConflictException, Injectable, NotFoundException }                 from '@nestjs/common';
+import { PrismaService }                                                    from '../prisma/prisma.service.js';
+import { MovimentosEstoqueService }                                         from '../movimentos-estoque/movimentos-estoque.service.js';
+import { travarComanda, travarMesa }                                        from '../prisma/travas.js';
+import { Prisma }                                                           from '../generated/prisma/client.js';
+import { buscarReservaSegurandoMesa, formatarHorario }                      from '../reservas/regras-reserva.js';
+import { SituacaoComanda, SituacaoItemPedido, SituacaoPagamento, TipoItem } from '../generated/prisma/enums.js';
+import { calcularTotais }                                                   from './calcular-totais.js';
+import { CreateComandaDto }                                                 from './dto/create-comanda.dto.js';
+import { UpdateComandaDto }                                                 from './dto/update-comanda.dto.js';
+import { ListarComandasQueryDto }                                           from './dto/listar-comandas-query.dto.js';
 
 @Injectable()
 export class ComandasService
 {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly movimentosEstoqueService: MovimentosEstoqueService
+  ) {}
 
   async abrirComanda(createComandaDto: CreateComandaDto)
   {
     const { id_usuario, id_mesa } = createComandaDto;
     await this.validarUsuario(id_usuario);
 
-    if (id_mesa)
-      await this.validarMesaLivre(id_mesa);
+    return this.prisma.$transaction(async (transacao) => {
+      if (id_mesa)
+      {
+        await travarMesa(transacao, id_mesa);
+        await this.validarMesaLivre(id_mesa, undefined, transacao);
+      }
 
-    return this.prisma.comanda.create({ data: { id_usuario, id_mesa } });
+      return transacao.comanda.create({ data: { id_usuario, id_mesa } });
+    });
   }
 
   listarComandas(listarComandasQueryDto: ListarComandasQueryDto)
@@ -37,10 +49,25 @@ export class ComandasService
       where: { id_comanda: nrId },
       include: {
         mesa: true,
-        usuario: { select: { id_usuario: true, ds_apelido: true, pessoa: { select: { nm_pessoa: true } } } },
-        itens: { include: { item_cardapio: { select: { nm_item: true } } }, orderBy: { dt_pedido: 'asc' } },
+        usuario: {
+          select: {
+            id_usuario: true,
+            ds_apelido: true,
+            pessoa: {
+              select: { nm_pessoa: true }
+            }
+          }
+        },
+        itens: {
+          include: {
+            item_cardapio: {
+              select: { nm_item: true }
+            }
+          },
+          orderBy: { dt_pedido: 'asc' }
+        },
         pagamentos: true,
-      },
+      }
     });
     if (!comanda)
       throw new NotFoundException(`Comanda ${nrId} não encontrada`);
@@ -57,16 +84,23 @@ export class ComandasService
 
   async atualizarComanda(nrId: number, updateComandaDto: UpdateComandaDto)
   {
-    await this.validarComandaAberta(nrId);
-    await this.validarMesaLivre(updateComandaDto.id_mesa, nrId);
-    await this.prisma.comanda.update({ where: { id_comanda: nrId }, data: { id_mesa: updateComandaDto.id_mesa } });
+    await this.prisma.$transaction(async (transacao) => {
+      await travarComanda(transacao, nrId);
+      await this.validarComandaAberta(nrId, transacao);
+      await travarMesa(transacao, updateComandaDto.id_mesa);
+      await this.validarMesaLivre(updateComandaDto.id_mesa, nrId, transacao);
+      await transacao.comanda.update({ where: { id_comanda: nrId }, data: { id_mesa: updateComandaDto.id_mesa } });
+    });
+
     return this.buscarComandaPorId(nrId);
   }
 
   async fecharComanda(nrId: number)
   {
-    await this.prisma.$transaction(async (tx) => {
-      const comanda = await tx.comanda.findUnique({ where: { id_comanda: nrId }, include: { itens: true, pagamentos: true } });
+    await this.prisma.$transaction(async (transacao) => {
+      await travarComanda(transacao, nrId);
+
+      const comanda = await transacao.comanda.findUnique({ where: { id_comanda: nrId }, include: { itens: true, pagamentos: true } });
 
       if (!comanda)
         throw new NotFoundException(`Comanda ${nrId} não encontrada!`);
@@ -95,7 +129,7 @@ export class ComandasService
       if (vlRestante.lt(0))
         throw new ConflictException('Os pagamentos são maiores que o total da comanda!');
 
-      const { count } = await tx.comanda.updateMany({
+      const { count } = await transacao.comanda.updateMany({
         where: { id_comanda: nrId, id_situacao: SituacaoComanda.ABERTA },
         data: { id_situacao: SituacaoComanda.FECHADA, dt_fechamento: new Date() },
       });
@@ -109,32 +143,51 @@ export class ComandasService
 
   async cancelarComanda(nrId: number)
   {
-    await this.validarComandaAberta(nrId);
-    const nrItensEntregues = await this.prisma.itemPedido.count({
-      where: { id_comanda: nrId, id_situacao: SituacaoItemPedido.ENTREGUE },
-    });
+    await this.prisma.$transaction(async (transacao) => {
+      await travarComanda(transacao, nrId);
+      await this.validarComandaAberta(nrId, transacao);
 
-    if (nrItensEntregues > 0)
-      throw new ConflictException('Comanda com itens entregues não pode ser cancelada, feche a comanda!');
+      const nrItensEntregues = await transacao.itemPedido.count({
+        where: {
+          id_comanda: nrId,
+          id_situacao: SituacaoItemPedido.ENTREGUE
+        },
+      });
 
-    const nrPagamentosConfirmados = await this.prisma.pagamento.count({
-      where: { id_comanda: nrId, id_situacao: SituacaoPagamento.CONFIRMADO },
-    });
+      if (nrItensEntregues > 0)
+        throw new ConflictException('Comanda com itens entregues não pode ser cancelada, feche a comanda!');
 
-    if (nrPagamentosConfirmados > 0)
-      throw new ConflictException('Comanda com pagamento confirmado não pode ser cancelada!');
+      const nrPagamentosConfirmados = await transacao.pagamento.count({
+        where: { id_comanda: nrId, id_situacao: SituacaoPagamento.CONFIRMADO },
+      });
 
-    await this.prisma.$transaction([
-      this.prisma.itemPedido.updateMany({ where: { id_comanda: nrId }, data: { id_situacao: SituacaoItemPedido.CANCELADO } }),
-      this.prisma.pagamento.updateMany({
+      if (nrPagamentosConfirmados > 0)
+        throw new ConflictException('Comanda com pagamento confirmado não pode ser cancelada!');
+
+      const arrItensRevenda = await transacao.itemPedido.findMany({
+        where: {
+          id_comanda: nrId,
+          id_situacao: { not: SituacaoItemPedido.CANCELADO },
+          item_cardapio: { tipo_item: TipoItem.REVENDA },
+        },
+        select: { id_item_pedido: true }
+      });
+
+      await this.movimentosEstoqueService.estornarEstoqueDosItens(transacao, arrItensRevenda.map((item) => item.id_item_pedido));
+      await transacao.itemPedido.updateMany({
+        where: { id_comanda: nrId },
+        data: { id_situacao: SituacaoItemPedido.CANCELADO }
+      });
+      await transacao.pagamento.updateMany({
         where: { id_comanda: nrId, id_situacao: SituacaoPagamento.PENDENTE },
         data: { id_situacao: SituacaoPagamento.RECUSADO },
-      }),
-      this.prisma.comanda.update({
+      });
+      await transacao.comanda.update({
         where: { id_comanda: nrId },
         data: { id_situacao: SituacaoComanda.CANCELADA, dt_fechamento: new Date() },
-      })
-    ]);
+      });
+    });
+
     return this.buscarComandaPorId(nrId);
   }
 
@@ -146,24 +199,37 @@ export class ComandasService
       throw new NotFoundException(`Usuário ${nrIdUsuario} não encontrado!`);
   }
 
-  private async validarMesaLivre(nrIdMesa: number, nrIdComandaAtual?: number)
+  private async validarMesaLivre(nrIdMesa: number, nrIdComandaAtual?: number, transacao?: Prisma.TransactionClient)
   {
-    const mesa = await this.prisma.mesa.findUnique({ where: { id_mesa: nrIdMesa } });
+    const database = transacao ?? this.prisma;
+    const mesa     = await database.mesa.findUnique({ where: { id_mesa: nrIdMesa } });
 
     if (!mesa)
       throw new NotFoundException(`Mesa ${nrIdMesa} não encontrada!`);
 
-    const comandaAberta = await this.prisma.comanda.findFirst({
+    const comandaAberta = await database.comanda.findFirst({
       where: { id_mesa: nrIdMesa, id_situacao: SituacaoComanda.ABERTA }
     });
 
     if (comandaAberta && comandaAberta.id_comanda !== nrIdComandaAtual)
       throw new ConflictException(`Mesa ${mesa.nr_mesa} já tem uma comanda aberta!`);
+
+    if (comandaAberta)
+      return;
+
+    const reservaSegurando = await buscarReservaSegurandoMesa(database, nrIdMesa);
+
+    if (reservaSegurando)
+      throw new ConflictException(
+        `Mesa ${mesa.nr_mesa} está reservada para ${formatarHorario(reservaSegurando.dt_reserva)} ` +
+        `(check-in até ${formatarHorario(reservaSegurando.dt_limite_checkin)}). Faça o check-in da reserva!`
+      );
   }
 
-  private async validarComandaAberta(nrId: number)
+  private async validarComandaAberta(nrId: number, transacao?: Prisma.TransactionClient)
   {
-    const comanda = await this.prisma.comanda.findUnique({ where: { id_comanda: nrId } });
+    const database = transacao ?? this.prisma;
+    const comanda  = await database.comanda.findUnique({ where: { id_comanda: nrId } });
 
     if (!comanda)
       throw new NotFoundException(`Comanda ${nrId} não encontrada!`);

@@ -24,7 +24,7 @@ type ItemCardapio = {
   categoria?: Categoria;
 };
 
-type Formulario = {
+type FormularioItem = {
   id_categoria: string;
   nm_item: string;
   ds_item: string;
@@ -33,7 +33,7 @@ type Formulario = {
   disponivel: boolean;
 };
 
-const formularioInicial: Formulario = {
+const OBJ_FORMULARIO_INICIAL: FormularioItem = {
   id_categoria: "",
   nm_item: "",
   ds_item: "",
@@ -42,127 +42,139 @@ const formularioInicial: Formulario = {
   disponivel: true,
 };
 
-export default function CardapioPage() {
-  const [itens, setItens] = useState<ItemCardapio[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [formulario, setFormulario] =
-    useState<Formulario>(formularioInicial);
-  const [itemEditando, setItemEditando] = useState<number | null>(null);
-  const [busca, setBusca] = useState("");
-  const [filtroCategoria, setFiltroCategoria] = useState("TODAS");
-  const [filtroDisponibilidade, setFiltroDisponibilidade] =
-    useState("TODOS");
-  const [carregando, setCarregando] = useState(true);
-  const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState("");
+export default function CardapioPage()
+{
+  const [arrItens,                setArrItens]                = useState<ItemCardapio[]>([]);
+  const [arrCategorias,           setArrCategorias]           = useState<Categoria[]>([]);
+  const [objFormulario,           setObjFormulario]           = useState<FormularioItem>(OBJ_FORMULARIO_INICIAL);
+  const [idItemEditando,          setIdItemEditando]          = useState<number | null>(null);
+  const [dsBusca,                 setDsBusca]                 = useState("");
+  const [dsFiltroCategoria,       setDsFiltroCategoria]       = useState("TODAS");
+  const [dsFiltroDisponibilidade, setDsFiltroDisponibilidade] = useState("TODOS");
+  const [flCarregando,            setFlCarregando]            = useState(true);
+  const [flSalvando,              setFlSalvando]              = useState(false);
+  const [dsErro,                  setDsErro]                  = useState("");
+  const [dsSucesso,               setDsSucesso]               = useState("");
 
   const carregarDados = useCallback(async () => {
-    setCarregando(true);
-    setErro("");
+    setFlCarregando(true);
+    setDsErro("");
 
-    try {
-      const [dadosItens, dadosCategorias] = await Promise.all([
+    try
+    {
+      const [arrItensApi, arrCategoriasApi] = await Promise.all([
         apiGet<ItemCardapio[]>("itens-cardapio"),
         apiGet<Categoria[]>("categorias"),
       ]);
 
-      setItens(
-        [...dadosItens].sort((a, b) =>
-          a.nm_item.localeCompare(b.nm_item, "pt-BR")
+      setArrItens(
+        [...arrItensApi].sort((objItemA, objItemB) =>
+          objItemA.nm_item.localeCompare(objItemB.nm_item, "pt-BR")
         )
       );
-      setCategorias(dadosCategorias);
-    } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível carregar o cardápio."
+      setArrCategorias(arrCategoriasApi);
+    }
+    catch (erro)
+    {
+      setDsErro(erro instanceof Error
+        ? erro.message
+        : "Não foi possível carregar o cardápio."
       );
-    } finally {
-      setCarregando(false);
+    }
+    finally
+    {
+      setFlCarregando(false);
     }
   }, []);
 
   useCarregarAoMontar(carregarDados);
 
-  function alterarCampo<K extends keyof Formulario>(
-    campo: K,
-    valor: Formulario[K]
-  ) {
-    setFormulario((atual) => ({ ...atual, [campo]: valor }));
+  function alterarCampo<NomeCampo extends keyof FormularioItem>(
+    nmCampo: NomeCampo,
+    valor: FormularioItem[NomeCampo]
+  )
+  {
+    setObjFormulario((objAtual) => ({ ...objAtual, [nmCampo]: valor }));
   }
 
   function limparFormulario() {
-    setFormulario(formularioInicial);
-    setItemEditando(null);
-    setErro("");
-    setSucesso("");
+    setObjFormulario(OBJ_FORMULARIO_INICIAL);
+    setIdItemEditando(null);
+    setDsErro("");
+    setDsSucesso("");
   }
 
   async function salvarItem(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    setErro("");
-    setSucesso("");
+    setDsErro("");
+    setDsSucesso("");
 
-    const idCategoria = Number(formulario.id_categoria);
-    const preco = Number(formulario.vl_unitario.replace(",", "."));
+    const idCategoria = Number(objFormulario.id_categoria);
+    const vlPreco     = Number(objFormulario.vl_unitario.replace(",", "."));
 
-    if (!Number.isInteger(idCategoria) || idCategoria < 1) {
-      setErro("Selecione uma categoria válida.");
+    if (!Number.isInteger(idCategoria) || idCategoria < 1)
+    {
+      setDsErro("Selecione uma categoria válida.");
       return;
     }
 
-    if (!formulario.nm_item.trim()) {
-      setErro("Informe o nome do item.");
+    if (!objFormulario.nm_item.trim())
+    {
+      setDsErro("Informe o nome do item.");
       return;
     }
 
-    if (!Number.isFinite(preco) || preco <= 0) {
-      setErro("Informe um preço maior que zero.");
+    if (!Number.isFinite(vlPreco) || vlPreco <= 0)
+    {
+      setDsErro("Informe um preço maior que zero.");
       return;
     }
 
-    const dados = {
+    const objDados = {
       id_categoria: idCategoria,
-      nm_item: formulario.nm_item.trim(),
-      ds_item: formulario.ds_item.trim() || undefined,
-      vl_unitario: Number(preco.toFixed(2)),
-      tipo_item: formulario.tipo_item,
-      disponivel: formulario.disponivel,
+      nm_item: objFormulario.nm_item.trim(),
+      ds_item: objFormulario.ds_item.trim() || undefined,
+      vl_unitario: Number(vlPreco.toFixed(2)),
+      tipo_item: objFormulario.tipo_item,
+      disponivel: objFormulario.disponivel
     };
 
-    setSalvando(true);
+    setFlSalvando(true);
 
-    try {
-      if (itemEditando !== null) {
-        await apiPatch<ItemCardapio>(
-          `itens-cardapio/${itemEditando}`,
-          dados
-        );
-        setSucesso("Item atualizado com sucesso!");
-      } else {
-        await apiPost<ItemCardapio>("itens-cardapio", dados);
-        setSucesso("Item cadastrado com sucesso!");
+    try
+    {
+      if (idItemEditando !== null)
+      {
+        await apiPatch<ItemCardapio>(`itens-cardapio/${idItemEditando}`, objDados);
+        setDsSucesso("Item atualizado com sucesso!");
+      }
+      else
+      {
+        await apiPost<ItemCardapio>("itens-cardapio", objDados);
+        setDsSucesso("Item cadastrado com sucesso!");
       }
 
-      setFormulario(formularioInicial);
-      setItemEditando(null);
+      setObjFormulario(OBJ_FORMULARIO_INICIAL);
+      setIdItemEditando(null);
       await carregarDados();
-    } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível salvar o item."
+    }
+    catch (erro)
+    {
+      setDsErro(erro instanceof Error
+        ? erro.message
+        : "Não foi possível salvar o item."
       );
-    } finally {
-      setSalvando(false);
+    }
+    finally
+    {
+      setFlSalvando(false);
     }
   }
 
-  function editarItem(item: ItemCardapio) {
-    setItemEditando(item.id_item_cardapio);
-    setFormulario({
+  function editarItem(item: ItemCardapio)
+  {
+    setIdItemEditando(item.id_item_cardapio);
+    setObjFormulario({
       id_categoria: String(item.id_categoria),
       nm_item: item.nm_item,
       ds_item: item.ds_item ?? "",
@@ -170,90 +182,92 @@ export default function CardapioPage() {
       tipo_item: item.tipo_item,
       disponivel: item.disponivel,
     });
-    setErro("");
-    setSucesso("");
+    setDsErro("");
+    setDsSucesso("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function excluirItem(item: ItemCardapio) {
-    const confirmar = window.confirm(
-      `Deseja realmente excluir "${item.nm_item}"?`
-    );
+  async function excluirItem(item: ItemCardapio)
+  {
+    const flConfirmarExclusao = window.confirm(`Deseja realmente excluir "${item.nm_item}"?`);
 
-    if (!confirmar) return;
+    if (!flConfirmarExclusao)
+      return;
 
-    setErro("");
-    setSucesso("");
+    setDsErro("");
+    setDsSucesso("");
 
-    try {
-      await apiDelete<void>(
-        `itens-cardapio/${item.id_item_cardapio}`
-      );
+    try
+    {
+      await apiDelete<void>(`itens-cardapio/${item.id_item_cardapio}`);
 
-      if (itemEditando === item.id_item_cardapio) {
-        setFormulario(formularioInicial);
-        setItemEditando(null);
+      if (idItemEditando === item.id_item_cardapio)
+      {
+        setObjFormulario(OBJ_FORMULARIO_INICIAL);
+        setIdItemEditando(null);
       }
 
-      setSucesso(`"${item.nm_item}" foi excluído.`);
+      setDsSucesso(`"${item.nm_item}" foi excluído.`);
       await carregarDados();
-    } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível excluir o item."
+    }
+    catch (erro)
+    {
+      setDsErro(erro instanceof Error
+        ? erro.message
+        : "Não foi possível excluir o item."
       );
     }
   }
 
-  async function alternarDisponibilidade(item: ItemCardapio) {
-    setErro("");
-    setSucesso("");
+  async function alternarDisponibilidade(item: ItemCardapio)
+  {
+    setDsErro("");
+    setDsSucesso("");
 
-    try {
+    try
+    {
       await apiPatch<ItemCardapio>(
         `itens-cardapio/${item.id_item_cardapio}`,
         { disponivel: !item.disponivel }
       );
 
-      setSucesso(
-        item.disponivel
-          ? "Item marcado como indisponível."
-          : "Item marcado como disponível."
+      setDsSucesso(item.disponivel
+        ? "Item marcado como indisponível."
+        : "Item marcado como disponível."
       );
 
       await carregarDados();
-    } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível alterar a disponibilidade."
+    }
+    catch (erro)
+    {
+      setDsErro(erro instanceof Error
+        ? erro.message
+        : "Não foi possível alterar a disponibilidade."
       );
     }
   }
 
-  const itensFiltrados = itens.filter((item) => {
-    const texto = `${item.nm_item} ${item.ds_item ?? ""}`.toLowerCase();
-    const correspondeBusca = texto.includes(busca.toLowerCase());
+  const arrItensFiltrados = arrItens.filter((item) => {
+    const flCorrespondeBusca = `${item.nm_item} ${item.ds_item ?? ""}`
+      .toLowerCase().includes(dsBusca.toLowerCase());
 
-    const correspondeCategoria =
-      filtroCategoria === "TODAS" ||
-      item.id_categoria === Number(filtroCategoria);
+    const flCorrespondeCategoria =
+      dsFiltroCategoria === "TODAS" ||
+      item.id_categoria === Number(dsFiltroCategoria);
 
-    const correspondeDisponibilidade =
-      filtroDisponibilidade === "TODOS" ||
-      (filtroDisponibilidade === "DISPONIVEIS" && item.disponivel) ||
-      (filtroDisponibilidade === "INDISPONIVEIS" && !item.disponivel);
+    const flCorrespondeDisponibilidade = dsFiltroDisponibilidade === "TODOS" ||
+      (dsFiltroDisponibilidade === "DISPONIVEIS"   && item.disponivel)     ||
+      (dsFiltroDisponibilidade === "INDISPONIVEIS" && !item.disponivel);
 
     return (
-      correspondeBusca &&
-      correspondeCategoria &&
-      correspondeDisponibilidade
+      flCorrespondeBusca     &&
+      flCorrespondeCategoria &&
+      flCorrespondeDisponibilidade
     );
   });
 
-  const disponiveis = itens.filter((item) => item.disponivel).length;
-  const indisponiveis = itens.length - disponiveis;
+  const nrItensDisponiveis   = arrItens.filter((item) => item.disponivel).length;
+  const nrItensIndisponiveis = arrItens.length - nrItensDisponiveis;
 
   return (
     <div className={estilos.pagina}>
@@ -267,23 +281,23 @@ export default function CardapioPage() {
 
       <section className={estilos.estatisticas}>
         {[
-          { titulo: "Total de itens", valor: itens.length },
-          { titulo: "Disponíveis", valor: disponiveis },
-          { titulo: "Indisponíveis", valor: indisponiveis },
-        ].map((indicador) => (
-          <div key={indicador.titulo} className={estilos.cartao}>
-            <p className={estilos.estatisticaRotulo}>{indicador.titulo}</p>
-            <p className={estilos.estatisticaValor}>{indicador.valor}</p>
+          { titulo: "Total de itens", valor: arrItens.length },
+          { titulo: "Disponíveis", valor: nrItensDisponiveis },
+          { titulo: "Indisponíveis", valor: nrItensIndisponiveis },
+        ].map((objIndicador) => (
+          <div key={objIndicador.titulo} className={estilos.cartao}>
+            <p className={estilos.estatisticaRotulo}>{objIndicador.titulo}</p>
+            <p className={estilos.estatisticaValor}>{objIndicador.valor}</p>
           </div>
         ))}
       </section>
 
       <section className={estilos.cartao}>
         <h2 className={estilos.tituloCartao}>
-          {itemEditando !== null ? "Editar item" : "Cadastrar item"}
+          {idItemEditando !== null ? "Editar item" : "Cadastrar item"}
         </h2>
 
-        {categorias.length === 0 && !carregando && (
+        {arrCategorias.length === 0 && !flCarregando && (
           <p className={`${estilos.alerta} ${estilos.alertaAviso} ${estilos.espacoTopo}`}>
             Nenhuma categoria foi encontrada. Cadastre uma categoria antes
             de adicionar itens ao cardápio.
@@ -299,8 +313,8 @@ export default function CardapioPage() {
               id="nm_item"
               required
               maxLength={150}
-              value={formulario.nm_item}
-              onChange={(e) => alterarCampo("nm_item", e.target.value)}
+              value={objFormulario.nm_item}
+              onChange={(evento) => alterarCampo("nm_item", evento.target.value)}
               placeholder="Ex.: Hambúrguer da casa"
               className={estilos.entrada}
             />
@@ -313,12 +327,12 @@ export default function CardapioPage() {
             <select
               id="id_categoria"
               required
-              value={formulario.id_categoria}
-              onChange={(e) => alterarCampo("id_categoria", e.target.value)}
+              value={objFormulario.id_categoria}
+              onChange={(evento) => alterarCampo("id_categoria", evento.target.value)}
               className={estilos.entrada}
             >
               <option value="">Selecione uma categoria</option>
-              {categorias.map((categoria) => (
+              {arrCategorias.map((categoria) => (
                 <option
                   key={categoria.id_categoria}
                   value={categoria.id_categoria}
@@ -338,9 +352,9 @@ export default function CardapioPage() {
               type="text"
               inputMode="decimal"
               required
-              value={formulario.vl_unitario}
-              onChange={(e) =>
-                alterarCampo("vl_unitario", e.target.value)
+              value={objFormulario.vl_unitario}
+              onChange={(evento) =>
+                alterarCampo("vl_unitario", evento.target.value)
               }
               placeholder="Ex.: 29,90"
               className={estilos.entrada}
@@ -353,11 +367,11 @@ export default function CardapioPage() {
             </label>
             <select
               id="tipo_item"
-              value={formulario.tipo_item}
-              onChange={(e) =>
+              value={objFormulario.tipo_item}
+              onChange={(evento) =>
                 alterarCampo(
                   "tipo_item",
-                  e.target.value as Formulario["tipo_item"]
+                  evento.target.value as FormularioItem["tipo_item"]
                 )
               }
               className={estilos.entrada}
@@ -374,8 +388,8 @@ export default function CardapioPage() {
             <textarea
               id="ds_item"
               rows={3}
-              value={formulario.ds_item}
-              onChange={(e) => alterarCampo("ds_item", e.target.value)}
+              value={objFormulario.ds_item}
+              onChange={(evento) => alterarCampo("ds_item", evento.target.value)}
               placeholder="Descreva os ingredientes ou detalhes do item..."
               className={`${estilos.entrada} ${estilos.areaTexto}`}
             />
@@ -384,9 +398,9 @@ export default function CardapioPage() {
           <label className={`${estilos.campoCheckbox} ${estilos.larguraTotal}`}>
             <input
               type="checkbox"
-              checked={formulario.disponivel}
-              onChange={(e) =>
-                alterarCampo("disponivel", e.target.checked)
+              checked={objFormulario.disponivel}
+              onChange={(evento) =>
+                alterarCampo("disponivel", evento.target.checked)
               }
             />
             Item disponível para pedidos
@@ -395,17 +409,17 @@ export default function CardapioPage() {
           <div className={`${estilos.botoes} ${estilos.larguraTotal}`}>
             <button
               type="submit"
-              disabled={salvando || categorias.length === 0}
+              disabled={flSalvando || arrCategorias.length === 0}
               className={`${estilos.botao} ${estilos.botaoPrimario}`}
             >
-              {salvando
+              {flSalvando
                 ? "Salvando..."
-                : itemEditando !== null
+                : idItemEditando !== null
                   ? "Salvar alterações"
                   : "Cadastrar item"}
             </button>
 
-            {itemEditando !== null && (
+            {idItemEditando !== null && (
               <button
                 type="button"
                 onClick={limparFormulario}
@@ -417,14 +431,14 @@ export default function CardapioPage() {
           </div>
         </form>
 
-        {erro && (
+        {dsErro && (
           <p role="alert" className={`${estilos.alerta} ${estilos.alertaErro} ${estilos.espacoTopo}`}>
-            {erro}
+            {dsErro}
           </p>
         )}
-        {sucesso && !erro && (
+        {dsSucesso && !dsErro && (
           <p role="status" className={`${estilos.alerta} ${estilos.alertaSucesso} ${estilos.espacoTopo}`}>
-            {sucesso}
+            {dsSucesso}
           </p>
         )}
       </section>
@@ -435,34 +449,34 @@ export default function CardapioPage() {
             <div>
               <h2 className={estilos.tituloCartao}>Itens cadastrados</h2>
               <p className={estilos.subtituloCartao}>
-                {itensFiltrados.length} item(ns) encontrado(s)
+                {arrItensFiltrados.length} item(ns) encontrado(s)
               </p>
             </div>
             <button
               type="button"
               onClick={() => void carregarDados()}
-              disabled={carregando}
+              disabled={flCarregando}
               className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno}`}
             >
-              {carregando ? "Atualizando..." : "Atualizar"}
+              {flCarregando ? "Atualizando..." : "Atualizar"}
             </button>
           </div>
 
           <div className={estilos.filtros}>
             <input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
+              value={dsBusca}
+              onChange={(evento) => setDsBusca(evento.target.value)}
               placeholder="Buscar por nome ou descrição..."
               className={estilos.entrada}
             />
 
             <select
-              value={filtroCategoria}
-              onChange={(e) => setFiltroCategoria(e.target.value)}
+              value={dsFiltroCategoria}
+              onChange={(evento) => setDsFiltroCategoria(evento.target.value)}
               className={estilos.entrada}
             >
               <option value="TODAS">Todas as categorias</option>
-              {categorias.map((categoria) => (
+              {arrCategorias.map((categoria) => (
                 <option
                   key={categoria.id_categoria}
                   value={categoria.id_categoria}
@@ -473,8 +487,8 @@ export default function CardapioPage() {
             </select>
 
             <select
-              value={filtroDisponibilidade}
-              onChange={(e) => setFiltroDisponibilidade(e.target.value)}
+              value={dsFiltroDisponibilidade}
+              onChange={(evento) => setDsFiltroDisponibilidade(evento.target.value)}
               className={estilos.entrada}
             >
               <option value="TODOS">Todas as disponibilidades</option>
@@ -484,9 +498,9 @@ export default function CardapioPage() {
           </div>
         </div>
 
-        {carregando ? (
+        {flCarregando ? (
           <p className={estilos.carregando}>Carregando cardápio...</p>
-        ) : itensFiltrados.length === 0 ? (
+        ) : arrItensFiltrados.length === 0 ? (
           <div className={estilos.vazio}>
             <p className={estilos.vazioTitulo}>Nenhum item encontrado</p>
             <p className={estilos.vazioTexto}>
@@ -507,7 +521,7 @@ export default function CardapioPage() {
                 </tr>
               </thead>
               <tbody>
-                {itensFiltrados.map((item) => (
+                {arrItensFiltrados.map((item) => (
                   <tr key={item.id_item_cardapio} className={estilos.linhaTopo}>
                     <td>
                       <span className={estilos.negrito}>{item.nm_item}</span>
@@ -517,7 +531,7 @@ export default function CardapioPage() {
                     </td>
                     <td>
                       {item.categoria?.nm_categoria ??
-                        categorias.find(
+                        arrCategorias.find(
                           (categoria) =>
                             categoria.id_categoria === item.id_categoria
                         )?.nm_categoria ??

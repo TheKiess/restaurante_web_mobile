@@ -25,6 +25,13 @@ export class MesasController
   }
 
   @Roles(Perfil.GERENCIA, Perfil.GARCOM)
+  @Get('painel')
+  painelDoSalao()
+  {
+    return this.mesasService.painelDoSalao();
+  }
+
+  @Roles(Perfil.GERENCIA, Perfil.GARCOM)
   @Get(':id')
   buscarMesaPorId(@Param('id', ParseIntPipe) nrId: number)
   {

@@ -12,6 +12,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum OrigemPedido {
+  SALAO
+  APP
+}
+
 model Pessoa {
   id_pessoa   Int     @id @default(autoincrement())
   nm_pessoa   String
@@ -22,15 +27,18 @@ model Pessoa {
 }
 
 model Usuario {
-  id_usuario Int      @id @default(autoincrement())
-  id_pessoa  Int      @unique
-  ds_apelido String   @unique
-  ds_senha   String
-  perfil     Perfil   @default(CLIENTE)
-  dt_criacao DateTime @default(now())
-  pessoa     Pessoa   @relation(fields: [id_pessoa], references: [id_pessoa])
-  comandas   Comanda[]
-  reservas   Reserva[]
+  id_usuario        Int       @id @default(autoincrement())
+  id_pessoa         Int       @unique
+  ds_apelido        String    @unique
+  ds_senha          String
+  perfil            Perfil    @default(CLIENTE)
+  id_ativo          Boolean   @default(true)
+  dt_criacao        DateTime  @default(now())
+  pessoa            Pessoa    @relation(fields: [id_pessoa], references: [id_pessoa])
+  comandas          Comanda[] @relation("ComandaAbertaPor")
+  comandasDoCliente Comanda[] @relation("ComandaDoCliente")
+  itensLancados     ItemPedido[]
+  reservas          Reserva[]
 }
 
 enum Perfil {
@@ -148,18 +156,21 @@ enum TipoMovimento {
 model Comanda {
   id_comanda    Int             @id @default(autoincrement())
   id_usuario    Int
+  id_cliente    Int?
   id_mesa       Int?
   id_reserva    Int?            @unique
   id_situacao   SituacaoComanda @default(ABERTA)
   dt_abertura   DateTime        @default(now())
   dt_fechamento DateTime?
-  usuario       Usuario?        @relation(fields: [id_usuario], references: [id_usuario])
-  mesa          Mesa?           @relation(fields: [id_mesa],    references: [id_mesa])
+  usuario       Usuario         @relation("ComandaAbertaPor", fields: [id_usuario], references: [id_usuario])
+  cliente       Usuario?        @relation("ComandaDoCliente", fields: [id_cliente], references: [id_usuario])
+  mesa          Mesa?           @relation(fields: [id_mesa], references: [id_mesa])
   reserva       Reserva?        @relation(fields: [id_reserva], references: [id_reserva])
   itens         ItemPedido[]
   pagamentos    Pagamento[]
 
   @@index([id_usuario])
+  @@index([id_cliente])
   @@index([dt_abertura])
 }
 
@@ -173,12 +184,15 @@ model ItemPedido {
   id_item_pedido   Int                @id @default(autoincrement())
   id_comanda       Int
   id_item_cardapio Int
+  id_usuario       Int?
+  id_origem        OrigemPedido       @default(SALAO)
   qt_quantidade    Int
   vl_unitario      Decimal            @db.Decimal(10, 2)
   ds_observacao    String?
   id_situacao      SituacaoItemPedido @default(AGUARDANDO)
   dt_pedido        DateTime           @default(now())
-  comanda          Comanda            @relation(fields: [id_comanda],       references: [id_comanda], onDelete: Cascade)
+  comanda          Comanda            @relation(fields: [id_comanda], references: [id_comanda], onDelete: Cascade)
+  usuario          Usuario?           @relation(fields: [id_usuario], references: [id_usuario])
   item_cardapio    ItemCardapio       @relation(fields: [id_item_cardapio], references: [id_item_cardapio])
   movimentos       MovimentoEstoque[]
 }

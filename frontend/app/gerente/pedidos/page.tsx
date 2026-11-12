@@ -23,11 +23,13 @@ type ItemPedido = {
   id_situacao: Situacao;
   dt_pedido: string;
   ds_observacao?: string | null;
+  id_origem?: "SALAO" | "APP";
   item_cardapio?: {
     nm_item: string;
   } | null;
   comanda?: {
     id_comanda: number;
+    cliente?: { pessoa: { nm_pessoa: string } } | null;
     mesa?: {
       nr_mesa: number;
     } | null;
@@ -295,6 +297,9 @@ export default function PedidosPage()
                         {numeroMesa != null
                           ? `Mesa ${numeroMesa}`
                           : "Mesa não informada"}{" "}
+                        · {primeiro.comanda?.cliente
+                          ? `Cliente: ${primeiro.comanda.cliente.pessoa.nm_pessoa}`
+                          : "Sem cliente vinculado"}{" "}
                         · {itensComanda.length}{" "}
                         {itensComanda.length === 1 ? "item" : "itens"}
                       </p>
@@ -320,6 +325,12 @@ export default function PedidosPage()
                                 {item.item_cardapio?.nm_item ??
                                   `Item #${item.id_item_pedido}`}
                               </h4>
+
+                              {item.id_origem === "APP" && (
+                                <span className={`${estilos.seloEstado} ${estilos.seloNeutro}`}>
+                                  Pedido pelo app
+                                </span>
+                              )}
 
                               <span
                                 className={`${estilos.seloEstado} ${estilosSituacao[item.id_situacao]}`}

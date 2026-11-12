@@ -1,0 +1,81 @@
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.mesa {
+  padding: 18px;
+  border: 1px solid var(--borda);
+  border-left-width: 5px;
+  border-radius: 10px;
+  background: var(--papel);
+}
+
+.mesaLivre {
+  border-left-color: var(--cor-sucesso);
+}
+
+.mesaOcupada {
+  border-left-color: var(--dourado-escuro);
+}
+
+.mesaReservada {
+  border-left-color: #25507a;
+}
+
+.topoMesa {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.numeroMesa {
+  font-family: var(--fonte-titulo);
+  font-size: 1.35rem;
+  color: var(--vinho-800);
+}
+
+.lugares {
+  margin-top: 2px;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.detalhes {
+  display: grid;
+  gap: 4px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+  font-size: 0.92rem;
+}
+
+.detalhes p {
+  margin: 0;
+}
+
+.rotuloDetalhe {
+  font-weight: 700;
+}
+
+.reserva {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(37, 80, 122, 0.08);
+  font-size: 0.9rem;
+}
+
+.reserva p {
+  margin: 0;
+}
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
