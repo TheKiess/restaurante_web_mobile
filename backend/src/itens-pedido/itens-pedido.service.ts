@@ -1,21 +1,33 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService }                                    from '../prisma/prisma.service.js';
-import { MovimentosEstoqueService }                         from '../movimentos-estoque/movimentos-estoque.service.js';
-import { travarComanda }                                    from '../prisma/travas.js';
-import { Prisma }                                           from '../generated/prisma/client.js';
-import { SituacaoComanda, SituacaoItemPedido, TipoItem }    from '../generated/prisma/enums.js';
-import { CreateItensPedidoDto }                             from './dto/create-itens-pedido.dto.js';
-import { UpdateItensPedidoDto }                             from './dto/update-itens-pedido.dto.js';
-import { AlterarSituacaoItemPedidoDto }                     from './dto/alterar-situacao-item-pedido.dto.js';
-import { ListarItensPedidoQueryDto }                        from './dto/listar-itens-pedido-query.dto.js';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService }                                                        from '../prisma/prisma.service.js';
+import { MovimentosEstoqueService }                                             from '../movimentos-estoque/movimentos-estoque.service.js';
+import { travarComanda }                                                        from '../prisma/travas.js';
+import { Prisma }                                                               from '../generated/prisma/client.js';
+import { OrigemPedido, SituacaoComanda, SituacaoItemPedido, TipoItem }          from '../generated/prisma/enums.js';
+import { CreateItensPedidoDto }                                                 from './dto/create-itens-pedido.dto.js';
+import { UpdateItensPedidoDto }                                                 from './dto/update-itens-pedido.dto.js';
+import { AlterarSituacaoItemPedidoDto }                                         from './dto/alterar-situacao-item-pedido.dto.js';
+import { ListarItensPedidoQueryDto }                                            from './dto/listar-itens-pedido-query.dto.js';
+
+const SELECIONAR_NOME = {
+  select: {
+    pessoa: {
+      select: { nm_pessoa: true }
+    }
+  }
+} satisfies Prisma.UsuarioDefaultArgs;
 
 const INCLUIR_DETALHES = {
   item_cardapio: {
     select: { nm_item: true }
   },
+  usuario: SELECIONAR_NOME,
   comanda: {
     select: {
       id_comanda: true,
+      id_situacao: true,
+      id_cliente: true,
+      cliente: SELECIONAR_NOME,
       mesa: {
         select: {
           nr_mesa: true
@@ -24,6 +36,13 @@ const INCLUIR_DETALHES = {
     }
   }
 } satisfies Prisma.ItemPedidoInclude;
+
+export interface AutorDoItem
+{
+  nrIdUsuario: number;
+  idOrigem: OrigemPedido;
+  nrIdClienteDono?: number;
+}
 
 const TRANSICOES_PERMITIDAS: Record<SituacaoItemPedido, SituacaoItemPedido[]> = {
   [SituacaoItemPedido.AGUARDANDO]: [SituacaoItemPedido.EM_PREPARO, SituacaoItemPedido.CANCELADO],
@@ -41,7 +60,7 @@ export class ItensPedidoService
     private readonly movimentosEstoqueService: MovimentosEstoqueService,
   ) {}
 
-  async lancarItemPedido(createItensPedidoDto: CreateItensPedidoDto)
+  async lancarItemPedido(createItensPedidoDto: CreateItensPedidoDto, autorDoItem: AutorDoItem)
   {
     const { id_comanda, id_item_cardapio, qt_quantidade, ds_observacao } = createItensPedidoDto;
 
@@ -50,7 +69,11 @@ export class ItensPedidoService
 
       const comanda = await transacao.comanda.findUnique({ where: { id_comanda } });
 
-      if (!comanda)
+      // O cliente só enxerga a comanda que está no nome dele; para os outros ela "não existe".
+      if (!comanda ||
+        (autorDoItem.nrIdClienteDono !== undefined &&
+        comanda.id_cliente !== autorDoItem.nrIdClienteDono)
+      )
         throw new NotFoundException(`Comanda ${id_comanda} não encontrada!`);
 
       if (comanda.id_situacao !== SituacaoComanda.ABERTA)
@@ -74,6 +97,8 @@ export class ItensPedidoService
         data: {
           id_comanda,
           id_item_cardapio,
+          id_usuario: autorDoItem.nrIdUsuario,
+          id_origem: autorDoItem.idOrigem,
           qt_quantidade,
           ds_observacao,
           vl_unitario: itemCardapio.vl_unitario,
@@ -130,16 +155,55 @@ export class ItensPedidoService
 
   async atualizarItemPedido(nrId: number, updateItensPedidoDto: UpdateItensPedidoDto)
   {
-    await this.buscarItemPedidoPorId(nrId);
-    const { count } = await this.prisma.itemPedido.updateMany({
-      where: { id_item_pedido: nrId, id_situacao: SituacaoItemPedido.AGUARDANDO },
-      data: updateItensPedidoDto,
+    const itemInicial = await this.buscarItemPedidoPorId(nrId);
+
+    await this.prisma.$transaction(async (transacao) => {
+      await travarComanda(transacao, itemInicial.id_comanda);
+
+      const itemPedido = await transacao.itemPedido.findUnique({ where: { id_item_pedido: nrId } });
+
+      if (itemPedido?.id_situacao !== SituacaoItemPedido.AGUARDANDO)
+        throw new ConflictException('Só é possível alterar um item que ainda está aguardando!');
+
+      if (updateItensPedidoDto.qt_quantidade)
+        await this.movimentosEstoqueService.verificarDisponibilidade(
+          transacao,
+          itemPedido.id_item_cardapio,
+          updateItensPedidoDto.qt_quantidade
+        );
+
+      await transacao.itemPedido.update({ where: { id_item_pedido: nrId }, data: updateItensPedidoDto });
     });
 
-    if (count === 0)
-      throw new ConflictException('Só é possível alterar um item que ainda está aguardando!');
-
     return this.buscarItemPedidoPorId(nrId);
+  }
+
+  // O cliente só cancela o que ele mesmo pediu pelo app e enquanto o item ainda está aguardando.
+  async cancelarItemDoCliente(nrIdItem: number, nrIdComanda: number, nrIdCliente: number)
+  {
+    await this.prisma.$transaction(async (transacao) => {
+      await travarComanda(transacao, nrIdComanda);
+
+      const itemPedido = await transacao.itemPedido.findFirst({
+        where: { id_item_pedido: nrIdItem, id_comanda: nrIdComanda, comanda: { id_cliente: nrIdCliente } }
+      });
+
+      if (!itemPedido)
+        throw new NotFoundException(`Item de pedido ${nrIdItem} não encontrado!`);
+
+      if (itemPedido.id_usuario !== nrIdCliente)
+        throw new ForbiddenException('Você só pode cancelar os itens que você mesmo pediu!');
+
+      if (itemPedido.id_situacao !== SituacaoItemPedido.AGUARDANDO)
+        throw new ConflictException('Só é possível cancelar um item que ainda está aguardando!');
+
+      await transacao.itemPedido.update({
+        where: { id_item_pedido: nrIdItem },
+        data: { id_situacao: SituacaoItemPedido.CANCELADO }
+      });
+    });
+
+    return this.buscarItemPedidoPorId(nrIdItem);
   }
 
   async alterarSituacaoItemPedido(nrId: number, alterarSituacaoItemPedidoDto: AlterarSituacaoItemPedidoDto)
@@ -147,15 +211,21 @@ export class ItensPedidoService
     const situacaoNova = alterarSituacaoItemPedidoDto.id_situacao;
 
     await this.prisma.$transaction(async (transacao) => {
-      const itemPedido = await transacao.itemPedido.findUnique({
+      const itemInicial = await transacao.itemPedido.findUnique({
+        where: { id_item_pedido: nrId },
+        select: { id_comanda: true },
+      });
+
+      if (!itemInicial)
+        throw new NotFoundException(`Item de pedido ${nrId} não encontrado!`);
+
+      await travarComanda(transacao, itemInicial.id_comanda);
+
+      // Relê depois da trava: a quantidade pode ter sido editada enquanto esperava a vez.
+      const itemPedido = await transacao.itemPedido.findUniqueOrThrow({
         where: { id_item_pedido: nrId },
         include: { item_cardapio: { select: { tipo_item: true } } },
       });
-
-      if (!itemPedido)
-        throw new NotFoundException(`Item de pedido ${nrId} não encontrado!`);
-
-      await travarComanda(transacao, itemPedido.id_comanda);
 
       if (!TRANSICOES_PERMITIDAS[itemPedido.id_situacao].includes(situacaoNova))
         throw new ConflictException(`Não é possível mudar o item de ${itemPedido.id_situacao} para ${situacaoNova}!`);

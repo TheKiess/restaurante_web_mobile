@@ -42,11 +42,12 @@ export function buscarReservaSegurandoMesa(database: Prisma.TransactionClient, n
 }
 
 // Outra reserva da mesma mesa dentro da duração de uma reserva (antes ou depois do horário pedido).
-export function buscarReservaEmConflito(database: Prisma.TransactionClient, nrIdMesa: number, dtReserva: Date)
+export function buscarReservaEmConflito(database: Prisma.TransactionClient, nrIdMesa: number, dtReserva: Date, nrIdReservaIgnorada?: number)
 {
   return database.reserva.findFirst({
     where: {
       id_mesa: nrIdMesa,
+      id_reserva: { not: nrIdReservaIgnorada },
       OR: [
         { id_situacao: SituacaoReserva.CONFIRMADA },
         { id_situacao: SituacaoReserva.CHECKIN,

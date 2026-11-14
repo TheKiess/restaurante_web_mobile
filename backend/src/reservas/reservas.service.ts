@@ -1,11 +1,12 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException }           from '@nestjs/common';
 import { PrismaService }                                                                   from '../prisma/prisma.service.js';
-import { travarMesa }                                                                      from '../prisma/travas.js';
+import { travarMesa, travarReserva }                                                       from '../prisma/travas.js';
 import { Prisma }                                                                          from '../generated/prisma/client.js';
 import { Perfil, SituacaoComanda, SituacaoReserva }                                        from '../generated/prisma/enums.js';
 import type { PayloadToken }                                                               from '../auth/auth.types.js';
 import { CreateReservaDto }                                                                from './dto/create-reserva.dto.js';
 import { ListarReservasQueryDto }                                                          from './dto/listar-reservas-query.dto.js';
+import { UpdateReservaDto }                                                                from './dto/update-reserva.dto.js';
 import { buscarReservaEmConflito, expirarReservasVencidas, formatarHorario, somarMinutos } from './regras-reserva.js';
 import {
   NR_DIAS_MAXIMOS_ANTECEDENCIA,
@@ -94,6 +95,51 @@ export class ReservasService
     return reserva;
   }
 
+  async atualizarReserva(nrId: number, updateReservaDto: UpdateReservaDto, usuarioLogado: PayloadToken)
+  {
+    const { id_mesa, qt_pessoas, dt_reserva } = updateReservaDto;
+
+    if (id_mesa === undefined && qt_pessoas === undefined && dt_reserva === undefined)
+      throw new BadRequestException('Informe o que deseja alterar na reserva!');
+
+    // Confere se a reserva existe e se a pessoa pode vê-la (cliente só vê as próprias).
+    await this.buscarReservaPorId(nrId, usuarioLogado);
+
+    if (dt_reserva)
+      this.validarDataDaReserva(new Date(dt_reserva));
+
+    await this.prisma.$transaction(async (transacao) => {
+      await travarReserva(transacao, nrId);
+
+      const reserva = await transacao.reserva.findUnique({ where: { id_reserva: nrId } });
+
+      if (reserva?.id_situacao !== SituacaoReserva.CONFIRMADA)
+        throw new ConflictException('Só é possível alterar uma reserva confirmada!');
+
+      const dtFinal    = dt_reserva ? new Date(dt_reserva) : reserva.dt_reserva;
+      const nrPessoas  = qt_pessoas ?? reserva.qt_pessoas;
+      const nrIdMesa   = await this.reservarMesaInformada(
+        transacao,
+        id_mesa ?? reserva.id_mesa,
+        nrPessoas,
+        dtFinal,
+        nrId
+      );
+
+      await transacao.reserva.update({
+        where: { id_reserva: nrId },
+        data: {
+          id_mesa: nrIdMesa,
+          qt_pessoas: nrPessoas,
+          dt_reserva: dtFinal,
+          dt_limite_checkin: somarMinutos(dtFinal, NR_MINUTOS_TOLERANCIA_CHECKIN)
+        }
+      });
+    });
+
+    return this.buscarReservaPorId(nrId, usuarioLogado);
+  }
+
   async cancelarReserva(nrId: number, usuarioLogado: PayloadToken)
   {
     await this.buscarReservaPorId(nrId, usuarioLogado);
@@ -109,22 +155,19 @@ export class ReservasService
     return this.buscarReservaPorId(nrId, usuarioLogado);
   }
 
-  async fazerCheckin(nrId: number)
+  async fazerCheckin(nrId: number, nrIdUsuarioLogado: number)
   {
     return this.prisma.$transaction(async (transacao) => {
       await expirarReservasVencidas(transacao);
 
-      const reservaInicial = await transacao.reserva.findUnique({ where: { id_reserva: nrId } });
-
-      if (!reservaInicial)
-        throw new NotFoundException(`Reserva ${nrId} não encontrada!`);
-
-      await travarMesa(transacao, reservaInicial.id_mesa);
+      await travarReserva(transacao, nrId);
 
       const reserva = await transacao.reserva.findUnique({ where: { id_reserva: nrId }, include: { mesa: true } });
 
       if (!reserva)
         throw new NotFoundException(`Reserva ${nrId} não encontrada!`);
+
+      await travarMesa(transacao, reserva.id_mesa);
 
       if (reserva.id_situacao !== SituacaoReserva.CONFIRMADA)
         throw new ConflictException(`Só é possível fazer check-in de uma reserva confirmada (situação atual: ${reserva.id_situacao})!`);
@@ -143,7 +186,7 @@ export class ReservasService
         throw new ConflictException(`Mesa ${reserva.mesa.nr_mesa} ainda tem uma comanda aberta!`);
 
       const comanda = await transacao.comanda.create({
-        data: { id_usuario: reserva.id_usuario, id_mesa: reserva.id_mesa, id_reserva: reserva.id_reserva }
+        data: { id_usuario: nrIdUsuarioLogado, id_cliente: reserva.id_usuario, id_mesa: reserva.id_mesa, id_reserva: reserva.id_reserva }
       });
 
       await transacao.reserva.update({
@@ -190,7 +233,7 @@ export class ReservasService
       throw new NotFoundException(`Usuário ${nrIdUsuario} não encontrado!`);
   }
 
-  private async reservarMesaInformada(transacao: Prisma.TransactionClient, nrIdMesa: number, qtPessoas: number, dtReserva: Date)
+  private async reservarMesaInformada(transacao: Prisma.TransactionClient, nrIdMesa: number, qtPessoas: number, dtReserva: Date, nrIdReservaIgnorada?: number)
   {
     await travarMesa(transacao, nrIdMesa);
 
@@ -202,7 +245,7 @@ export class ReservasService
     if (qtPessoas > mesa.qt_lugares)
       throw new ConflictException(`A mesa ${mesa.nr_mesa} comporta no máximo ${mesa.qt_lugares} pessoas!`);
 
-    if (await buscarReservaEmConflito(transacao, nrIdMesa, dtReserva))
+    if (await buscarReservaEmConflito(transacao, nrIdMesa, dtReserva, nrIdReservaIgnorada))
       throw new ConflictException(`A mesa ${mesa.nr_mesa} já está reservada perto deste horário!`);
 
     return nrIdMesa;

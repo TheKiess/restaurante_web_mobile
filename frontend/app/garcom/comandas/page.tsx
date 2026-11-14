@@ -4,6 +4,8 @@ import { useCallback, useState }           from "react";
 import Link                                from "next/link";
 import { apiGet, apiPatch }                from "@/lib/api";
 import BuscaCliente, { type ClienteBusca } from "@/componentes/BuscaCliente/BuscaCliente";
+import EditorItemPedido                    from "@/componentes/EditorItemPedido/EditorItemPedido";
+import TrocarMesa                          from "@/componentes/TrocarMesa/TrocarMesa";
 import {
   OBJ_NOMES_FORMA_PAGAMENTO,
   OBJ_NOMES_SITUACAO_ITEM,
@@ -74,17 +76,19 @@ function lerMensagemDoErro(erro: unknown, dsPadrao: string): string
 
 export default function ComandasPage()
 {
-  const [arrComandas, setArrComandas]                 = useState<Comanda[]>([]);
-  const [dsFiltro, setDsFiltro]                       = useState<Filtro>("ABERTA");
-  const [carregando, setCarregando]                   = useState(true);
-  const [dsErro, setDsErro]                           = useState("");
-  const [dsSucesso, setDsSucesso]                     = useState("");
-  const [nrComandaAberta, setNrComandaAberta]         = useState<number | null>(null);
-  const [detalhe, setDetalhe]                         = useState<ComandaDetalhe | null>(null);
-  const [carregandoDetalhe, setCarregandoDetalhe]     = useState(false);
-  const [nrComandaEmAcao, setNrComandaEmAcao]         = useState<number | null>(null);
-  const [clienteParaVincular, setClienteParaVincular] = useState<ClienteBusca | null>(null);
-  const carregarComandas                              = useCallback(async () => {
+  const [arrComandas,           setArrComandas]           = useState<Comanda[]>([]);
+  const [dsFiltro,              setDsFiltro]              = useState<Filtro>("ABERTA");
+  const [carregando,            setCarregando]            = useState(true);
+  const [dsErro,                setDsErro]                = useState("");
+  const [dsSucesso,             setDsSucesso]             = useState("");
+  const [nrComandaAberta,       setNrComandaAberta]       = useState<number | null>(null);
+  const [detalhe,               setDetalhe]               = useState<ComandaDetalhe | null>(null);
+  const [carregandoDetalhe,     setCarregandoDetalhe]     = useState(false);
+  const [nrComandaEmAcao,       setNrComandaEmAcao]       = useState<number | null>(null);
+  const [clienteParaVincular,   setClienteParaVincular]   = useState<ClienteBusca | null>(null);
+  const [nrItemEditando,        setNrItemEditando]        = useState<number | null>(null);
+  const [nrComandaTrocandoMesa, setNrComandaTrocandoMesa] = useState<number | null>(null);
+  const carregarComandas                                  = useCallback(async () => {
     setCarregando(true);
     setDsErro("");
 
@@ -171,6 +175,22 @@ export default function ComandasPage()
     {
       setNrComandaEmAcao(null);
     }
+  }
+
+  async function aposEdicao(comanda: Comanda, dsMensagem: string)
+  {
+    setNrItemEditando(null);
+    setNrComandaTrocandoMesa(null);
+    setDsErro("");
+    setDsSucesso(dsMensagem);
+    await carregarComandas();
+    await carregarDetalhe(comanda.id_comanda);
+  }
+
+  function mostrarErro(dsMensagem: string)
+  {
+    setDsSucesso("");
+    setDsErro(dsMensagem);
   }
 
   async function vincularCliente(comanda: Comanda, nrIdCliente: number | null)
@@ -379,6 +399,15 @@ export default function ComandasPage()
                                       Observação: {item.ds_observacao}
                                     </p>
                                   )}
+
+                                  {nrItemEditando === item.id_item_pedido && (
+                                    <EditorItemPedido
+                                      item={item}
+                                      aoSalvar={(dsMensagem) => void aposEdicao(comanda, dsMensagem)}
+                                      aoCancelar={() => setNrItemEditando(null)}
+                                      aoErro={mostrarErro}
+                                    />
+                                  )}
                                 </div>
 
                                 <div className={estilos.acoesItem}>
@@ -388,6 +417,16 @@ export default function ComandasPage()
                                   <span className={estilos.seloPonto}>
                                     {OBJ_NOMES_SITUACAO_ITEM[item.id_situacao] ?? item.id_situacao}
                                   </span>
+
+                                  {item.id_situacao === "AGUARDANDO" && comanda.id_situacao === "ABERTA" && nrItemEditando !== item.id_item_pedido && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setNrItemEditando(item.id_item_pedido)}
+                                      className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno}`}
+                                    >
+                                      Editar item
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             ))}
@@ -451,7 +490,27 @@ export default function ComandasPage()
                             >
                               Cancelar comanda
                             </button>
+
+                            {nrComandaTrocandoMesa !== comanda.id_comanda && (
+                              <button
+                                type="button"
+                                onClick={() => setNrComandaTrocandoMesa(comanda.id_comanda)}
+                                disabled={nrComandaEmAcao !== null}
+                                className={`${estilos.botao} ${estilos.botaoSecundario}`}
+                              >
+                                Trocar de mesa
+                              </button>
+                            )}
                           </div>
+                        )}
+
+                        {comanda.id_situacao === "ABERTA" && nrComandaTrocandoMesa === comanda.id_comanda && (
+                          <TrocarMesa
+                            nrIdComanda={comanda.id_comanda}
+                            aoTrocar={(dsMensagem) => void aposEdicao(comanda, dsMensagem)}
+                            aoFechar={() => setNrComandaTrocandoMesa(null)}
+                            aoErro={mostrarErro}
+                          />
                         )}
                       </>
                     )}

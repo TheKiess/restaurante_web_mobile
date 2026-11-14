@@ -43,3 +43,12 @@ export async function travarGerentesAtivos(transacao: Prisma.TransactionClient):
      WHERE "perfil" = 'GERENCIA' AND "id_ativo" = true
      ORDER BY "id_usuario" FOR UPDATE`;
 }
+
+// Serializa quem mexe na mesma reserva (editar, fazer check-in).
+export async function travarReserva(transacao: Prisma.TransactionClient, nrIdReserva: number): Promise<void>
+{
+  await transacao.$queryRaw`
+    SELECT "id_reserva"
+      FROM "Reserva"
+     WHERE "id_reserva" = ${nrIdReserva} FOR UPDATE`;
+}

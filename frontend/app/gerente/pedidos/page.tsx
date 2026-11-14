@@ -7,6 +7,8 @@ import { useCarregarAoMontar }   from "@/lib/useCarregarAoMontar";
 import estilos                   from "@/estilos/Painel.module.css";
 import estilosPagina             from "./page.module.css";
 import { formatarMoeda }         from "@/lib/formatar";
+import EditorItemPedido          from "@/componentes/EditorItemPedido/EditorItemPedido";
+import TrocarMesa                from "@/componentes/TrocarMesa/TrocarMesa";
 
 type Situacao =
   | "AGUARDANDO"
@@ -29,6 +31,7 @@ type ItemPedido = {
   } | null;
   comanda?: {
     id_comanda: number;
+    id_situacao?: string;
     cliente?: { pessoa: { nm_pessoa: string } } | null;
     mesa?: {
       nr_mesa: number;
@@ -88,12 +91,14 @@ function erroTexto(erro: unknown) {
 
 export default function PedidosPage()
 {
-  const [itens, setItens] = useState<ItemPedido[]>([]);
-  const [filtro, setFiltro] = useState<"TODOS" | Situacao>("TODOS");
-  const [carregando, setCarregando] = useState(true);
-  const [itemAtualizando, setItemAtualizando] = useState<number | null>(null);
-  const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState("");
+  const [itens,               setItens]               = useState<ItemPedido[]>([]);
+  const [filtro,              setFiltro]              = useState<"TODOS" | Situacao>("TODOS");
+  const [carregando,          setCarregando]          = useState(true);
+  const [itemAtualizando,     setItemAtualizando]     = useState<number | null>(null);
+  const [itemEditando,        setItemEditando]        = useState<number | null>(null);
+  const [comandaTrocandoMesa, setComandaTrocandoMesa] = useState<number | null>(null);
+  const [erro,                setErro]                = useState("");
+  const [sucesso,             setSucesso]             = useState("");
 
   const carregarPedidos = useCallback(async () => {
     try
@@ -115,6 +120,20 @@ export default function PedidosPage()
   }, []);
 
   useCarregarAoMontar(carregarPedidos);
+
+  async function aposEdicao(dsMensagem: string)
+  {
+    setItemEditando(null);
+    setComandaTrocandoMesa(null);
+    setSucesso(dsMensagem);
+    await carregarPedidos();
+  }
+
+  function mostrarErro(dsMensagem: string)
+  {
+    setSucesso("");
+    setErro(dsMensagem);
+  }
 
   async function alterarSituacao(
     item: ItemPedido,
@@ -303,6 +322,16 @@ export default function PedidosPage()
                         · {itensComanda.length}{" "}
                         {itensComanda.length === 1 ? "item" : "itens"}
                       </p>
+
+                      {primeiro.comanda?.id_situacao === "ABERTA" && comandaTrocandoMesa !== idComanda && (
+                        <button
+                          type="button"
+                          onClick={() => setComandaTrocandoMesa(idComanda)}
+                          className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno} ${estilos.espacoTopo}`}
+                        >
+                          Trocar de mesa
+                        </button>
+                      )}
                     </div>
 
                     <div className={estilos.comandaTotal}>
@@ -312,6 +341,15 @@ export default function PedidosPage()
                       <p className={estilos.comandaTotalValor}>{formatarMoeda(total)}</p>
                     </div>
                   </header>
+
+                  {comandaTrocandoMesa === idComanda && (
+                    <TrocarMesa
+                      nrIdComanda={idComanda}
+                      aoTrocar={(dsMensagem) => void aposEdicao(dsMensagem)}
+                      aoFechar={() => setComandaTrocandoMesa(null)}
+                      aoErro={mostrarErro}
+                    />
+                  )}
 
                   <div>
                     {itensComanda.map((item) => {
@@ -355,9 +393,28 @@ export default function PedidosPage()
                                 {item.ds_observacao}
                               </p>
                             )}
+
+                            {itemEditando === item.id_item_pedido && (
+                              <EditorItemPedido
+                                item={item}
+                                aoSalvar={(dsMensagem) => void aposEdicao(dsMensagem)}
+                                aoCancelar={() => setItemEditando(null)}
+                                aoErro={mostrarErro}
+                              />
+                            )}
                           </div>
 
                           <div className={estilos.acoesItem}>
+                            {item.id_situacao === "AGUARDANDO" && itemEditando !== item.id_item_pedido && (
+                              <button
+                                type="button"
+                                onClick={() => setItemEditando(item.id_item_pedido)}
+                                className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno}`}
+                              >
+                                Editar item
+                              </button>
+                            )}
+
                             {permitidas.length === 0 ? (
                               <span className={estilos.textoSuave}>
                                 Sem próximas ações

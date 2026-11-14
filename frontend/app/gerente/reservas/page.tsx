@@ -59,6 +59,15 @@ const OBJ_CLASSE_SITUACAO: Record<string, string> = {
 
 const ARR_SITUACOES = ["CONFIRMADA", "CHECKIN", "CANCELADA", "EXPIRADA"];
 
+function paraDataHoraLocal(dsData: string): string
+{
+  const dtData        = new Date(dsData);
+  const dsDoisDigitos = (nrValor: number) => String(nrValor).padStart(2, "0");
+
+  return `${dtData.getFullYear()}-${dsDoisDigitos(dtData.getMonth() + 1)}-${dsDoisDigitos(dtData.getDate())}`
+    + `T${dsDoisDigitos(dtData.getHours())}:${dsDoisDigitos(dtData.getMinutes())}`;
+}
+
 // Monta o texto de consulta da lista conforme os filtros escolhidos.
 function montarConsulta(dsSituacao: string, dsDia: string): string
 {
@@ -78,16 +87,17 @@ function montarConsulta(dsSituacao: string, dsDia: string): string
 
 export default function ReservasPage()
 {
-  const [arrReservas,   setArrReservas]  = useState<Reserva[]>([]);
-  const [arrMesas,      setArrMesas]     = useState<Mesa[]>([]);
-  const [arrClientes,   setArrClientes]  = useState<Usuario[]>([]);
-  const [formulario,    setFormulario]   = useState<FormularioReserva>(OBJ_FORMULARIO_INICIAL);
-  const [dsSituacao,    setDsSituacao]   = useState("CONFIRMADA");
-  const [dsDia,         setDsDia]        = useState("");
-  const [flCarregando,  setFlCarregando] = useState(true);
-  const [flSalvando,    setFlSalvando]   = useState(false);
-  const [dsErro,        setDsErro]       = useState("");
-  const [dsSucesso,     setDsSucesso]    = useState("");
+  const [arrReservas,  setArrReservas]  = useState<Reserva[]>([]);
+  const [arrMesas,     setArrMesas]     = useState<Mesa[]>([]);
+  const [arrClientes,  setArrClientes]  = useState<Usuario[]>([]);
+  const [formulario,   setFormulario]   = useState<FormularioReserva>(OBJ_FORMULARIO_INICIAL);
+  const [dsSituacao,   setDsSituacao]   = useState("CONFIRMADA");
+  const [dsDia,        setDsDia]        = useState("");
+  const [flCarregando, setFlCarregando] = useState(true);
+  const [flSalvando,   setFlSalvando]   = useState(false);
+  const [nrIdEditando, setNrIdEditando] = useState<number | null>(null);
+  const [dsErro,       setDsErro]       = useState("");
+  const [dsSucesso,    setDsSucesso]    = useState("");
 
   const carregarDados = useCallback(async (dsSituacaoFiltro: string, dsDiaFiltro: string) => {
     setFlCarregando(true);
@@ -132,7 +142,27 @@ export default function ReservasPage()
     await carregarDados(dsNovaSituacao, dsNovoDia);
   }
 
-  async function criarReserva(evento: FormEvent<HTMLFormElement>)
+  function iniciarEdicao(reserva: Reserva)
+  {
+    setNrIdEditando(reserva.id_reserva);
+    setFormulario({
+      id_usuario: String(reserva.id_usuario),
+      id_mesa: String(reserva.id_mesa),
+      qt_pessoas: String(reserva.qt_pessoas),
+      dt_reserva: paraDataHoraLocal(reserva.dt_reserva),
+    });
+    limparMensagens();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelarEdicao()
+  {
+    setNrIdEditando(null);
+    setFormulario(OBJ_FORMULARIO_INICIAL);
+    limparMensagens();
+  }
+
+  async function salvarReserva(evento: FormEvent<HTMLFormElement>)
   {
     evento.preventDefault();
     limparMensagens();
@@ -161,20 +191,24 @@ export default function ReservasPage()
 
     try
     {
-      const reserva = await apiPost<Reserva>("reservas", {
-        id_usuario: Number(formulario.id_usuario),
+      const objDados = {
         qt_pessoas: nrPessoas,
         dt_reserva: new Date(formulario.dt_reserva).toISOString(),
         ...(formulario.id_mesa ? { id_mesa: Number(formulario.id_mesa) } : {}),
-      });
+      };
 
-      setDsSucesso(`Reserva criada na mesa ${reserva.mesa.nr_mesa} para ${formatarDataHora(reserva.dt_reserva)}.`);
+      const reserva = nrIdEditando === null
+        ? await apiPost<Reserva>("reservas", { id_usuario: Number(formulario.id_usuario), ...objDados })
+        : await apiPatch<Reserva>(`reservas/${nrIdEditando}`, objDados);
+
+      setDsSucesso(`Reserva ${nrIdEditando === null ? "criada" : "atualizada"} na mesa ${reserva.mesa.nr_mesa} para ${formatarDataHora(reserva.dt_reserva)}.`);
       setFormulario(OBJ_FORMULARIO_INICIAL);
+      setNrIdEditando(null);
       await carregarDados(dsSituacao, dsDia);
     }
     catch (erro)
     {
-      setDsErro(erro instanceof Error ? erro.message : "Não foi possível criar a reserva.");
+      setDsErro(erro instanceof Error ? erro.message : "Não foi possível salvar a reserva.");
     }
     finally
     {
@@ -267,13 +301,14 @@ export default function ReservasPage()
       )}
 
       <section className={estilos.cartao}>
-        <h2 className={estilos.tituloCartao}>Nova reserva</h2>
+        <h2 className={estilos.tituloCartao}>{nrIdEditando === null ? "Nova reserva" : `Editar reserva #${nrIdEditando}`}</h2>
         <p className={estilos.subtituloCartao}>
-          Sem escolher a mesa, o sistema usa a menor mesa livre que comporta o grupo. O cliente tem 15 minutos
-          de tolerância para o check-in.
+          {nrIdEditando === null
+            ? "Sem escolher a mesa, o sistema usa a menor mesa livre que comporta o grupo. O cliente tem 15 minutos de tolerância para o check-in."
+            : "Mude a mesa, o número de pessoas ou o horário. O sistema confere se a mesa comporta o grupo e se está livre nesse horário."}
         </p>
 
-        <form onSubmit={criarReserva} className={estilos.formulario}>
+        <form onSubmit={salvarReserva} className={estilos.formulario}>
           <div className={estilos.camposLinha}>
             <div>
               <label htmlFor="id_usuario" className={estilos.rotulo}>Cliente *</label>
@@ -281,13 +316,22 @@ export default function ReservasPage()
                 id="id_usuario"
                 value={formulario.id_usuario}
                 onChange={(evento) => setFormulario({ ...formulario, id_usuario: evento.target.value })}
+                disabled={nrIdEditando !== null}
                 required
                 className={estilos.entrada}
               >
-                <option value="">Selecione o cliente</option>
-                {arrClientes.map((cliente) => (
-                  <option key={cliente.id_usuario} value={cliente.id_usuario}>{cliente.pessoa.nm_pessoa}</option>
-                ))}
+                {nrIdEditando !== null ? (
+                  <option value={formulario.id_usuario}>
+                    {arrReservas.find((reserva) => reserva.id_reserva === nrIdEditando)?.usuario.pessoa.nm_pessoa}
+                  </option>
+                ) : (
+                  <>
+                    <option value="">Selecione o cliente</option>
+                    {arrClientes.map((cliente) => (
+                      <option key={cliente.id_usuario} value={cliente.id_usuario}>{cliente.pessoa.nm_pessoa}</option>
+                    ))}
+                  </>
+                )}
               </select>
             </div>
 
@@ -299,7 +343,7 @@ export default function ReservasPage()
                 onChange={(evento) => setFormulario({ ...formulario, id_mesa: evento.target.value })}
                 className={estilos.entrada}
               >
-                <option value="">Escolher automaticamente</option>
+                <option value="">{nrIdEditando === null ? "Escolher automaticamente" : "Manter a mesa atual"}</option>
                 {arrMesas.map((mesa) => (
                   <option key={mesa.id_mesa} value={mesa.id_mesa}>Mesa {mesa.nr_mesa} ({mesa.qt_lugares} lugares)</option>
                 ))}
@@ -338,8 +382,14 @@ export default function ReservasPage()
 
           <div className={estilos.botoes}>
             <button type="submit" disabled={flSalvando} className={`${estilos.botao} ${estilos.botaoPrimario}`}>
-              {flSalvando ? "Reservando..." : "Criar reserva"}
+              {flSalvando ? "Salvando..." : nrIdEditando === null ? "Criar reserva" : "Salvar alterações"}
             </button>
+
+            {nrIdEditando !== null && (
+              <button type="button" onClick={cancelarEdicao} className={`${estilos.botao} ${estilos.botaoSecundario}`}>
+                Cancelar edição
+              </button>
+            )}
           </div>
         </form>
       </section>
@@ -433,6 +483,13 @@ export default function ReservasPage()
                               className={`${estilos.botao} ${estilos.botaoPrimario} ${estilos.botaoPequeno}`}
                             >
                               Check-in
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => iniciarEdicao(reserva)}
+                              className={`${estilos.botao} ${estilos.botaoSecundario} ${estilos.botaoPequeno}`}
+                            >
+                              Editar
                             </button>
                             <button
                               type="button"
