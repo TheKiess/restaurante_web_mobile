@@ -2277,3 +2277,223 @@ Authorization: Bearer {{tokenCliente}}
 GET {{host}}/mesas/painel
 Authorization: Bearer {{tokenGerencia}}
 
+
+###
+# ==========================================================================
+# EDIÇÕES PELO WEB: reserva, item de pedido e mesa da comanda
+# ==========================================================================
+# Reserva: só confirmada. Mesa, pessoas e horário passam pela mesma regra de quando se cria
+# (capacidade da mesa e conflito de horário, sem contar a própria reserva).
+# Item: só enquanto está aguardando (antes de a cozinha começar). Mesa da comanda: só comanda aberta.
+
+### 234. Cliente reserva a mesa grande para editar depois (espera 201)
+# @name reservaParaEditar
+POST {{host}}/reservas
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaReserva2.response.body.id_mesa}},
+  "qt_pessoas": 4,
+  "dt_reserva": "{{$datetime iso8601 40 d}}"
+}
+
+
+### 235. Editar sem informar nada (espera 400)
+PATCH {{host}}/reservas/{{reservaParaEditar.response.body.id_reserva}}
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{}
+
+
+### 236. Cliente muda o número de pessoas (espera 200)
+PATCH {{host}}/reservas/{{reservaParaEditar.response.body.id_reserva}}
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "qt_pessoas": 5
+}
+
+
+### 237. Mesa pequena demais para o grupo (espera 409)
+PATCH {{host}}/reservas/{{reservaParaEditar.response.body.id_reserva}}
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaReserva1.response.body.id_mesa}}
+}
+
+
+### 238. Garçom muda o horário (espera 200)
+PATCH {{host}}/reservas/{{reservaParaEditar.response.body.id_reserva}}
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "dt_reserva": "{{$datetime iso8601 41 d}}"
+}
+
+
+### 239. Data no passado (espera 400)
+PATCH {{host}}/reservas/{{reservaParaEditar.response.body.id_reserva}}
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "dt_reserva": "{{$datetime iso8601 -1 d}}"
+}
+
+
+### 240. Mesa que não existe (espera 404)
+PATCH {{host}}/reservas/{{reservaParaEditar.response.body.id_reserva}}
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_mesa": 99999
+}
+
+
+### 241. Cozinha não edita reserva (espera 403)
+PATCH {{host}}/reservas/{{reservaParaEditar.response.body.id_reserva}}
+Authorization: Bearer {{tokenCozinha}}
+Content-Type: application/json
+
+{
+  "qt_pessoas": 2
+}
+
+
+### 242. Cancelar a reserva (espera 200)
+PATCH {{host}}/reservas/{{reservaParaEditar.response.body.id_reserva}}/cancelar
+Authorization: Bearer {{tokenCliente}}
+
+
+### 243. Reserva cancelada não pode ser editada (espera 409)
+PATCH {{host}}/reservas/{{reservaParaEditar.response.body.id_reserva}}
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "qt_pessoas": 2
+}
+
+
+### 244. Garçom lança um item para editar (espera 201)
+# @name itemParaEditar
+POST {{host}}/itens-pedido
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_comanda": {{comandaDoCliente.response.body.id_comanda}},
+  "id_item_cardapio": {{itemDoApp.response.body.id_item_cardapio}},
+  "qt_quantidade": 2
+}
+
+
+### 245. Editar quantidade e observação do item (espera 200)
+PATCH {{host}}/itens-pedido/{{itemParaEditar.response.body.id_item_pedido}}
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "qt_quantidade": 3,
+  "ds_observacao": "sem cebola"
+}
+
+
+### 246. Apagar a observação (null) (espera 200)
+PATCH {{host}}/itens-pedido/{{itemParaEditar.response.body.id_item_pedido}}
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "ds_observacao": null
+}
+
+
+### 247. Quantidade zero (espera 400)
+PATCH {{host}}/itens-pedido/{{itemParaEditar.response.body.id_item_pedido}}
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "qt_quantidade": 0
+}
+
+
+### 248. Cliente não edita item pelo web (espera 403)
+PATCH {{host}}/itens-pedido/{{itemParaEditar.response.body.id_item_pedido}}
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{
+  "qt_quantidade": 1
+}
+
+
+### 249. Cozinha começa o preparo do item (espera 200)
+PATCH {{host}}/itens-pedido/{{itemParaEditar.response.body.id_item_pedido}}/situacao
+Authorization: Bearer {{tokenCozinha}}
+Content-Type: application/json
+
+{
+  "id_situacao": "EM_PREPARO"
+}
+
+
+### 250. Item em preparo não pode ser editado (espera 409)
+PATCH {{host}}/itens-pedido/{{itemParaEditar.response.body.id_item_pedido}}
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "qt_quantidade": 1
+}
+
+
+### 251. Criar mesa livre para a troca (espera 201)
+# @name mesaTroca
+POST {{host}}/mesas
+Authorization: Bearer {{tokenGerencia}}
+Content-Type: application/json
+
+{
+  "nr_mesa": 30,
+  "qt_lugares": 4
+}
+
+
+### 252. Trocar a comanda do cliente para a mesa livre (espera 200)
+PATCH {{host}}/comandas/{{comandaDoCliente.response.body.id_comanda}}
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaTroca.response.body.id_mesa}}
+}
+
+
+### 253. Outra comanda não vai para a mesa ocupada (espera 409)
+PATCH {{host}}/comandas/{{comandaSemCliente.response.body.id_comanda}}
+Authorization: Bearer {{tokenGarcom}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaTroca.response.body.id_mesa}}
+}
+
+
+### 254. Cozinha não troca a mesa de comanda (espera 403)
+PATCH {{host}}/comandas/{{comandaDoCliente.response.body.id_comanda}}
+Authorization: Bearer {{tokenCozinha}}
+Content-Type: application/json
+
+{
+  "id_mesa": {{mesaTroca.response.body.id_mesa}}
+}
+
