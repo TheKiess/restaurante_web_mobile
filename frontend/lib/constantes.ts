@@ -60,13 +60,8 @@ export const ARR_LINKS_COZINHA = [
   { nmRotulo: "Fila de preparo", dsCaminho: "/cozinha" }
 ];
 
-export const ARR_LINKS_CLIENTE = [
-  { nmRotulo: "Início",       dsCaminho: "/cliente" },
-  { nmRotulo: "Cardápio",     dsCaminho: "/cliente/cardapio" },
-  { nmRotulo: "Meus pedidos", dsCaminho: "/cliente/pedidos" }
-];
-
-export type Perfil = "GERENCIA" | "GARCOM" | "COZINHA" | "CLIENTE";
+// Perfis que entram no site, já o cliente faz pedidos e reservas pelo aplicativo.
+export type Perfil = "GERENCIA" | "GARCOM" | "COZINHA";
 
 export const NM_COOKIE_SESSAO = "restaurante_token";
 
@@ -74,14 +69,12 @@ export const OBJ_ROTA_POR_PERFIL: Record<Perfil, string> = {
   GERENCIA: "/gerente",
   GARCOM: "/garcom",
   COZINHA: "/cozinha",
-  CLIENTE: "/cliente",
 };
 
 export const OBJ_PERFIS_POR_AREA: Record<string, Perfil[]> = {
   "/gerente": ["GERENCIA"],
-  "/garcom": ["GARCOM"],
-  "/cozinha": ["COZINHA"],
-  "/cliente": ["CLIENTE"],
+  "/garcom":  ["GARCOM"],
+  "/cozinha": ["COZINHA"]
 };
 
 export const OBJ_NOMES_SITUACAO_ITEM: Record<string, string> = {

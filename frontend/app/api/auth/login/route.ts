@@ -1,5 +1,5 @@
 import { NextResponse }     from "next/server";
-import { NM_COOKIE_SESSAO } from "@/lib/constantes";
+import { NM_COOKIE_SESSAO, OBJ_ROTA_POR_PERFIL } from "@/lib/constantes";
 import { URL_API }          from "@/lib/servidor";
 import { decodificarToken } from "@/lib/token";
 
@@ -29,6 +29,13 @@ export async function POST(request: Request)
 
   if (!resposta.ok)
     return NextResponse.json(corpo ?? { message: "Não foi possível entrar." }, { status: resposta.status });
+
+  // O site é da equipe: o cliente entra pelo aplicativo e não recebe cookie de sessão aqui.
+  if (!(corpo.usuario?.perfil in OBJ_ROTA_POR_PERFIL))
+    return NextResponse.json(
+      { message: "Clientes usam o aplicativo para fazer pedidos e reservas. O site é só para a equipe do restaurante." },
+      { status: 403 }
+    );
 
   const nrExpira   = decodificarToken(corpo.ds_token)?.exp;
   const nrSegundos = nrExpira ? nrExpira - Math.floor(Date.now() / 1000) : NR_SEGUNDOS_PADRAO;
