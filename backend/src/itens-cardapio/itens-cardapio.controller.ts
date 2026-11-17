@@ -1,60 +1,103 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Put } from '@nestjs/common';
-import { ItensCardapioService }                                                                       from './itens-cardapio.service.js';
-import { CreateItensCardapioDto }                                                                     from './dto/create-itens-cardapio.dto.js';
-import { DefinirReceitaDto }                                                                          from './dto/definir-receita.dto.js';
-import { UpdateItensCardapioDto }                                                                     from './dto/update-itens-cardapio.dto.js';
-import { Roles, TODOS_OS_PERFIS }                                                                     from '../auth/roles.decorator.js';
-import { Perfil }                                                                                     from '../generated/prisma/enums.js';
+
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Put,
+} from '@nestjs/common';
+
+import { ItensCardapioService } from './itens-cardapio.service.js';
+
+import { CreateItensCardapioDto } from './dto/create-itens-cardapio.dto.js';
+import { DefinirReceitaDto } from './dto/definir-receita.dto.js';
+import { UpdateItensCardapioDto } from './dto/update-itens-cardapio.dto.js';
+
+import { Roles, TODOS_OS_PERFIS } from '../auth/roles.decorator.js';
+import { Public } from '../auth/public.decorator.js';
+
+import { Perfil } from '../generated/prisma/enums.js';
 
 @Controller('itens-cardapio')
 @Roles(Perfil.GERENCIA)
-export class ItensCardapioController
-{
-  constructor(private readonly itensCardapioService: ItensCardapioService) {}
+export class ItensCardapioController {
+  constructor(
+    private readonly itensCardapioService: ItensCardapioService,
+  ) {}
 
+  // Cadastrar item do cardápio
   @Post()
-  criarItemCardapio(@Body() createItensCardapioDto: CreateItensCardapioDto)
-  {
-    return this.itensCardapioService.criarItemCardapio(createItensCardapioDto);
+  criarItemCardapio(
+    @Body() createItensCardapioDto: CreateItensCardapioDto,
+  ) {
+    return this.itensCardapioService.criarItemCardapio(
+      createItensCardapioDto,
+    );
   }
 
-  @Roles(...TODOS_OS_PERFIS)
+  // Listar cardápio - acesso público
   @Get()
-  listarItensCardapio()
-  {
+  @Public()
+  @Roles(...TODOS_OS_PERFIS)
+  listarItensCardapio() {
     return this.itensCardapioService.listarItensCardapio();
   }
 
-  @Roles(...TODOS_OS_PERFIS)
+  // Buscar item por ID - acesso público
   @Get(':id')
-  buscarItemCardapioPorId(@Param('id', ParseIntPipe) nrId: number)
-  {
+  @Public()
+  @Roles(...TODOS_OS_PERFIS)
+  buscarItemCardapioPorId(
+    @Param('id', ParseIntPipe) nrId: number,
+  ) {
     return this.itensCardapioService.buscarItemCardapioPorId(nrId);
   }
 
-  @Roles(Perfil.GERENCIA, Perfil.COZINHA)
+  // Buscar receita - gerente e cozinha
   @Get(':id/receita')
-  buscarReceita(@Param('id', ParseIntPipe) nrId: number)
-  {
+  @Roles(Perfil.GERENCIA, Perfil.COZINHA)
+  buscarReceita(
+    @Param('id', ParseIntPipe) nrId: number,
+  ) {
     return this.itensCardapioService.buscarReceita(nrId);
   }
 
+  // Definir receita
   @Put(':id/receita')
-  definirReceita(@Param('id', ParseIntPipe) nrId: number, @Body() definirReceitaDto: DefinirReceitaDto)
-  {
-    return this.itensCardapioService.definirReceita(nrId, definirReceitaDto);
+  definirReceita(
+    @Param('id', ParseIntPipe) nrId: number,
+    @Body() definirReceitaDto: DefinirReceitaDto,
+  ) {
+    return this.itensCardapioService.definirReceita(
+      nrId,
+      definirReceitaDto,
+    );
   }
 
+  // Atualizar item
   @Patch(':id')
-  atualizarItemCardapio(@Param('id', ParseIntPipe) nrId: number, @Body() updateItensCardapioDto: UpdateItensCardapioDto)
-  {
-    return this.itensCardapioService.atualizarItemCardapio(nrId, updateItensCardapioDto);
+  atualizarItemCardapio(
+    @Param('id', ParseIntPipe) nrId: number,
+    @Body() updateItensCardapioDto: UpdateItensCardapioDto,
+  ) {
+    return this.itensCardapioService.atualizarItemCardapio(
+      nrId,
+      updateItensCardapioDto,
+    );
   }
 
+  // Remover item
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  removerItemCardapio(@Param('id', ParseIntPipe) nrId: number)
-  {
+  removerItemCardapio(
+    @Param('id', ParseIntPipe) nrId: number,
+  ) {
     return this.itensCardapioService.removerItemCardapio(nrId);
   }
 }
