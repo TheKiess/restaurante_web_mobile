@@ -52,6 +52,32 @@ export class UsuariosService
     });
   }
 
+  buscarClientes(dsBusca: string)
+  {
+    return this.prisma.usuario.findMany({
+      where: {
+        perfil: Perfil.CLIENTE,
+        id_ativo: true,
+        OR: [
+          { ds_apelido: { contains: dsBusca, mode: 'insensitive' } },
+          { pessoa: { nm_pessoa: { contains: dsBusca, mode: 'insensitive' } } },
+          { pessoa: { ds_telefone: { contains: dsBusca } } }
+        ]
+      },
+      select: {
+        id_usuario: true,
+        ds_apelido: true,
+        pessoa: {
+          select: { nm_pessoa: true, ds_telefone: true }
+        }
+      },
+      orderBy: {
+        pessoa: { nm_pessoa: 'asc' }
+      },
+      take: 10
+    });
+  }
+
   async buscarUsuarioPorId(nrId: number)
   {
     const usuario = await this.prisma.usuario.findUnique({

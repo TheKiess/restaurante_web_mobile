@@ -2,6 +2,7 @@ import { Body, Controller, ForbiddenException, Get, Param, ParseIntPipe, Patch, 
 import { UsuariosService }                                                                         from './usuarios.service.js';
 import { CreateUsuarioDto }                                                                        from './dto/create-usuario.dto.js';
 import { UpdateUsuarioDto }                                                                        from './dto/update-usuario.dto.js';
+import { BuscarClientesQueryDto }                                                                  from './dto/buscar-clientes-query.dto.js';
 import { ListarUsuariosQueryDto }                                                                  from './dto/listar-usuarios-query.dto.js';
 import { Public }                                                                                  from '../auth/public.decorator.js';
 import { Roles }                                                                                   from '../auth/roles.decorator.js';
@@ -28,6 +29,13 @@ export class UsuariosController
   listarUsuarios(@Query() listarUsuariosQueryDto: ListarUsuariosQueryDto)
   {
     return this.usuariosService.listarUsuarios(listarUsuariosQueryDto);
+  }
+
+  @Roles(Perfil.GERENCIA, Perfil.GARCOM)
+  @Get('clientes')
+  buscarClientes(@Query() buscarClientesQueryDto: BuscarClientesQueryDto)
+  {
+    return this.usuariosService.buscarClientes(buscarClientesQueryDto.busca);
   }
 
   @Get(':id')

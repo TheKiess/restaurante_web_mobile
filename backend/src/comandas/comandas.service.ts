@@ -1,14 +1,25 @@
-import { ConflictException, Injectable, NotFoundException }                 from '@nestjs/common';
-import { PrismaService }                                                    from '../prisma/prisma.service.js';
-import { MovimentosEstoqueService }                                         from '../movimentos-estoque/movimentos-estoque.service.js';
-import { travarComanda, travarMesa }                                        from '../prisma/travas.js';
-import { Prisma }                                                           from '../generated/prisma/client.js';
-import { buscarReservaSegurandoMesa, formatarHorario }                      from '../reservas/regras-reserva.js';
-import { SituacaoComanda, SituacaoItemPedido, SituacaoPagamento, TipoItem } from '../generated/prisma/enums.js';
-import { calcularTotais }                                                   from './calcular-totais.js';
-import { CreateComandaDto }                                                 from './dto/create-comanda.dto.js';
-import { UpdateComandaDto }                                                 from './dto/update-comanda.dto.js';
-import { ListarComandasQueryDto }                                           from './dto/listar-comandas-query.dto.js';
+import { ConflictException, Injectable, NotFoundException }                         from '@nestjs/common';
+import { PrismaService }                                                            from '../prisma/prisma.service.js';
+import { MovimentosEstoqueService }                                                 from '../movimentos-estoque/movimentos-estoque.service.js';
+import { travarComanda, travarMesa }                                                from '../prisma/travas.js';
+import { Prisma }                                                                   from '../generated/prisma/client.js';
+import { buscarReservaSegurandoMesa, formatarHorario }                              from '../reservas/regras-reserva.js';
+import { Perfil, SituacaoComanda, SituacaoItemPedido, SituacaoPagamento, TipoItem } from '../generated/prisma/enums.js';
+import { calcularTotais }                                                           from './calcular-totais.js';
+import { CreateComandaDto }                                                         from './dto/create-comanda.dto.js';
+import { UpdateComandaDto }                                                         from './dto/update-comanda.dto.js';
+import { VincularClienteDto }                                                       from './dto/vincular-cliente.dto.js';
+import { ListarComandasQueryDto }                                                   from './dto/listar-comandas-query.dto.js';
+
+const SELECIONAR_CLIENTE = {
+  select: {
+    id_usuario: true,
+    ds_apelido: true,
+    pessoa: {
+      select: { nm_pessoa: true }
+    }
+  }
+} satisfies Prisma.UsuarioDefaultArgs;
 
 @Injectable()
 export class ComandasService
@@ -18,10 +29,12 @@ export class ComandasService
     private readonly movimentosEstoqueService: MovimentosEstoqueService
   ) {}
 
-  async abrirComanda(createComandaDto: CreateComandaDto)
+  async abrirComanda(createComandaDto: CreateComandaDto, nrIdUsuario: number)
   {
-    const { id_usuario, id_mesa } = createComandaDto;
-    await this.validarUsuario(id_usuario);
+    const { id_mesa, id_cliente } = createComandaDto;
+
+    if (id_cliente)
+      await this.validarCliente(id_cliente);
 
     return this.prisma.$transaction(async (transacao) => {
       if (id_mesa)
@@ -30,7 +43,7 @@ export class ComandasService
         await this.validarMesaLivre(id_mesa, undefined, transacao);
       }
 
-      return transacao.comanda.create({ data: { id_usuario, id_mesa } });
+      return transacao.comanda.create({ data: { id_usuario: nrIdUsuario, id_cliente, id_mesa } });
     });
   }
 
@@ -38,9 +51,31 @@ export class ComandasService
   {
     return this.prisma.comanda.findMany({
       where: { id_situacao: listarComandasQueryDto.id_situacao },
-      include: { mesa: true },
+      include: { mesa: true, cliente: SELECIONAR_CLIENTE },
       orderBy: { dt_abertura: 'desc' },
     });
+  }
+
+  listarMinhasComandas(nrIdCliente: number, listarComandasQueryDto: ListarComandasQueryDto)
+  {
+    return this.prisma.comanda.findMany({
+      where: {
+        id_cliente: nrIdCliente,
+        id_situacao: listarComandasQueryDto.id_situacao
+      },
+      include: { mesa: true },
+      orderBy: { dt_abertura: 'desc' }
+    });
+  }
+
+  async buscarMinhaComanda(nrId: number, nrIdCliente: number)
+  {
+    const nrComandas = await this.prisma.comanda.count({ where: { id_comanda: nrId, id_cliente: nrIdCliente } });
+
+    if (nrComandas === 0)
+      throw new NotFoundException(`Comanda ${nrId} não encontrada!`);
+
+    return this.buscarComandaPorId(nrId);
   }
 
   async buscarComandaPorId(nrId: number)
@@ -49,6 +84,7 @@ export class ComandasService
       where: { id_comanda: nrId },
       include: {
         mesa: true,
+        cliente: SELECIONAR_CLIENTE,
         usuario: {
           select: {
             id_usuario: true,
@@ -66,7 +102,7 @@ export class ComandasService
           },
           orderBy: { dt_pedido: 'asc' }
         },
-        pagamentos: true,
+        pagamentos: true
       }
     });
     if (!comanda)
@@ -90,6 +126,22 @@ export class ComandasService
       await travarMesa(transacao, updateComandaDto.id_mesa);
       await this.validarMesaLivre(updateComandaDto.id_mesa, nrId, transacao);
       await transacao.comanda.update({ where: { id_comanda: nrId }, data: { id_mesa: updateComandaDto.id_mesa } });
+    });
+
+    return this.buscarComandaPorId(nrId);
+  }
+
+  async vincularCliente(nrId: number, vincularClienteDto: VincularClienteDto)
+  {
+    const { id_cliente } = vincularClienteDto;
+
+    if (id_cliente !== null)
+      await this.validarCliente(id_cliente);
+
+    await this.prisma.$transaction(async (transacao) => {
+      await travarComanda(transacao, nrId);
+      await this.validarComandaAberta(nrId, transacao);
+      await transacao.comanda.update({ where: { id_comanda: nrId }, data: { id_cliente } });
     });
 
     return this.buscarComandaPorId(nrId);
@@ -191,12 +243,18 @@ export class ComandasService
     return this.buscarComandaPorId(nrId);
   }
 
-  private async validarUsuario(nrIdUsuario: number)
+  private async validarCliente(nrIdCliente: number)
   {
-    const usuario = await this.prisma.usuario.findUnique({ where: { id_usuario: nrIdUsuario } });
+    const cliente = await this.prisma.usuario.findFirst({
+      where: {
+        id_usuario: nrIdCliente,
+        perfil: Perfil.CLIENTE,
+        id_ativo: true
+      }
+    });
 
-    if (!usuario)
-      throw new NotFoundException(`Usuário ${nrIdUsuario} não encontrado!`);
+    if (!cliente)
+      throw new NotFoundException(`Cliente ${nrIdCliente} não encontrado!`);
   }
 
   private async validarMesaLivre(nrIdMesa: number, nrIdComandaAtual?: number, transacao?: Prisma.TransactionClient)

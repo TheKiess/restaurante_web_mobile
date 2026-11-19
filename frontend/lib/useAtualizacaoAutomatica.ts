@@ -18,10 +18,12 @@ export function useAtualizacaoAutomatica(carregar: () => Promise<void>, nrSegund
         void refCarregar.current();
     };
 
+    const idIntervalo = window.setInterval(atualizarSeVisivel, nrSegundos * 1000);
+
     document.addEventListener("visibilitychange", atualizarSeVisivel);
 
     return () => {
-      window.clearInterval(window.setInterval(atualizarSeVisivel, nrSegundos * 1000));
+      window.clearInterval(idIntervalo);
       document.removeEventListener("visibilitychange", atualizarSeVisivel);
     };
   }, [nrSegundos]);
