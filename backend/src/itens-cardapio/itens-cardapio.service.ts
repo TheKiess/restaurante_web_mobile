@@ -1,8 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService }                                      from '../prisma/prisma.service.js';
-import { CreateItensCardapioDto }                             from './dto/create-itens-cardapio.dto.js';
-import { UpdateItensCardapioDto }                             from './dto/update-itens-cardapio.dto.js';
-import { DefinirReceitaDto }                                  from './dto/definir-receita.dto.js';
+import { BadRequestException, Injectable, NotFoundException }                from '@nestjs/common';
+import { PrismaService }                                                     from '../prisma/prisma.service.js';
+import { CreateItensCardapioDto }                                            from './dto/create-itens-cardapio.dto.js';
+import { UpdateItensCardapioDto }                                            from './dto/update-itens-cardapio.dto.js';
+import { apagarImagemCardapio, gravarImagemCardapio, identificarTipoImagem } from './imagem-cardapio.js';
+import type { ArquivoEnviado }                                               from './imagem-cardapio.js';
+import { DefinirReceitaDto }                                                 from './dto/definir-receita.dto.js';
 
 @Injectable()
 export class ItensCardapioService
@@ -45,8 +47,60 @@ export class ItensCardapioService
 
   async removerItemCardapio(nrId: number)
   {
-    await this.buscarItemCardapioPorId(nrId);
-    return this.prisma.itemCardapio.delete({ where: { id_item_cardapio: nrId } });
+    const item         = await this.buscarItemCardapioPorId(nrId);
+    const itemRemovido = await this.prisma.itemCardapio.delete({ where: { id_item_cardapio: nrId } });
+    await apagarImagemCardapio(item.ds_imagem);
+    return itemRemovido;
+  }
+
+  async salvarImagem(nrId: number, arquivo: ArquivoEnviado | undefined)
+  {
+    const item = await this.buscarItemCardapioPorId(nrId);
+
+    if (!arquivo)
+      throw new BadRequestException('Envie a imagem no campo "imagem"!');
+
+    const dsExtensao = identificarTipoImagem(arquivo.buffer);
+
+    if (!dsExtensao)
+      throw new BadRequestException('A imagem precisa ser JPG, PNG ou WebP!');
+
+    const dsCaminho = await gravarImagemCardapio(arquivo.buffer, dsExtensao);
+
+    try
+    {
+      const itemAtualizado = await this.prisma.itemCardapio.update({
+        where: { id_item_cardapio: nrId },
+        data: { ds_imagem: dsCaminho },
+        include: { categoria: true }
+      });
+
+      await apagarImagemCardapio(item.ds_imagem);
+      return itemAtualizado;
+    }
+    catch (erro)
+    {
+      await apagarImagemCardapio(dsCaminho);
+      throw erro;
+    }
+  }
+
+  async removerImagem(nrId: number)
+  {
+    const item = await this.buscarItemCardapioPorId(nrId);
+
+    if (!item.ds_imagem)
+      return item;
+
+    const itemAtualizado = await this.prisma.itemCardapio.update({
+      where: { id_item_cardapio: nrId },
+      data: { ds_imagem: null },
+      include: { categoria: true }
+    });
+
+    await apagarImagemCardapio(item.ds_imagem);
+
+    return itemAtualizado;
   }
 
   async buscarReceita(nrId: number)

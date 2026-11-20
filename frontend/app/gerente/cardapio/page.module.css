@@ -1,0 +1,37 @@
+.miniatura {
+  display: block;
+  width: 56px;
+  height: 56px;
+  border: 1px solid rgba(74, 22, 32, 0.12);
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.miniaturaGrande {
+  display: block;
+  width: 96px;
+  height: 96px;
+  border: 1px solid rgba(74, 22, 32, 0.12);
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.semFoto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 1px dashed rgba(74, 22, 32, 0.25);
+  border-radius: 6px;
+  color: var(--texto-suave);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.fotoAtual {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}

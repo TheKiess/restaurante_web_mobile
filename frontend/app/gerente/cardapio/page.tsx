@@ -1,11 +1,13 @@
 
 "use client";
 
-import { useCallback, useState }                from "react";
-import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
-import { useCarregarAoMontar }                  from "@/lib/useCarregarAoMontar";
-import estilos                                  from "@/estilos/Painel.module.css";
-import { formatarMoeda }                        from "@/lib/formatar";
+import Image                                                      from "next/image";
+import { useCallback, useState }                                  from "react";
+import { apiDelete, apiEnviarArquivo, apiGet, apiPatch, apiPost } from "@/lib/api";
+import { useCarregarAoMontar }                                    from "@/lib/useCarregarAoMontar";
+import estilos                                                    from "@/estilos/Painel.module.css";
+import { formatarMoeda }                                          from "@/lib/formatar";
+import estilosPagina                                              from "./page.module.css";
 
 type Categoria = {
   id_categoria: number;
@@ -18,6 +20,7 @@ type ItemCardapio = {
   id_categoria: number;
   nm_item: string;
   ds_item: string | null;
+  ds_imagem?: string | null;
   vl_unitario: number | string;
   tipo_item: "PREPARADO" | "REVENDA";
   disponivel: boolean;
@@ -32,6 +35,9 @@ type FormularioItem = {
   tipo_item: "PREPARADO" | "REVENDA";
   disponivel: boolean;
 };
+
+const NR_TAMANHO_MAXIMO_IMAGEM = 2 * 1024 * 1024;
+const ARR_TIPOS_IMAGEM         = ["image/jpeg", "image/png", "image/webp"];
 
 const OBJ_FORMULARIO_INICIAL: FormularioItem = {
   id_categoria: "",
@@ -48,6 +54,8 @@ export default function CardapioPage()
   const [arrCategorias,           setArrCategorias]           = useState<Categoria[]>([]);
   const [objFormulario,           setObjFormulario]           = useState<FormularioItem>(OBJ_FORMULARIO_INICIAL);
   const [idItemEditando,          setIdItemEditando]          = useState<number | null>(null);
+  const [arqImagem,               setArqImagem]               = useState<File | null>(null);
+  const [nrChaveCampoArquivo,     setNrChaveCampoArquivo]     = useState(0);
   const [dsBusca,                 setDsBusca]                 = useState("");
   const [dsFiltroCategoria,       setDsFiltroCategoria]       = useState("TODAS");
   const [dsFiltroDisponibilidade, setDsFiltroDisponibilidade] = useState("TODOS");
@@ -97,9 +105,46 @@ export default function CardapioPage()
     setObjFormulario((objAtual) => ({ ...objAtual, [nmCampo]: valor }));
   }
 
+  function limparCampoArquivo()
+  {
+    setArqImagem(null);
+    setNrChaveCampoArquivo((nrChave) => nrChave + 1);
+  }
+
+  function selecionarArquivo(evento: React.ChangeEvent<HTMLInputElement>)
+  {
+    const arquivo = evento.target.files?.[0];
+
+    setDsErro("");
+    setDsSucesso("");
+
+    if (!arquivo)
+    {
+      setArqImagem(null);
+      return;
+    }
+
+    if (!ARR_TIPOS_IMAGEM.includes(arquivo.type))
+    {
+      setDsErro("A foto precisa ser JPG, PNG ou WebP.");
+      limparCampoArquivo();
+      return;
+    }
+
+    if (arquivo.size > NR_TAMANHO_MAXIMO_IMAGEM)
+    {
+      setDsErro("A foto pode ter no máximo 2 MB.");
+      limparCampoArquivo();
+      return;
+    }
+
+    setArqImagem(arquivo);
+  }
+
   function limparFormulario() {
     setObjFormulario(OBJ_FORMULARIO_INICIAL);
     setIdItemEditando(null);
+    limparCampoArquivo();
     setDsErro("");
     setDsSucesso("");
   }
@@ -143,19 +188,35 @@ export default function CardapioPage()
 
     try
     {
-      if (idItemEditando !== null)
+      const flEditando = idItemEditando !== null;
+      const itemSalvo  = flEditando
+        ? await apiPatch<ItemCardapio>(`itens-cardapio/${idItemEditando}`, objDados)
+        : await apiPost<ItemCardapio>("itens-cardapio", objDados);
+      let dsErroImagem = "";
+
+      if (arqImagem)
       {
-        await apiPatch<ItemCardapio>(`itens-cardapio/${idItemEditando}`, objDados);
-        setDsSucesso("Item atualizado com sucesso!");
+        try
+        {
+          const objArquivo = new FormData();
+
+          objArquivo.append("imagem", arqImagem);
+          await apiEnviarArquivo<ItemCardapio>(`itens-cardapio/${itemSalvo.id_item_cardapio}/imagem`, objArquivo);
+        }
+        catch (erro)
+        {
+          dsErroImagem = erro instanceof Error ? erro.message : "erro desconhecido";
+        }
       }
+
+      if (dsErroImagem)
+        setDsErro(`O item foi salvo, mas a foto não foi enviada: ${dsErroImagem}`);
       else
-      {
-        await apiPost<ItemCardapio>("itens-cardapio", objDados);
-        setDsSucesso("Item cadastrado com sucesso!");
-      }
+        setDsSucesso(flEditando ? "Item atualizado com sucesso!" : "Item cadastrado com sucesso!");
 
       setObjFormulario(OBJ_FORMULARIO_INICIAL);
       setIdItemEditando(null);
+      limparCampoArquivo();
       await carregarDados();
     }
     catch (erro)
@@ -184,7 +245,28 @@ export default function CardapioPage()
     });
     setDsErro("");
     setDsSucesso("");
+    limparCampoArquivo();
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function removerImagem(item: ItemCardapio)
+  {
+    setDsErro("");
+    setDsSucesso("");
+
+    try
+    {
+      await apiDelete<ItemCardapio>(`itens-cardapio/${item.id_item_cardapio}/imagem`);
+      setDsSucesso("Foto removida.");
+      await carregarDados();
+    }
+    catch (erro)
+    {
+      setDsErro(erro instanceof Error
+        ? erro.message
+        : "Não foi possível remover a foto."
+      );
+    }
   }
 
   async function excluirItem(item: ItemCardapio)
@@ -266,6 +348,7 @@ export default function CardapioPage()
     );
   });
 
+  const itemEditando         = arrItens.find((item) => item.id_item_cardapio === idItemEditando);
   const nrItensDisponiveis   = arrItens.filter((item) => item.disponivel).length;
   const nrItensIndisponiveis = arrItens.length - nrItensDisponiveis;
 
@@ -395,6 +478,42 @@ export default function CardapioPage()
             />
           </div>
 
+          <div className={estilos.larguraTotal}>
+            <label htmlFor="imagem" className={estilos.rotulo}>
+              Foto do item
+            </label>
+
+            {itemEditando?.ds_imagem && (
+              <div className={estilosPagina.fotoAtual}>
+                <Image
+                  src={`/api${itemEditando.ds_imagem}`}
+                  alt={`Foto de ${itemEditando.nm_item}`}
+                  width={96}
+                  height={96}
+                  unoptimized
+                  className={estilosPagina.miniaturaGrande}
+                />
+                <button
+                  type="button"
+                  onClick={() => void removerImagem(itemEditando)}
+                  className={`${estilos.botao} ${estilos.botaoPerigo} ${estilos.botaoPequeno}`}
+                >
+                  Remover foto
+                </button>
+              </div>
+            )}
+
+            <input
+              key={nrChaveCampoArquivo}
+              id="imagem"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={selecionarArquivo}
+              className={estilos.entrada}
+            />
+            <p className={estilos.textoPequeno}>JPG, PNG ou WebP, até 2 MB.</p>
+          </div>
+
           <label className={`${estilos.campoCheckbox} ${estilos.larguraTotal}`}>
             <input
               type="checkbox"
@@ -512,6 +631,7 @@ export default function CardapioPage()
             <table className={`${estilos.tabela} ${estilos.tabelaLarga}`}>
               <thead>
                 <tr>
+                  <th>Foto</th>
                   <th>Item</th>
                   <th>Categoria</th>
                   <th>Tipo</th>
@@ -523,6 +643,20 @@ export default function CardapioPage()
               <tbody>
                 {arrItensFiltrados.map((item) => (
                   <tr key={item.id_item_cardapio} className={estilos.linhaTopo}>
+                    <td>
+                      {item.ds_imagem ? (
+                        <Image
+                          src={`/api${item.ds_imagem}`}
+                          alt={`Foto de ${item.nm_item}`}
+                          width={56}
+                          height={56}
+                          unoptimized
+                          className={estilosPagina.miniatura}
+                        />
+                      ) : (
+                        <span className={estilosPagina.semFoto}>Sem foto</span>
+                      )}
+                    </td>
                     <td>
                       <span className={estilos.negrito}>{item.nm_item}</span>
                       {item.ds_item && (

@@ -94,6 +94,7 @@ model ItemCardapio {
   id_categoria     Int
   nm_item          String
   ds_item          String?
+  ds_imagem        String?
   vl_unitario      Decimal   @db.Decimal(10, 2)
   tipo_item        TipoItem
   disponivel       Boolean   @default(true)

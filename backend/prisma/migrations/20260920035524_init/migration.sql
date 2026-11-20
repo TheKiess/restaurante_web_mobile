@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "OrigemPedido" AS ENUM ('SALAO', 'APP');
 
@@ -91,6 +94,7 @@ CREATE TABLE "ItemCardapio" (
     "id_categoria" INTEGER NOT NULL,
     "nm_item" TEXT NOT NULL,
     "ds_item" TEXT,
+    "ds_imagem" TEXT,
     "vl_unitario" DECIMAL(10,2) NOT NULL,
     "tipo_item" "TipoItem" NOT NULL,
     "disponivel" BOOLEAN NOT NULL DEFAULT true,

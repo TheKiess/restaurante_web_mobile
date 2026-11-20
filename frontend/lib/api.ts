@@ -73,6 +73,18 @@ export async function apiPost<T>(endpoint: string,
   return tratarResposta<T>(resposta);
 }
 
+export async function apiEnviarArquivo<T>(endpoint: string, dados: FormData): Promise<T>
+{
+  // Sem Content-Type: o navegador monta sozinho, com o limite (boundary) do multipart
+  const resposta = await fetch(obterUrl(endpoint), {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    body: dados,
+  });
+
+  return tratarResposta<T>(resposta);
+}
+
 export async function apiPatch<T>(endpoint: string,
   dados: unknown
 ): Promise<T>
