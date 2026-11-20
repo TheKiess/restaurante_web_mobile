@@ -2,7 +2,8 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPip
 import { CategoriasService }                                                                     from './categorias.service.js';
 import { CreateCategoriaDto }                                                                    from './dto/create-categoria.dto.js';
 import { UpdateCategoriaDto }                                                                    from './dto/update-categoria.dto.js';
-import { Roles, TODOS_OS_PERFIS }                                                                from '../auth/roles.decorator.js';
+import { Public }                                                                                from '../auth/public.decorator.js';
+import { Roles }                                                                                 from '../auth/roles.decorator.js';
 import { Perfil }                                                                                from '../generated/prisma/enums.js';
 
 @Controller('categorias')
@@ -17,14 +18,14 @@ export class CategoriasController
     return this.categoriasService.criarCategoria(createCategoriaDto);
   }
 
-  @Roles(...TODOS_OS_PERFIS)
+  @Public()
   @Get()
   listarCategorias()
   {
     return this.categoriasService.listarCategorias();
   }
 
-  @Roles(...TODOS_OS_PERFIS)
+  @Public()
   @Get(':id')
   buscarCategoriaPorId(@Param('id', ParseIntPipe) nrId: number)
   {
