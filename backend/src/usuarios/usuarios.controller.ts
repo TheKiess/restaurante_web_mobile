@@ -8,6 +8,7 @@ import { Public }                                                               
 import { Roles }                                                                                   from '../auth/roles.decorator.js';
 import type { RequisicaoAutenticada }                                                              from '../auth/auth.types.js';
 import { Perfil }                                                                                  from '../generated/prisma/enums.js';
+import { UpdateMeuPerfilDto }                                                                      from './dto/update_perfil.dto.js';    
 
 @Controller('usuarios')
 @Roles(Perfil.GERENCIA)
@@ -38,10 +39,34 @@ export class UsuariosController
     return this.usuariosService.buscarClientes(buscarClientesQueryDto.busca);
   }
 
+  @Roles(Perfil.CLIENTE)
+  @Get('me')
+  buscarMeuPerfil(@Req() request: RequisicaoAutenticada)
+  {
+    return this.usuariosService.buscarUsuarioPorId(
+      request.usuario.sub
+    );
+  }
+
+
   @Get(':id')
   buscarUsuarioPorId(@Param('id', ParseIntPipe) nrId: number)
   {
     return this.usuariosService.buscarUsuarioPorId(nrId);
+  }
+
+  @Roles(Perfil.CLIENTE)
+  @Patch('me')
+  atualizarMeuPerfil(
+    @Body() updateMeuPerfilDto: UpdateMeuPerfilDto,
+    @Req() request: RequisicaoAutenticada
+  )
+  {
+    return this.usuariosService.atualizarUsuario(
+      request.usuario.sub,
+      updateMeuPerfilDto,
+      request.usuario.sub
+    );
   }
 
   @Patch(':id')

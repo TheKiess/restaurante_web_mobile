@@ -71,10 +71,11 @@ export class ItensPedidoService
 
       // O cliente só enxerga a comanda que está no nome dele; para os outros ela "não existe".
       if (!comanda ||
-        (autorDoItem.nrIdClienteDono !== undefined &&
-        comanda.id_cliente !== autorDoItem.nrIdClienteDono)
-      )
-        throw new NotFoundException(`Comanda ${id_comanda} não encontrada!`);
+      (
+        autorDoItem.nrIdClienteDono !== undefined &&
+        (comanda.id_cliente !== autorDoItem.nrIdClienteDono || comanda.id_mesa !== null)
+    ))
+      throw new NotFoundException(`Comanda ${id_comanda} não encontrada!`);
 
       if (comanda.id_situacao !== SituacaoComanda.ABERTA)
         throw new ConflictException('Só é possível lançar itens em uma comanda aberta!');
@@ -115,16 +116,34 @@ export class ItensPedidoService
     });
   }
 
+  listarItensDoCliente(nrIdCliente: number)
+{
+  return this.prisma.itemPedido.findMany({
+    where: {
+      comanda: {
+        is: {
+          id_cliente: nrIdCliente,
+          id_mesa: null
+        }
+      }
+    },
+    include: INCLUIR_DETALHES,
+    orderBy: {
+      dt_pedido: 'desc'
+    }
+  });
+}
+
   listarItensPedido(listarItensPedidoQueryDto: ListarItensPedidoQueryDto)
   {
-    return this.prisma.itemPedido.findMany({
-      where: {
-        id_situacao: listarItensPedidoQueryDto.id_situacao,
-        id_comanda: listarItensPedidoQueryDto.id_comanda
-      },
-      include: INCLUIR_DETALHES,
-      orderBy: { dt_pedido: 'asc' },
-    });
+  return this.prisma.itemPedido.findMany({
+    where: {
+      id_situacao: listarItensPedidoQueryDto.id_situacao,
+      id_comanda: listarItensPedidoQueryDto.id_comanda
+    },
+    include: INCLUIR_DETALHES,
+    orderBy: { dt_pedido: 'asc' },
+  });
   }
 
   listarFilaCozinha()
@@ -179,32 +198,38 @@ export class ItensPedidoService
   }
 
   // O cliente só cancela o que ele mesmo pediu pelo app e enquanto o item ainda está aguardando.
-  async cancelarItemDoCliente(nrIdItem: number, nrIdComanda: number, nrIdCliente: number)
-  {
-    await this.prisma.$transaction(async (transacao) => {
-      await travarComanda(transacao, nrIdComanda);
+  // O cliente só cancela o que ele mesmo pediu pelo app e enquanto o item ainda está aguardando.
+async cancelarItemDoCliente(nrIdItem: number, nrIdComanda: number, nrIdCliente: number)
+{
+  await this.prisma.$transaction(async (transacao) => {
+    await travarComanda(transacao, nrIdComanda);
 
-      const itemPedido = await transacao.itemPedido.findFirst({
-        where: { id_item_pedido: nrIdItem, id_comanda: nrIdComanda, comanda: { id_cliente: nrIdCliente } }
-      });
-
-      if (!itemPedido)
-        throw new NotFoundException(`Item de pedido ${nrIdItem} não encontrado!`);
-
-      if (itemPedido.id_usuario !== nrIdCliente)
-        throw new ForbiddenException('Você só pode cancelar os itens que você mesmo pediu!');
-
-      if (itemPedido.id_situacao !== SituacaoItemPedido.AGUARDANDO)
-        throw new ConflictException('Só é possível cancelar um item que ainda está aguardando!');
-
-      await transacao.itemPedido.update({
-        where: { id_item_pedido: nrIdItem },
-        data: { id_situacao: SituacaoItemPedido.CANCELADO }
-      });
+    const itemPedido = await transacao.itemPedido.findFirst({
+      where: {
+        id_item_pedido: nrIdItem,
+        id_comanda: nrIdComanda,
+        id_usuario: nrIdCliente,
+        comanda: {
+          id_cliente: nrIdCliente,
+          id_mesa: null
+        }
+      }
     });
 
-    return this.buscarItemPedidoPorId(nrIdItem);
-  }
+    if (!itemPedido)
+      throw new NotFoundException(`Item de pedido ${nrIdItem} não encontrado!`);
+
+    if (itemPedido.id_situacao !== SituacaoItemPedido.AGUARDANDO)
+      throw new ConflictException('Só é possível cancelar um item que ainda está aguardando!');
+
+    await transacao.itemPedido.update({
+      where: { id_item_pedido: nrIdItem },
+      data: { id_situacao: SituacaoItemPedido.CANCELADO }
+    });
+  });
+
+  return this.buscarItemPedidoPorId(nrIdItem);
+}
 
   async alterarSituacaoItemPedido(nrId: number, alterarSituacaoItemPedidoDto: AlterarSituacaoItemPedidoDto)
   {

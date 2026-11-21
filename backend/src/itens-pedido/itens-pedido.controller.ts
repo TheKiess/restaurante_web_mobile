@@ -40,6 +40,15 @@ export class ItensPedidoController
   {
     return this.itensPedidoService.listarFilaCozinha();
   }
+  
+  @Roles(Perfil.CLIENTE)
+  @Get('meus')
+  listarMeusPedidos(@Req() request: RequisicaoAutenticada)
+  {
+    return this.itensPedidoService.listarItensDoCliente(
+      request.usuario.sub
+    );
+  }
 
   @Get(':id')
   buscarItemPedidoPorId(@Param('id', ParseIntPipe) nrId: number)

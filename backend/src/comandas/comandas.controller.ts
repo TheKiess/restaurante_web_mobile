@@ -19,6 +19,15 @@ export class ComandasController
   {
     return this.comandasService.abrirComanda(createComandaDto, request.usuario.sub);
   }
+  
+  @Roles(Perfil.CLIENTE)
+  @Post('retirada')
+  criarComandaRetirada(@Req() request: RequisicaoAutenticada)
+  {
+    return this.comandasService.criarComandaRetirada(
+      request.usuario.sub
+    );
+  }
 
   @Get()
   listarComandas(@Query() listarComandasQueryDto: ListarComandasQueryDto)

@@ -1,7 +1,9 @@
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../models/item_cardapio.dart';
+import '../services/carrinho_service.dart';
+import '../widgets/barra_superior.dart';
 
 class DetalhesProdutoScreen extends StatelessWidget {
   final ItemCardapio produto;
@@ -16,14 +18,33 @@ class DetalhesProdutoScreen extends StatelessWidget {
   static const Color texto = Color(0xFF352A2C);
   static const Color textoSecundario = Color(0xFF786C6C);
 
+  String get precoFormatado {
+    return 'R\$ ${produto.preco.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
+  void adicionarAoCarrinho(BuildContext context) {
+    CarrinhoService.instance.adicionar(produto);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${produto.nome} adicionado ao carrinho!'),
+        backgroundColor: vinho,
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: creme,
-      appBar: AppBar(
-        backgroundColor: vinho,
-        foregroundColor: Colors.white,
-        title: const Text('Detalhes do produto'),
+      appBar: const BarraSuperior(
+        titulo: 'Detalhes do produto',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -107,14 +128,56 @@ class DetalhesProdutoScreen extends StatelessWidget {
             const SizedBox(height: 6),
 
             Text(
-              'R\$ ${produto.preco.toStringAsFixed(2).replaceAll('.', ',')}',
+              precoFormatado,
               style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: vinho,
               ),
             ),
+
+            const SizedBox(height: 20),
           ],
+        ),
+      ),
+
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(18),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 52,
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: produto.disponivel
+                  ? () => adicionarAoCarrinho(context)
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: vinho,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.shopping_cart_outlined),
+              label: Text(
+                produto.disponivel
+                    ? 'Adicionar ao carrinho'
+                    : 'Produto indisponível',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

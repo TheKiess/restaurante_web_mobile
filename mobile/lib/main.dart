@@ -1,6 +1,6 @@
 
-import 'package:flutter/material.dart';
-import 'screens/cardapio_screen.dart';
+import 'package:material_ui/material_ui.dart';
+import 'screens/principal_screen.dart';
 
 void main() {
   runApp(const RestauranteApp());
@@ -18,7 +18,7 @@ class RestauranteApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF6F2438),
       ),
-      home: const CardapioScreen(),
+      home: const PrincipalScreen(),
     );
   }
 }

@@ -46,6 +46,18 @@ export class ComandasService
       return transacao.comanda.create({ data: { id_usuario: nrIdUsuario, id_cliente, id_mesa } });
     });
   }
+  async criarComandaRetirada(nrIdCliente: number)
+  {
+    await this.validarCliente(nrIdCliente);
+
+    return this.prisma.comanda.create({
+      data: {
+        id_usuario: nrIdCliente,
+        id_cliente: nrIdCliente,
+        id_mesa: null
+      }
+    });
+  }
 
   listarComandas(listarComandasQueryDto: ListarComandasQueryDto)
   {

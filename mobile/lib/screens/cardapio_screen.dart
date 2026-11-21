@@ -1,9 +1,10 @@
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../models/item_cardapio.dart';
 import '../services/cardapio_service.dart';
 import '../widgets/produto_card.dart';
+import '../widgets/barra_superior.dart';
 import 'detalhes_produto_screen.dart';
 
 class CardapioScreen extends StatefulWidget {
@@ -61,46 +62,30 @@ class _CardapioScreenState extends State<CardapioScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: creme,
+      appBar: const BarraSuperior(
+        titulo: 'Nosso Restaurante',
+        automaticamenteImplyLeading: false,
+      ),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
-            // Cabeçalho
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
-              decoration: const BoxDecoration(
-                color: vinho,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Olá! Escolha o que deseja hoje.',
+                  style: TextStyle(
+                    color: textoSecundario,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Nosso Restaurante',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Olá! Escolha o que deseja hoje.',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
               ),
             ),
 
-            // Campo de pesquisa
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
               child: TextField(
                 controller: pesquisaController,
                 onChanged: (valor) {
@@ -139,7 +124,6 @@ class _CardapioScreenState extends State<CardapioScreen> {
               ),
             ),
 
-            // Título da seção
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 12, 20, 14),
               child: Align(
@@ -155,12 +139,10 @@ class _CardapioScreenState extends State<CardapioScreen> {
               ),
             ),
 
-            // Lista de produtos
             Expanded(
               child: FutureBuilder<List<ItemCardapio>>(
                 future: produtos,
                 builder: (context, snapshot) {
-                  // Carregando
                   if (snapshot.connectionState ==
                       ConnectionState.waiting) {
                     return const Center(
@@ -170,7 +152,6 @@ class _CardapioScreenState extends State<CardapioScreen> {
                     );
                   }
 
-                  // Erro
                   if (snapshot.hasError) {
                     return Center(
                       child: Padding(
@@ -217,7 +198,6 @@ class _CardapioScreenState extends State<CardapioScreen> {
                     );
                   }
 
-                  // Lista vazia
                   if (!snapshot.hasData ||
                       snapshot.data!.isEmpty) {
                     return const Center(
@@ -242,7 +222,6 @@ class _CardapioScreenState extends State<CardapioScreen> {
                     );
                   }
 
-                  // Filtragem dos produtos
                   final listaProdutos = snapshot.data!
                       .where((produto) {
                     final nome = produto.nome.toLowerCase();
@@ -254,7 +233,6 @@ class _CardapioScreenState extends State<CardapioScreen> {
                             descricao.contains(pesquisa));
                   }).toList();
 
-                  // Nenhum resultado na pesquisa
                   if (listaProdutos.isEmpty) {
                     return const Center(
                       child: Text(
@@ -267,7 +245,6 @@ class _CardapioScreenState extends State<CardapioScreen> {
                     );
                   }
 
-                  // Exibição dos produtos
                   return ListView.builder(
                     padding: const EdgeInsets.fromLTRB(
                       20,
