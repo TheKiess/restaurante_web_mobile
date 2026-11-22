@@ -55,115 +55,108 @@ class PedidoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final podeCancelar = pedido.situacao == 'AGUARDANDO';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 14),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Pedido #${pedido.idItemPedido}',
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  pedido.nomeItem,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     color: vinho,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: corSituacao(pedido.situacao)
-                        .withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    textoSituacao(pedido.situacao),
-                    style: TextStyle(
-                      color: corSituacao(pedido.situacao),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: corSituacao(pedido.situacao)
+                      .withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  textoSituacao(pedido.situacao),
+                  style: TextStyle(
+                    color: corSituacao(pedido.situacao),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
 
+          const SizedBox(height: 10),
+
+          Text('Quantidade: ${pedido.quantidade}'),
+
+          const SizedBox(height: 4),
+
+          Text(
+            'Valor unitário: R\$ '
+            '${pedido.valorUnitario.toStringAsFixed(2).replaceAll('.', ',')}',
+          ),
+
+          if (pedido.observacao != null &&
+              pedido.observacao!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text('Observação: ${pedido.observacao}'),
+          ],
+
+          const SizedBox(height: 8),
+
+          Text(
+            'Data: '
+            '${pedido.dataPedido.day.toString().padLeft(2, '0')}/'
+            '${pedido.dataPedido.month.toString().padLeft(2, '0')}/'
+            '${pedido.dataPedido.year}',
+            style: const TextStyle(
+              color: Color(0xFF786C6C),
+              fontSize: 12,
+            ),
+          ),
+
+          if (podeCancelar) ...[
             const SizedBox(height: 12),
 
-            Text(
-              pedido.nomeItem,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            Text('Quantidade: ${pedido.quantidade}'),
-
-            Text(
-              'Valor unitário: R\$ '
-              '${pedido.valorUnitario.toStringAsFixed(2)}',
-            ),
-
-            if (pedido.observacao != null &&
-                pedido.observacao!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text('Observação: ${pedido.observacao}'),
-            ],
-
-            const SizedBox(height: 8),
-
-            Text(
-              'Data: '
-              '${pedido.dataPedido.day.toString().padLeft(2, '0')}/'
-              '${pedido.dataPedido.month.toString().padLeft(2, '0')}/'
-              '${pedido.dataPedido.year}',
-              style: const TextStyle(
-                color: Color(0xFF786C6C),
-                fontSize: 12,
-              ),
-            ),
-
-            if (podeCancelar) ...[
-              const SizedBox(height: 14),
-
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: cancelando ? null : onCancelar,
-                  icon: cancelando
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(Icons.cancel_outlined),
-                  label: Text(
-                    cancelando
-                        ? 'Cancelando...'
-                        : 'Cancelar pedido',
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                  ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: cancelando ? null : onCancelar,
+                icon: cancelando
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.cancel_outlined),
+                label: Text(
+                  cancelando
+                      ? 'Cancelando...'
+                      : 'Cancelar produto',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
                 ),
               ),
-            ],
+            ),
           ],
-        ),
+
+          const Divider(height: 24),
+        ],
       ),
     );
   }

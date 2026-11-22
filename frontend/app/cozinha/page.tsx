@@ -1,3 +1,4 @@
+
 /**
  * Desenvolvimento da pagina da cozinha, pode ser acessada por /cozinha
  * Template base: Next Shadcn Admin (reoring/next-shadcn-admin).
@@ -9,16 +10,18 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { apiGet, apiPatch }              from "@/lib/api";
-import { useAtualizacaoAutomatica }      from "@/lib/useAtualizacaoAutomatica";
-import { useCarregarAoMontar }           from "@/lib/useCarregarAoMontar";
-import estilos                           from "@/estilos/Painel.module.css";
+import { apiGet, apiPatch } from "@/lib/api";
+import { useAtualizacaoAutomatica } from "@/lib/useAtualizacaoAutomatica";
+import { useCarregarAoMontar } from "@/lib/useCarregarAoMontar";
+import estilos from "@/estilos/Painel.module.css";
 import {
   ChefHat,
   Clock,
   RefreshCw,
   CheckCircle2,
   Utensils,
+  UserRound,
+  ShoppingBag,
 } from "lucide-react";
 
 type SituacaoItem =
@@ -42,11 +45,15 @@ interface ItemPedido {
     mesa: {
       nr_mesa: number;
     } | null;
+    cliente: {
+      pessoa: {
+        nm_pessoa: string;
+      };
+    } | null;
   };
 }
 
-function formatarHorario(data: string)
-{
+function formatarHorario(data: string) {
   const dataPedido = new Date(data);
 
   if (Number.isNaN(dataPedido.getTime()))
@@ -58,23 +65,22 @@ function formatarHorario(data: string)
   });
 }
 
-export default function CozinhaPage()
-{
-  const [pedidos,           setPedidos]               = useState<ItemPedido[]>([]);
-  const [carregando,        setCarregando]            = useState(true);
-  const [atualizando,       setAtualizando]           = useState(false);
-  const [itemEmAtualizacao, setItemEmAtualizacao]     = useState<number | null>(null);
-  const [erro,              setErro]                  = useState("");
+export default function CozinhaPage() {
+  const [pedidos, setPedidos] = useState<ItemPedido[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [atualizando, setAtualizando] = useState(false);
+  const [itemEmAtualizacao, setItemEmAtualizacao] = useState<number | null>(null);
+  const [erro, setErro] = useState("");
   const [dtUltimaAtualizacao, setDtUltimaAtualizacao] = useState<Date | null>(null);
-  const refRequisicao                                 = useRef(0);
-  const refErroDaAtualizacao                          = useRef(false);
-  const carregarPedidos                               = useCallback(async (flSilencioso = false) => {
-  const nrRequisicao                                  = ++refRequisicao.current;
 
-    try
-    {
-      if (!flSilencioso)
-      {
+  const refRequisicao = useRef(0);
+  const refErroDaAtualizacao = useRef(false);
+
+  const carregarPedidos = useCallback(async (flSilencioso = false) => {
+    const nrRequisicao = ++refRequisicao.current;
+
+    try {
+      if (!flSilencioso) {
         setErro("");
         setAtualizando(true);
       }
@@ -88,22 +94,19 @@ export default function CozinhaPage()
       setPedidos(dados);
       setDtUltimaAtualizacao(new Date());
 
-      if (refErroDaAtualizacao.current)
-      {
+      if (refErroDaAtualizacao.current) {
         setErro("");
         refErroDaAtualizacao.current = false;
       }
-    }
-    catch (error)
-    {
+    } catch (error) {
       refErroDaAtualizacao.current = flSilencioso;
-      setErro(error instanceof Error
-        ? error.message
-        : "Não foi possível carregar a fila da cozinha."
+
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível carregar a fila da cozinha."
       );
-    }
-    finally
-    {
+    } finally {
       setCarregando(false);
 
       if (!flSilencioso)
@@ -112,15 +115,17 @@ export default function CozinhaPage()
   }, []);
 
   useCarregarAoMontar(carregarPedidos);
-  useAtualizacaoAutomatica(useCallback(() => carregarPedidos(true), [carregarPedidos]), 5);
+
+  useAtualizacaoAutomatica(
+    useCallback(() => carregarPedidos(true), [carregarPedidos]),
+    5
+  );
 
   async function alterarSituacao(
     item: ItemPedido,
     novaSituacao: SituacaoItem
-  )
-  {
-    try
-    {
+  ) {
+    try {
       setErro("");
       setItemEmAtualizacao(item.id_item_pedido);
 
@@ -130,29 +135,33 @@ export default function CozinhaPage()
       );
 
       await carregarPedidos();
-    }
-    catch (error)
-    {
-      setErro(error instanceof Error
-        ? error.message
-        : "Não foi possível alterar o status do pedido."
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível alterar o status do pedido."
       );
-    }
-    finally
-    {
+    } finally {
       setItemEmAtualizacao(null);
     }
   }
 
-  const aguardando = pedidos.filter((item) => item.id_situacao === "AGUARDANDO");
-  const emPreparo  = pedidos.filter((item) => item.id_situacao === "EM_PREPARO");
+  const aguardando = pedidos.filter(
+    (item) => item.id_situacao === "AGUARDANDO"
+  );
 
-  function renderizarPedido(item: ItemPedido)
-  {
+  const emPreparo = pedidos.filter(
+    (item) => item.id_situacao === "EM_PREPARO"
+  );
+
+  function renderizarPedido(item: ItemPedido) {
     const processando = itemEmAtualizacao === item.id_item_pedido;
 
     return (
-      <article key={item.id_item_pedido} className={estilos.cartaoInterno}>
+      <article
+        key={item.id_item_pedido}
+        className={estilos.cartaoInterno}
+      >
         <div className={estilos.linhaCabecalho}>
           <div>
             <p className={estilos.subtituloCartao}>
@@ -175,12 +184,27 @@ export default function CozinhaPage()
             Recebido às {formatarHorario(item.dt_pedido)}
           </p>
 
-          <p className={estilos.linhaIcone}>
-            <Utensils size={16} aria-hidden="true" />
-            {item.comanda.mesa
-              ? `Mesa ${item.comanda.mesa.nr_mesa}`
-              : "Mesa não informada"}
-          </p>
+          {item.comanda.mesa ? (
+            <p className={estilos.linhaIcone}>
+              <Utensils size={16} aria-hidden="true" />
+              Mesa {item.comanda.mesa.nr_mesa}
+            </p>
+          ) : (
+            <>
+              <p className={estilos.linhaIcone}>
+                <ShoppingBag size={16} aria-hidden="true" />
+                Pedido para retirada
+              </p>
+
+              <p className={estilos.linhaIcone}>
+                <UserRound size={16} aria-hidden="true" />
+                Cliente: {
+                  item.comanda.cliente?.pessoa?.nm_pessoa ??
+                  "Nome não informado"
+                }
+              </p>
+            </>
+          )}
         </div>
 
         {item.ds_observacao && (
@@ -226,13 +250,17 @@ export default function CozinhaPage()
       <header className={estilos.cabecalhoComAcao}>
         <div>
           <p className="sobretitulo">Painel operacional</p>
+
           <h1 className={estilos.titulo}>Cozinha</h1>
+
           <p className={estilos.descricao}>
             Acompanhe os pedidos e atualize o preparo dos pratos.
           </p>
+
           <p className={estilos.textoSuave}>
             A fila atualiza sozinha a cada 5 segundos.
-            {dtUltimaAtualizacao && ` Última atualização: ${dtUltimaAtualizacao.toLocaleTimeString("pt-BR")}.`}
+            {dtUltimaAtualizacao &&
+              ` Última atualização: ${dtUltimaAtualizacao.toLocaleTimeString("pt-BR")}.`}
           </p>
         </div>
 
@@ -248,7 +276,10 @@ export default function CozinhaPage()
       </header>
 
       {erro && (
-        <div role="alert" className={`${estilos.alerta} ${estilos.alertaErro}`}>
+        <div
+          role="alert"
+          className={`${estilos.alerta} ${estilos.alertaErro}`}
+        >
           {erro}
         </div>
       )}
@@ -259,8 +290,16 @@ export default function CozinhaPage()
         </div>
       ) : pedidos.length === 0 ? (
         <div className={`${estilos.cartao} ${estilos.vazio}`}>
-          <ChefHat size={48} className={estilos.iconeDestaque} aria-hidden="true" />
-          <h2 className={estilos.vazioTitulo}>Nenhum pedido na fila</h2>
+          <ChefHat
+            size={48}
+            className={estilos.iconeDestaque}
+            aria-hidden="true"
+          />
+
+          <h2 className={estilos.vazioTitulo}>
+            Nenhum pedido na fila
+          </h2>
+
           <p className={estilos.vazioTexto}>
             Quando houver itens aguardando preparo ou em preparo, eles
             aparecerão aqui.
@@ -270,14 +309,19 @@ export default function CozinhaPage()
         <div className={estilos.colunasDuplas}>
           <section className={estilos.colunaFila}>
             <div className={estilos.linhaCabecalho}>
-              <h2 className={estilos.tituloCartao}>Aguardando preparo</h2>
+              <h2 className={estilos.tituloCartao}>
+                Aguardando preparo
+              </h2>
+
               <span className={`${estilos.seloEstado} ${estilos.seloAguardando}`}>
                 {aguardando.length}
               </span>
             </div>
 
             {aguardando.length === 0 ? (
-              <p className={estilos.textoSuave}>Nenhum item aguardando.</p>
+              <p className={estilos.textoSuave}>
+                Nenhum item aguardando.
+              </p>
             ) : (
               aguardando.map(renderizarPedido)
             )}
@@ -285,14 +329,19 @@ export default function CozinhaPage()
 
           <section className={estilos.colunaFila}>
             <div className={estilos.linhaCabecalho}>
-              <h2 className={estilos.tituloCartao}>Em preparo</h2>
+              <h2 className={estilos.tituloCartao}>
+                Em preparo
+              </h2>
+
               <span className={`${estilos.seloEstado} ${estilos.seloEmPreparo}`}>
                 {emPreparo.length}
               </span>
             </div>
 
             {emPreparo.length === 0 ? (
-              <p className={estilos.textoSuave}>Nenhum item em preparo.</p>
+              <p className={estilos.textoSuave}>
+                Nenhum item em preparo.
+              </p>
             ) : (
               emPreparo.map(renderizarPedido)
             )}

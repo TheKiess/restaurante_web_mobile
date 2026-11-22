@@ -1,88 +1,184 @@
-import { ConflictException, Injectable, NotFoundException }   from '@nestjs/common';
-import { PrismaService }                                      from '../prisma/prisma.service.js';
-import { travarComanda }                                      from '../prisma/travas.js';
-import { Prisma }                                             from '../generated/prisma/client.js';
-import { FormaPagamento, SituacaoComanda, SituacaoPagamento } from '../generated/prisma/enums.js';
-import { calcularTotais }                                     from '../comandas/calcular-totais.js';
-import { CreatePagamentoDto }                                 from './dto/create-pagamento.dto.js';
-import { AlterarSituacaoPagamentoDto }                        from './dto/alterar-situacao-pagamento.dto.js';
-import { ListarPagamentosQueryDto }                           from './dto/listar-pagamentos-query.dto.js';
+
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
+import { PrismaService } from '../prisma/prisma.service.js';
+import { travarComanda } from '../prisma/travas.js';
+import { Prisma } from '../generated/prisma/client.js';
+
+import {
+  FormaPagamento,
+  SituacaoComanda,
+  SituacaoPagamento,
+  Perfil,
+} from '../generated/prisma/enums.js';
+
+import { calcularTotais } from '../comandas/calcular-totais.js';
+import { CreatePagamentoDto } from './dto/create-pagamento.dto.js';
+import { AlterarSituacaoPagamentoDto } from './dto/alterar-situacao-pagamento.dto.js';
+import { ListarPagamentosQueryDto } from './dto/listar-pagamentos-query.dto.js';
+
+interface DadosUsuarioPagamento {
+  nrIdUsuario: number;
+  perfil: Perfil;
+}
 
 @Injectable()
-export class PagamentosService
-{
+export class PagamentosService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async registrarPagamento(createPagamentoDto: CreatePagamentoDto)
-  {
+  async registrarPagamento(
+    createPagamentoDto: CreatePagamentoDto,
+    dadosUsuario: DadosUsuarioPagamento,
+  ) {
     const { id_comanda, vl_pago, forma_pagamento } = createPagamentoDto;
 
     return this.prisma.$transaction(async (transacao) => {
+      // Bloqueia a comanda durante a operação.
       await travarComanda(transacao, id_comanda);
 
       const comanda = await transacao.comanda.findUnique({
         where: { id_comanda },
-        include: { itens: true, pagamentos: true },
+        include: {
+          itens: true,
+          pagamentos: true,
+        },
       });
 
-      if (!comanda)
-        throw new NotFoundException(`Comanda ${id_comanda} não encontrada!`);
+      if (!comanda) {
+        throw new NotFoundException(
+          `Comanda ${id_comanda} não encontrada!`,
+        );
+      }
 
-      if (comanda.id_situacao !== SituacaoComanda.ABERTA)
-        throw new ConflictException('Só é possível registrar pagamento em uma comanda aberta!');
+      if (comanda.id_situacao !== SituacaoComanda.ABERTA) {
+        throw new ConflictException(
+          'Só é possível registrar pagamento em uma comanda aberta!',
+        );
+      }
 
-      const { vlTotal, vlPago, vlPendente } = calcularTotais(comanda.itens, comanda.pagamentos);
-      const vlDisponivel                    = vlTotal.minus(vlPago).minus(vlPendente);
+      // Identifica se quem está realizando o pagamento é cliente.
+      const flCliente = dadosUsuario.perfil === Perfil.CLIENTE;
 
-      if (new Prisma.Decimal(vl_pago).gt(vlDisponivel))
-        throw new ConflictException(`Valor maior que o que falta pagar (${vlDisponivel.toFixed(2)})`);
+      if (flCliente) {
+        // O cliente só pode pagar suas próprias comandas.
+        if (comanda.id_cliente !== dadosUsuario.nrIdUsuario) {
+          throw new ForbiddenException(
+            'Você não tem permissão para pagar esta comanda!',
+          );
+        }
 
-      const confirmadoNaHora = forma_pagamento !== FormaPagamento.PIX;
+        // O cliente só pode pagar comandas de retirada.
+        if (comanda.id_mesa !== null) {
+          throw new ForbiddenException(
+            'Clientes só podem registrar pagamentos de pedidos para retirada!',
+          );
+        }
+
+        // Impede pagamentos duplicados na mesma comanda.
+        if (comanda.pagamentos.length > 0) {
+          throw new ConflictException(
+            'Esta comanda já possui um pagamento registrado!',
+          );
+        }
+      }
+
+      // Calcula o valor disponível para pagamento.
+      const { vlTotal, vlPago, vlPendente } = calcularTotais(
+        comanda.itens,
+        comanda.pagamentos,
+      );
+
+      const vlDisponivel = vlTotal.minus(vlPago).minus(vlPendente);
+
+      if (new Prisma.Decimal(vl_pago).gt(vlDisponivel)) {
+        throw new ConflictException(
+          `Valor maior que o que falta pagar (${vlDisponivel.toFixed(2)})`,
+        );
+      }
+
+      // Regras de confirmação:
+      // Cliente: PIX confirmado; cartão e dinheiro pendentes.
+      // Gerência/Garçom: mantém o comportamento anterior.
+      const confirmadoNaHora = flCliente
+        ? forma_pagamento === FormaPagamento.PIX
+        : forma_pagamento !== FormaPagamento.PIX;
 
       return transacao.pagamento.create({
         data: {
           id_comanda,
           vl_pago,
           forma_pagamento,
-          id_situacao: confirmadoNaHora ? SituacaoPagamento.CONFIRMADO : SituacaoPagamento.PENDENTE,
+          id_situacao: confirmadoNaHora
+            ? SituacaoPagamento.CONFIRMADO
+            : SituacaoPagamento.PENDENTE,
           dt_pagamento: confirmadoNaHora ? new Date() : null,
         },
       });
     });
   }
 
-  listarPagamentos(listarPagamentosQueryDto: ListarPagamentosQueryDto)
-  {
+  listarPagamentos(
+    listarPagamentosQueryDto: ListarPagamentosQueryDto,
+  ) {
     return this.prisma.pagamento.findMany({
-      where: { id_comanda: listarPagamentosQueryDto.id_comanda, id_situacao: listarPagamentosQueryDto.id_situacao },
-      orderBy: { id_pagamento: 'asc' },
+      where: {
+        id_comanda: listarPagamentosQueryDto.id_comanda,
+        id_situacao: listarPagamentosQueryDto.id_situacao,
+      },
+      orderBy: {
+        id_pagamento: 'asc',
+      },
     });
   }
 
-  async buscarPagamentoPorId(nrId: number)
-  {
-    const pagamento = await this.prisma.pagamento.findUnique({ where: { id_pagamento: nrId } });
+  async buscarPagamentoPorId(nrId: number) {
+    const pagamento = await this.prisma.pagamento.findUnique({
+      where: {
+        id_pagamento: nrId,
+      },
+    });
 
-    if (!pagamento)
-      throw new NotFoundException(`Pagamento ${nrId} não encontrado!`);
+    if (!pagamento) {
+      throw new NotFoundException(
+        `Pagamento ${nrId} não encontrado!`,
+      );
+    }
 
     return pagamento;
   }
 
-  async alterarSituacaoPagamento(nrId: number, alterarSituacaoPagamentoDto: AlterarSituacaoPagamentoDto)
-  {
+  async alterarSituacaoPagamento(
+    nrId: number,
+    alterarSituacaoPagamentoDto: AlterarSituacaoPagamentoDto,
+  ) {
     await this.buscarPagamentoPorId(nrId);
+
     const situacaoNova = alterarSituacaoPagamentoDto.id_situacao;
-    const { count }    = await this.prisma.pagamento.updateMany({
-      where: { id_pagamento: nrId, id_situacao: SituacaoPagamento.PENDENTE },
+
+    const { count } = await this.prisma.pagamento.updateMany({
+      where: {
+        id_pagamento: nrId,
+        id_situacao: SituacaoPagamento.PENDENTE,
+      },
       data: {
         id_situacao: situacaoNova,
-        dt_pagamento: situacaoNova === SituacaoPagamento.CONFIRMADO ? new Date() : null
+        dt_pagamento:
+          situacaoNova === SituacaoPagamento.CONFIRMADO
+            ? new Date()
+            : null,
       },
     });
 
-    if (count === 0)
-      throw new ConflictException('Só é possível confirmar ou recusar um pagamento pendente!');
+    if (count === 0) {
+      throw new ConflictException(
+        'Só é possível confirmar ou recusar um pagamento pendente!',
+      );
+    }
 
     return this.buscarPagamentoPorId(nrId);
   }

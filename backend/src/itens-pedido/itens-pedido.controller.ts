@@ -8,12 +8,26 @@ import { ListarItensPedidoQueryDto }                                           f
 import { Roles }                                                               from '../auth/roles.decorator.js';
 import type { RequisicaoAutenticada }                                          from '../auth/auth.types.js';
 import { OrigemPedido, Perfil }                                                from '../generated/prisma/enums.js';
+import { CreatePedidoRetiradaDto }                                             from './dto/create-pedido-retirada.dto.js';
 
 @Controller('itens-pedido')
 @Roles(Perfil.GERENCIA, Perfil.GARCOM)
 export class ItensPedidoController
 {
   constructor(private readonly itensPedidoService: ItensPedidoService) {}
+
+  @Roles(Perfil.CLIENTE)
+  @Post('retirada')
+  criarPedidoRetirada(
+    @Body() createPedidoRetiradaDto: CreatePedidoRetiradaDto,
+    @Req() request: RequisicaoAutenticada,
+  )
+  {
+    return this.itensPedidoService.criarPedidoRetirada(
+      createPedidoRetiradaDto,
+      request.usuario.sub,
+    );
+  }
 
   @Roles(Perfil.GERENCIA, Perfil.GARCOM, Perfil.CLIENTE)
   @Post()
@@ -40,7 +54,7 @@ export class ItensPedidoController
   {
     return this.itensPedidoService.listarFilaCozinha();
   }
-  
+
   @Roles(Perfil.CLIENTE)
   @Get('meus')
   listarMeusPedidos(@Req() request: RequisicaoAutenticada)

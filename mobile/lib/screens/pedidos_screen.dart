@@ -38,6 +38,50 @@ class _PedidosScreenState extends State<PedidosScreen> {
     return SessaoService.token;
   }
 
+  Color corSituacaoComanda(String situacao) {
+    switch (situacao) {
+      case 'AGUARDANDO':
+        return Colors.orange;
+
+      case 'EM_PREPARO':
+        return Colors.blue;
+
+      case 'PRONTO':
+        return Colors.green;
+
+      case 'FINALIZADA':
+        return Colors.grey;
+
+      case 'CANCELADA':
+        return Colors.red;
+
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String textoSituacaoComanda(String situacao) {
+    switch (situacao) {
+      case 'AGUARDANDO':
+        return 'Aguardando';
+
+      case 'EM_PREPARO':
+        return 'Em preparo';
+
+      case 'PRONTO':
+        return 'Pronto';
+
+      case 'FINALIZADA':
+        return 'Finalizada';
+
+      case 'CANCELADA':
+        return 'Cancelada';
+
+      default:
+        return 'Indefinida';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -141,7 +185,7 @@ class _PedidosScreenState extends State<PedidosScreen> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancelar pedido?'),
+        title: const Text('Cancelar produto?'),
         content: Text(
           'Deseja realmente cancelar o produto '
           '${pedido.nomeItem}?',
@@ -184,7 +228,7 @@ class _PedidosScreenState extends State<PedidosScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Pedido cancelado com sucesso!'),
+          content: Text('Produto cancelado com sucesso!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -208,40 +252,178 @@ class _PedidosScreenState extends State<PedidosScreen> {
     }
   }
 
-  Widget construirComanda(Comanda comanda) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 18),
-      color: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+  // Etiqueta de situação da comanda.
+  Widget construirEtiquetaSituacao(String situacao) {
+    final cor = corSituacaoComanda(situacao);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 11,
+        vertical: 6,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.receipt_long,
-                  color: vinho,
-                  size: 25,
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: cor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            textoSituacaoComanda(situacao),
+            style: TextStyle(
+              color: cor,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Card individual de cada comanda.
+  Widget construirComanda(Comanda comanda) {
+    final situacao = comanda.situacaoGeral;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFECE5E1),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.045),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: ExpansionTile(
+          initiallyExpanded: false,
+          backgroundColor: Colors.white,
+          collapsedBackgroundColor: Colors.white,
+          tilePadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          childrenPadding: const EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            16,
+          ),
+          shape: const Border(),
+          collapsedShape: const Border(),
+
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: vinho.withValues(alpha: 0.09),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.receipt_long_rounded,
+              color: vinho,
+              size: 23,
+            ),
+          ),
+
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Comanda #${comanda.idComanda}',
+                  style: const TextStyle(
+                    color: vinho,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
+              ),
+              const SizedBox(width: 8),
+              construirEtiquetaSituacao(situacao),
+            ],
+          ),
+
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.shopping_bag_outlined,
+                  size: 14,
+                  color: Colors.grey.shade600,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  '${comanda.itens.length} '
+                  '${comanda.itens.length == 1 ? 'produto' : 'produtos'}',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
-                    'Comanda #${comanda.idComanda}',
-                    style: const TextStyle(
-                      color: vinho,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    '•',
+                    style: TextStyle(
+                      color: Colors.grey.shade400,
                     ),
+                  ),
+                ),
+                Text(
+                  'R\$ ${comanda.valorTotal.toStringAsFixed(2).replaceAll('.', ',')}',
+                  style: const TextStyle(
+                    color: Color(0xFF514447),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
-            const Divider(height: 24),
+          ),
+
+          children: [
+            const Divider(
+              height: 20,
+              color: Color(0xFFEFE9E5),
+            ),
+
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: 4,
+                  bottom: 12,
+                ),
+                child: Text(
+                  'Produtos do pedido',
+                  style: TextStyle(
+                    color: vinho,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
             ...comanda.itens.map((pedido) {
               return PedidoCard(
                 pedido: pedido,
@@ -251,24 +433,31 @@ class _PedidosScreenState extends State<PedidosScreen> {
                 onCancelar: () => cancelarPedido(pedido),
               );
             }),
-            const Divider(height: 24),
+
+            const SizedBox(height: 8),
+
+            const Divider(
+              height: 20,
+              color: Color(0xFFEFE9E5),
+            ),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   'Total da comanda',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
                     color: vinho,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   'R\$ ${comanda.valorTotal.toStringAsFixed(2).replaceAll('.', ',')}',
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
                     color: vinho,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],

@@ -35,8 +35,12 @@ class _FinalizacaoPedidoScreenState
 
   String formaPagamento = 'PIX';
   String tipoCartao = 'CREDITO';
+
   bool precisaTroco = false;
   bool enviandoPedido = false;
+
+  // Guarda a comanda criada caso o registro do pagamento falhe.
+  int? idComandaCriada;
 
   @override
   void dispose() {
@@ -58,6 +62,7 @@ class _FinalizacaoPedidoScreenState
   }
 
   Future<void> finalizarPedido() async {
+    // Validação do pagamento em dinheiro.
     if (formaPagamento == 'DINHEIRO' && precisaTroco) {
       final valorInformado = num.tryParse(
         trocoController.text.replaceAll(',', '.'),
@@ -81,34 +86,54 @@ class _FinalizacaoPedidoScreenState
     });
 
     try {
-      final idComanda = await pedidoService.finalizarPedido(
+      // 1. Cria a comanda e registra os itens.
+      // Se já existir uma comanda criada nesta tela,
+      // reutiliza o mesmo ID para evitar duplicação.
+      final int idComanda = idComandaCriada ??
+          await pedidoService.finalizarPedido(
+            token: widget.token,
+            itens: widget.itens,
+          );
+
+      idComandaCriada ??= idComanda;
+
+      // 2. Registra o pagamento no backend.
+      await pedidoService.registrarPagamento(
         token: widget.token,
-        itens: widget.itens,
+        idComanda: idComanda,
+        valorTotal: widget.valorTotal.toDouble(),
+        formaPagamento: formaPagamento,
       );
+
+      // 3. Pagamento registrado com sucesso.
+      idComandaCriada = null;
 
       if (!mounted) return;
 
+      // Limpa o carrinho somente após o pagamento ser registrado.
       CarrinhoService.instance.limpar();
 
       setState(() {
         enviandoPedido = false;
       });
 
+      // Monta a descrição da forma de pagamento.
       final String descricaoPagamento;
 
       if (formaPagamento == 'PIX') {
-        descricaoPagamento = 'Pix (pagamento simulado no aplicativo)';
-      } else if (formaPagamento == 'CARTAO') {
         descricaoPagamento =
-            tipoCartao == 'CREDITO'
-                ? 'Cartão de crédito - pagamento na retirada'
-                : 'Cartão de débito - pagamento na retirada';
+            'Pix (pagamento simulado no aplicativo)';
+      } else if (formaPagamento == 'CARTAO') {
+        descricaoPagamento = tipoCartao == 'CREDITO'
+            ? 'Cartão de crédito - pagamento na retirada'
+            : 'Cartão de débito - pagamento na retirada';
       } else {
         descricaoPagamento = precisaTroco
             ? 'Dinheiro - troco de ${formatarPreco(valorTroco)}'
             : 'Dinheiro - sem necessidade de troco';
       }
 
+      // 4. Exibe a confirmação.
       await showDialog(
         context: context,
         barrierDismissible: false,
@@ -184,11 +209,15 @@ class _FinalizacaoPedidoScreenState
         value: valor,
         groupValue: formaPagamento,
         activeColor: vinho,
-        onChanged: (value) {
-          setState(() {
-            formaPagamento = value!;
-          });
-        },
+        onChanged: enviandoPedido
+            ? null
+            : (value) {
+                if (value == null) return;
+
+                setState(() {
+                  formaPagamento = value;
+                });
+              },
         secondary: Icon(icone, color: vinho),
         title: Text(
           titulo,
@@ -307,22 +336,30 @@ class _FinalizacaoPedidoScreenState
               groupValue: tipoCartao,
               activeColor: vinho,
               title: const Text('Crédito'),
-              onChanged: (value) {
-                setState(() {
-                  tipoCartao = value!;
-                });
-              },
+              onChanged: enviandoPedido
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+
+                      setState(() {
+                        tipoCartao = value;
+                      });
+                    },
             ),
             RadioListTile<String>(
               value: 'DEBITO',
               groupValue: tipoCartao,
               activeColor: vinho,
               title: const Text('Débito'),
-              onChanged: (value) {
-                setState(() {
-                  tipoCartao = value!;
-                });
-              },
+              onChanged: enviandoPedido
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+
+                      setState(() {
+                        tipoCartao = value;
+                      });
+                    },
             ),
           ],
 
@@ -344,16 +381,19 @@ class _FinalizacaoPedidoScreenState
               activeThumbColor: vinho,
               title: const Text('Sim, preciso de troco'),
               value: precisaTroco,
-              onChanged: (value) {
-                setState(() {
-                  precisaTroco = value;
-                  trocoController.clear();
-                });
-              },
+              onChanged: enviandoPedido
+                  ? null
+                  : (value) {
+                      setState(() {
+                        precisaTroco = value;
+                        trocoController.clear();
+                      });
+                    },
             ),
             if (precisaTroco) ...[
               TextField(
                 controller: trocoController,
+                enabled: !enviandoPedido,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),

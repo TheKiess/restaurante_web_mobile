@@ -9,7 +9,7 @@ import '../models/comanda.dart';
 class PedidoService {
   static const String baseUrl = 'http://localhost:3000';
 
-  // Finaliza o carrinho e registra os produtos como pedido de retirada.
+  // Finaliza o carrinho em uma única requisição.
   Future<int> finalizarPedido({
     required String token,
     required List<ItemCarrinho> itens,
@@ -18,52 +18,65 @@ class PedidoService {
       throw Exception('O carrinho está vazio.');
     }
 
-    final urlComanda = Uri.parse('$baseUrl/comandas/retirada');
+    final url = Uri.parse('$baseUrl/itens-pedido/retirada');
 
-    final respostaComanda = await http.post(
-      urlComanda,
+    final resposta = await http.post(
+      url,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
+      body: jsonEncode({
+        'itens': itens.map((item) {
+          return {
+            'id_item_cardapio': item.produto.id,
+            'qt_quantidade': item.quantidade,
+          };
+        }).toList(),
+      }),
     );
 
-    if (respostaComanda.statusCode != 201 &&
-        respostaComanda.statusCode != 200) {
+    if (resposta.statusCode != 201 &&
+        resposta.statusCode != 200) {
       throw Exception(
-        'Erro ao criar comanda: ${respostaComanda.body}',
+        'Erro ao finalizar pedido: '
+        '${resposta.statusCode} - ${resposta.body}',
       );
     }
 
-    final dadosComanda = jsonDecode(respostaComanda.body);
-    final int idComanda = dadosComanda['id_comanda'];
+    final dados = jsonDecode(resposta.body);
+    return dados['id_comanda'] as int;
+  }
 
-    final urlItem = Uri.parse('$baseUrl/itens-pedido');
+  // Registra o pagamento da comanda.
+  Future<void> registrarPagamento({
+    required String token,
+    required int idComanda,
+    required double valorTotal,
+    required String formaPagamento,
+  }) async {
+    final url = Uri.parse('$baseUrl/pagamentos');
 
-    for (final item in itens) {
-      final respostaItem = await http.post(
-        urlItem,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'id_comanda': idComanda,
-          'id_item_cardapio': item.produto.id,
-          'qt_quantidade': item.quantidade,
-        }),
+    final resposta = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'id_comanda': idComanda,
+        'vl_pago': valorTotal,
+        'forma_pagamento': formaPagamento,
+      }),
+    );
+
+    if (resposta.statusCode != 201 &&
+        resposta.statusCode != 200) {
+      throw Exception(
+        'Erro ao registrar pagamento: '
+        '${resposta.statusCode} - ${resposta.body}',
       );
-
-      if (respostaItem.statusCode != 201 &&
-          respostaItem.statusCode != 200) {
-        throw Exception(
-          'Erro ao registrar ${item.produto.nome}: '
-          '${respostaItem.body}',
-        );
-      }
     }
-
-    return idComanda;
   }
 
   // Lista os pedidos do cliente autenticado.
