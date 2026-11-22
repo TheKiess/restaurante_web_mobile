@@ -34,7 +34,6 @@ export class ItensPedidoController
   lancarItemPedido(@Body() createItensPedidoDto: CreateItensPedidoDto, @Req() request: RequisicaoAutenticada)
   {
     const flCliente = request.usuario.perfil === Perfil.CLIENTE;
-
     return this.itensPedidoService.lancarItemPedido(createItensPedidoDto, {
       nrIdUsuario: request.usuario.sub,
       idOrigem: flCliente ? OrigemPedido.APP : OrigemPedido.SALAO,
@@ -59,9 +58,7 @@ export class ItensPedidoController
   @Get('meus')
   listarMeusPedidos(@Req() request: RequisicaoAutenticada)
   {
-    return this.itensPedidoService.listarItensDoCliente(
-      request.usuario.sub
-    );
+    return this.itensPedidoService.listarItensDoCliente(request.usuario.sub);
   }
 
   @Get(':id')
