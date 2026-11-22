@@ -49,7 +49,6 @@ export class ComandasService
   async criarComandaRetirada(nrIdCliente: number)
   {
     await this.validarCliente(nrIdCliente);
-
     return this.prisma.comanda.create({
       data: {
         id_usuario: nrIdCliente,
