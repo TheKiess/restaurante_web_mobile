@@ -22,6 +22,7 @@ coverage/
 # =========================================================
 backend/dist/
 backend/generated/
+backend/uploads/
 prisma/generated/
 
 # Cliente Prisma gerado — artefato, nunca versionado
