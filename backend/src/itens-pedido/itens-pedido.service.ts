@@ -1,14 +1,13 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService }                                                        from '../prisma/prisma.service.js';
 import { MovimentosEstoqueService }                                             from '../movimentos-estoque/movimentos-estoque.service.js';
-import { travarComanda, travarInsumos }                                                        from '../prisma/travas.js';
+import { travarComanda }                                                        from '../prisma/travas.js';
 import { Prisma }                                                               from '../generated/prisma/client.js';
 import { OrigemPedido, SituacaoComanda, SituacaoItemPedido, TipoItem }          from '../generated/prisma/enums.js';
 import { CreateItensPedidoDto }                                                 from './dto/create-itens-pedido.dto.js';
 import { UpdateItensPedidoDto }                                                 from './dto/update-itens-pedido.dto.js';
 import { AlterarSituacaoItemPedidoDto }                                         from './dto/alterar-situacao-item-pedido.dto.js';
 import { ListarItensPedidoQueryDto }                                            from './dto/listar-itens-pedido-query.dto.js';
-import { CreatePedidoRetiradaDto }                                              from './dto/create-pedido-retirada.dto.js';
 
 const SELECIONAR_NOME = {
   select: {
@@ -20,7 +19,10 @@ const SELECIONAR_NOME = {
 
 const INCLUIR_DETALHES = {
   item_cardapio: {
-    select: { nm_item: true }
+    select: {
+      nm_item: true,
+      ds_imagem: true
+    }
   },
   usuario: SELECIONAR_NOME,
   comanda: {
@@ -72,11 +74,10 @@ export class ItensPedidoService
 
       // O cliente só enxerga a comanda que está no nome dele; para os outros ela "não existe".
       if (!comanda ||
-      (
         autorDoItem.nrIdClienteDono !== undefined &&
         (comanda.id_cliente !== autorDoItem.nrIdClienteDono || comanda.id_mesa !== null)
-    ))
-      throw new NotFoundException(`Comanda ${id_comanda} não encontrada!`);
+      )
+        throw new NotFoundException(`Comanda ${id_comanda} não encontrada!`);
 
       if (comanda.id_situacao !== SituacaoComanda.ABERTA)
         throw new ConflictException('Só é possível lançar itens em uma comanda aberta!');
@@ -291,14 +292,14 @@ async criarPedidoRetirada(
 
   listarItensPedido(listarItensPedidoQueryDto: ListarItensPedidoQueryDto)
   {
-  return this.prisma.itemPedido.findMany({
-    where: {
-      id_situacao: listarItensPedidoQueryDto.id_situacao,
-      id_comanda: listarItensPedidoQueryDto.id_comanda
-    },
-    include: INCLUIR_DETALHES,
-    orderBy: { dt_pedido: 'asc' },
-  });
+    return this.prisma.itemPedido.findMany({
+      where: {
+        id_situacao: listarItensPedidoQueryDto.id_situacao,
+        id_comanda: listarItensPedidoQueryDto.id_comanda
+      },
+      include: INCLUIR_DETALHES,
+      orderBy: { dt_pedido: 'asc' }
+    });
   }
 
   listarFilaCozinha()
@@ -354,11 +355,8 @@ async criarPedidoRetirada(
 
   // O cliente só cancela o que ele mesmo pediu pelo app
   // e enquanto o item ainda está aguardando.
-  async cancelarItemDoCliente(
-    nrIdItem: number,
-    nrIdComanda: number,
-    nrIdCliente: number,
-  ) {
+  async cancelarItemDoCliente(nrIdItem: number, nrIdComanda: number, nrIdCliente: number)
+  {
     await this.prisma.$transaction(async (transacao) => {
       await travarComanda(transacao, nrIdComanda);
 
@@ -374,19 +372,15 @@ async criarPedidoRetirada(
         },
       });
 
-      if (!itemPedido) {
-        throw new NotFoundException(
-          `Item de pedido ${nrIdItem} não encontrado!`,
-        );
-      }
+      if (!itemPedido)
+        throw new NotFoundException(`Item de pedido ${nrIdItem} não encontrado!`);
 
-      if (itemPedido.id_situacao !== SituacaoItemPedido.AGUARDANDO) {
-        throw new ConflictException(
-          'Só é possível cancelar um item que ainda está aguardando!',
-        );
-      }
+      if (itemPedido.id_usuario !== nrIdCliente)
+        throw new ForbiddenException('Você só pode cancelar os itens que você mesmo pediu!');
 
-      // 1. Cancela o item.
+      if (itemPedido.id_situacao !== SituacaoItemPedido.AGUARDANDO)
+        throw new ConflictException('Só é possível cancelar um item que ainda está aguardando!');
+
       await transacao.itemPedido.update({
         where: { id_item_pedido: nrIdItem },
         data: {

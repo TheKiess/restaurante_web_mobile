@@ -35,3 +35,25 @@
   margin: 0;
   color: var(--texto-suave);
 }
+
+.cartaoFoto {
+  padding: 16px 16px 24px;
+  border: 1px solid rgba(74, 22, 32, 0.12);
+  border-top: 3px solid var(--dourado);
+  border-radius: 6px;
+  background: var(--papel);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cartaoFoto:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(74, 22, 32, 0.12);
+}
+
+.categoriaItem {
+  margin: 0 0 4px;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}

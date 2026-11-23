@@ -7,6 +7,7 @@ import { useCarregarAoMontar }             from "@/lib/useCarregarAoMontar";
 import BuscaCliente, { type ClienteBusca } from "@/componentes/BuscaCliente/BuscaCliente";
 import estilos                             from "@/estilos/Painel.module.css";
 import { formatarMoeda }                   from "@/lib/formatar";
+import FotoItem                            from "@/componentes/FotoItem/FotoItem";
 
 type Mesa = {
   id_mesa: number;
@@ -25,6 +26,7 @@ type ItemCardapio = {
   id_item_cardapio: number;
   nm_item: string;
   ds_item: string | null;
+  ds_imagem?: string | null;
   vl_unitario: number | string;
   tipo_item: "PREPARADO" | "REVENDA";
   disponivel: boolean;
@@ -522,6 +524,7 @@ export default function PedidosPage()
 
                 {produtoEscolhido && (
                   <div className={`${estilos.observacao} ${estilos.larguraTotal}`}>
+                    <FotoItem dsImagem={produtoEscolhido.ds_imagem} nmItem={produtoEscolhido.nm_item} variante="grande" flOcultarSemFoto />
                     <p className={estilos.negrito}>{produtoEscolhido.nm_item}</p>
                     <p className={estilos.subtituloCartao}>
                       Preço unitário: {formatarMoeda(produtoEscolhido.vl_unitario)}
@@ -671,6 +674,7 @@ export default function PedidosPage()
               <div className={estilos.gradeCartoesTres}>
                 {itens.map((item) => (
                   <article key={item.id_item_cardapio} className={estilos.cartaoInterno}>
+                    <FotoItem dsImagem={item.ds_imagem} nmItem={item.nm_item} variante="cartao" />
                     <h3 className={estilos.tituloItem}>{item.nm_item}</h3>
 
                     {item.ds_item && (

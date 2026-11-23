@@ -2,7 +2,7 @@ import { Injectable, NotFoundException }                        from '@nestjs/co
 import { PrismaService }                                        from '../prisma/prisma.service.js';
 import { SituacaoComanda, SituacaoItemPedido, SituacaoReserva } from '../generated/prisma/enums.js';
 import { calcularTotais }                                       from '../comandas/calcular-totais.js';
-import { expirarReservasVencidas, somarMinutos }                from '../reservas/regras-reserva.js';
+import { somarMinutos }                                         from '../reservas/regras-reserva.js';
 import { NR_MINUTOS_CHECKIN_ANTECIPADO }                        from '../reservas/reservas.constantes.js';
 import { CreateMesaDto }                                        from './dto/create-mesa.dto.js';
 import { UpdateMesaDto }                                        from './dto/update-mesa.dto.js';
@@ -25,8 +25,6 @@ export class MesasService
   // Visão do salão: cada mesa com a situação (livre, ocupada ou reservada), a comanda aberta e a próxima reserva.
   async painelDoSalao()
   {
-    await expirarReservasVencidas(this.prisma);
-
     const dtAgora       = new Date();
     const dsNomeUsuario = {
       select: {

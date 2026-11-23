@@ -63,8 +63,6 @@ export class ReservasService
 
   async listarReservas(listarReservasQueryDto: ListarReservasQueryDto, usuarioLogado: PayloadToken)
   {
-    await expirarReservasVencidas(this.prisma);
-
     const { id_situacao, id_mesa, id_usuario, dt_de, dt_ate } = listarReservasQueryDto;
     const ehCliente                                          = usuarioLogado.perfil === Perfil.CLIENTE;
 
@@ -85,8 +83,6 @@ export class ReservasService
 
   async buscarReservaPorId(nrId: number, usuarioLogado: PayloadToken)
   {
-    await expirarReservasVencidas(this.prisma);
-
     const reserva = await this.prisma.reserva.findUnique({ where: { id_reserva: nrId }, include: INCLUIR_DETALHES });
 
     if (!reserva || !this.podeVerReserva(reserva.id_usuario, usuarioLogado))

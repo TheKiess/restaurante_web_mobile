@@ -1,7 +1,7 @@
 
 "use client";
 
-import Image                                                      from "next/image";
+import FotoItem                                                   from "@/componentes/FotoItem/FotoItem";
 import { useCallback, useState }                                  from "react";
 import { apiDelete, apiEnviarArquivo, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useCarregarAoMontar }                                    from "@/lib/useCarregarAoMontar";
@@ -485,14 +485,7 @@ export default function CardapioPage()
 
             {itemEditando?.ds_imagem && (
               <div className={estilosPagina.fotoAtual}>
-                <Image
-                  src={`/api${itemEditando.ds_imagem}`}
-                  alt={`Foto de ${itemEditando.nm_item}`}
-                  width={96}
-                  height={96}
-                  unoptimized
-                  className={estilosPagina.miniaturaGrande}
-                />
+                <FotoItem dsImagem={itemEditando.ds_imagem} nmItem={itemEditando.nm_item} variante="grande" />
                 <button
                   type="button"
                   onClick={() => void removerImagem(itemEditando)}
@@ -644,18 +637,7 @@ export default function CardapioPage()
                 {arrItensFiltrados.map((item) => (
                   <tr key={item.id_item_cardapio} className={estilos.linhaTopo}>
                     <td>
-                      {item.ds_imagem ? (
-                        <Image
-                          src={`/api${item.ds_imagem}`}
-                          alt={`Foto de ${item.nm_item}`}
-                          width={56}
-                          height={56}
-                          unoptimized
-                          className={estilosPagina.miniatura}
-                        />
-                      ) : (
-                        <span className={estilosPagina.semFoto}>Sem foto</span>
-                      )}
+                      <FotoItem dsImagem={item.ds_imagem} nmItem={item.nm_item} />
                     </td>
                     <td>
                       <span className={estilos.negrito}>{item.nm_item}</span>

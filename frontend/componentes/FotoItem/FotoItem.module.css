@@ -1,0 +1,38 @@
+.caixa {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(74, 22, 32, 0.12);
+  border-radius: 6px;
+  background: var(--creme-escuro);
+}
+
+.miniatura {
+  width: 56px;
+  height: 56px;
+}
+
+.grande {
+  width: 96px;
+  height: 96px;
+}
+
+.cartao {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 12px;
+}
+
+.imagem {
+  object-fit: cover;
+}
+
+.semFoto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  text-align: center;
+}

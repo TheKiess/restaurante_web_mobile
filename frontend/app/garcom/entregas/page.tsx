@@ -7,6 +7,7 @@ import { apiGet, apiPatch }              from "@/lib/api";
 import { useAtualizacaoAutomatica }      from "@/lib/useAtualizacaoAutomatica";
 import { useCarregarAoMontar }           from "@/lib/useCarregarAoMontar";
 import estilos                           from "@/estilos/Painel.module.css";
+import FotoItem                          from "@/componentes/FotoItem/FotoItem";
 
 type ItemPedido = {
   id_item_pedido: number;
@@ -16,6 +17,7 @@ type ItemPedido = {
   dt_criacao?: string;
   item_cardapio?: {
     nm_item: string;
+    ds_imagem?: string | null;
   };
   comanda?: {
     id_comanda: number;
@@ -172,6 +174,13 @@ export default function EntregasPage()
           <div className={estilos.gradeCartoes}>
             {pedidos.map((pedido) => (
               <article key={pedido.id_item_pedido} className={estilos.cartaoInterno}>
+                <FotoItem
+                  dsImagem={pedido.item_cardapio?.ds_imagem}
+                  nmItem={pedido.item_cardapio?.nm_item ?? "Item do cardápio"}
+                  variante="cartao"
+                  flOcultarSemFoto
+                />
+
                 <div className={estilos.linhaCabecalho}>
                   <div>
                     <p className={estilos.rotuloPequeno}>

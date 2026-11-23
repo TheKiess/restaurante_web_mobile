@@ -1,5 +1,7 @@
 import { Module }                  from '@nestjs/common';
 import { ConfigModule }            from '@nestjs/config';
+import { ScheduleModule }          from '@nestjs/schedule';
+import { ThrottlerModule }         from '@nestjs/throttler';
 import { PrismaModule }            from './prisma/prisma.module.js';
 import { MesasModule }             from './mesas/mesas.module.js';
 import { CategoriasModule }        from './categorias/categorias.module.js';
@@ -16,6 +18,11 @@ import { PagamentosModule }        from './pagamentos/pagamentos.module.js';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60_000, limit: 5 }],
+      errorMessage: 'Muitas tentativas. Aguarde um minuto e tente novamente.'
+    }),
     PrismaModule,
     MesasModule,
     CategoriasModule,

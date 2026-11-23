@@ -33,6 +33,13 @@ async function encaminharRequisicao(
       headers: { "Content-Type": resposta.headers.get("content-type") ?? "application/json" },
     });
 
+    // Os arquivos de /uploads têm nome único (uuid), então o navegador pode guardar a imagem por muito tempo.
+    if (request.method === "GET" && resposta.ok && caminho[0] === "uploads")
+    {
+      saida.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      saida.headers.set("X-Content-Type-Options", "nosniff");
+    }
+
     if (resposta.status === 401 && dsToken)
       saida.cookies.delete(NM_COOKIE_SESSAO);
 
