@@ -1,6 +1,16 @@
 # mobile
 
-A new Flutter project.
+## Executar no navegador
+
+Para iniciar a versao web do app em `http://localhost:3003`:
+
+```bash
+flutter run -d web-server --web-port 3003
+```
+
+O backend continua em `http://localhost:3000`; para chamadas feitas pelo
+navegador, o `.env` do backend deve permitir as origens `localhost:3001` e
+`localhost:3003` em `FRONTEND_URL`.
 
 ## Getting Started
 

@@ -13,7 +13,11 @@ async function bootstrap()
     index: false,
     setHeaders: (resposta) => resposta.setHeader('X-Content-Type-Options', 'nosniff'),
   });
-  app.enableCors({ origin: process.env.FRONTEND_URL ?? 'http://localhost:3001' });
+  const arrOrigensFrontend = (process.env.FRONTEND_URL ?? 'http://localhost:3001')
+    .split(',')
+    .map((origem) => origem.trim())
+    .filter(Boolean);
+  app.enableCors({ origin: arrOrigensFrontend });
   await app.listen(process.env.PORT ?? 3000);
 }
 
