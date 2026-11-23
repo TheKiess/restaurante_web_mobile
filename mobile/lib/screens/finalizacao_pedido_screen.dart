@@ -180,7 +180,10 @@ class _FinalizacaoPedidoScreenState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Não foi possível finalizar: $erro'),
+          content: Text(
+            'Não foi possível finalizar: '
+            '${erro.toString().replaceFirst('Exception: ', '')}'
+          ),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 5),
         ),

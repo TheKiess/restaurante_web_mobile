@@ -1,13 +1,14 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService }                                                        from '../prisma/prisma.service.js';
 import { MovimentosEstoqueService }                                             from '../movimentos-estoque/movimentos-estoque.service.js';
-import { travarComanda }                                                        from '../prisma/travas.js';
+import { travarComanda, travarInsumos }                                         from '../prisma/travas.js';
 import { Prisma }                                                               from '../generated/prisma/client.js';
-import { OrigemPedido, SituacaoComanda, SituacaoItemPedido, TipoItem }          from '../generated/prisma/enums.js';
+import { OrigemPedido, Perfil, SituacaoComanda, SituacaoItemPedido, TipoItem }  from '../generated/prisma/enums.js';
 import { CreateItensPedidoDto }                                                 from './dto/create-itens-pedido.dto.js';
 import { UpdateItensPedidoDto }                                                 from './dto/update-itens-pedido.dto.js';
 import { AlterarSituacaoItemPedidoDto }                                         from './dto/alterar-situacao-item-pedido.dto.js';
 import { ListarItensPedidoQueryDto }                                            from './dto/listar-itens-pedido-query.dto.js';
+import { CreatePedidoRetiradaDto }                                              from './dto/create-pedido-retirada.dto.js';
 
 const SELECIONAR_NOME = {
   select: {
@@ -119,176 +120,115 @@ export class ItensPedidoService
   }
 
 
-async criarPedidoRetirada(
-  createPedidoRetiradaDto: CreatePedidoRetiradaDto,
-  nrIdCliente: number,
-) {
-  const { itens } = createPedidoRetiradaDto;
+  async criarPedidoRetirada(createPedidoRetiradaDto: CreatePedidoRetiradaDto, nrIdCliente: number)
+  {
+    const { itens: arrItens } = createPedidoRetiradaDto;
 
-  return this.prisma.$transaction(async (transacao) => {
-    // 1. Valida se o cliente existe e está ativo.
-    const cliente = await transacao.usuario.findFirst({
-      where: {
-        id_usuario: nrIdCliente,
-        perfil: 'CLIENTE',
-        id_ativo: true,
-      },
-    });
-
-    if (!cliente)
-      throw new NotFoundException('Cliente não encontrado ou inativo!');
-
-    // 2. Cria a comanda de retirada dentro da transação.
-    const comanda = await transacao.comanda.create({
-      data: {
-        id_usuario: nrIdCliente,
-        id_cliente: nrIdCliente,
-        id_mesa: null,
-      },
-    });
-
-    // 3. Busca e valida todos os produtos do pedido.
-    const idsItens = [...new Set(
-      itens.map((item) => item.id_item_cardapio),
-    )];
-
-    const arrItensCardapio = await transacao.itemCardapio.findMany({
-      where: {
-        id_item_cardapio: { in: idsItens },
-      },
-    });
-
-    const itensValidados = itens.map((dados) => {
-      const itemCardapio = arrItensCardapio.find(
-        (item) => item.id_item_cardapio === dados.id_item_cardapio,
-      );
-
-      if (!itemCardapio)
-        throw new NotFoundException(
-          `Item ${dados.id_item_cardapio} não encontrado no cardápio!`,
-        );
-
-      if (!itemCardapio.disponivel)
-        throw new ConflictException(
-          `${itemCardapio.nm_item} não está disponível!`,
-        );
-
-      return { dados, itemCardapio };
-    });
-
-    // 4. Identifica os produtos de revenda e trava
-    // todos os insumos em ordem crescente de ID.
-    const idsItensRevenda = [
-      ...new Set(
-        itensValidados
-          .filter(({ itemCardapio }) =>
-            itemCardapio.tipo_item === TipoItem.REVENDA,
-          )
-          .map(({ itemCardapio }) => itemCardapio.id_item_cardapio),
-      ),
-    ];
-
-    if (idsItensRevenda.length > 0) {
-      const receitas = await transacao.receita.findMany({
+    return this.prisma.$transaction(async (transacao) => {
+      const cliente = await transacao.usuario.findFirst({
         where: {
-          id_item_cardapio: { in: idsItensRevenda },
-        },
-        select: {
-          id_insumo: true,
-        },
-      });
-
-      const idsInsumos = [
-        ...new Set(receitas.map((receita) => receita.id_insumo)),
-      ].sort((a, b) => a - b);
-
-      await travarInsumos(transacao, idsInsumos);
-    }
-
-    // 5. Verifica a disponibilidade dos preparados.
-    // Agrupa quantidades quando o mesmo produto aparece mais de uma vez.
-    const quantidadesPreparados = new Map<number, number>();
-
-    for (const { dados, itemCardapio } of itensValidados) {
-      if (itemCardapio.tipo_item !== TipoItem.PREPARADO)
-        continue;
-
-      const quantidadeAtual =
-        quantidadesPreparados.get(itemCardapio.id_item_cardapio) ?? 0;
-
-      quantidadesPreparados.set(
-        itemCardapio.id_item_cardapio,
-        quantidadeAtual + dados.qt_quantidade,
-      );
-    }
-
-    for (const [idItem, quantidade] of quantidadesPreparados) {
-      await this.movimentosEstoqueService.verificarDisponibilidade(
-        transacao,
-        idItem,
-        quantidade,
-      );
-    }
-
-    // 6. Registra todos os itens.
-    const itensCriados = [];
-
-    for (const { dados, itemCardapio } of itensValidados) {
-      const idPreparado =
-        itemCardapio.tipo_item === TipoItem.PREPARADO;
-
-      const itemPedido = await transacao.itemPedido.create({
-        data: {
-          id_comanda: comanda.id_comanda,
-          id_item_cardapio: itemCardapio.id_item_cardapio,
           id_usuario: nrIdCliente,
-          id_origem: OrigemPedido.APP,
-          qt_quantidade: dados.qt_quantidade,
-          ds_observacao: dados.ds_observacao,
-          vl_unitario: itemCardapio.vl_unitario,
-          id_situacao: idPreparado
-            ? SituacaoItemPedido.AGUARDANDO
-            : SituacaoItemPedido.PRONTO,
-        },
-        include: INCLUIR_DETALHES,
+          perfil: Perfil.CLIENTE,
+          id_ativo: true
+        }
       });
 
-      // 7. Produtos de revenda têm baixa imediata.
-      // Os preparados terão baixa quando a cozinha iniciar o preparo.
-      if (!idPreparado) {
-        await this.movimentosEstoqueService.baixarEstoqueDoItem(
-          transacao,
-          itemPedido,
-        );
-      }
+      if (!cliente)
+        throw new NotFoundException('Cliente não encontrado ou inativo!');
 
-      itensCriados.push(itemPedido);
-    }
-
-    return {
-      ...comanda,
-      itens: itensCriados,
-    };
-  });
-}
-
-  listarItensDoCliente(nrIdCliente: number)
-{
-  return this.prisma.itemPedido.findMany({
-    where: {
-      comanda: {
-        is: {
+      const comanda = await transacao.comanda.create({
+        data: {
+          id_usuario: nrIdCliente,
           id_cliente: nrIdCliente,
           id_mesa: null
         }
+      });
+
+      const arrIdsItens      = [...new Set(arrItens.map((item) => item.id_item_cardapio))];
+      const arrItensCardapio = await transacao.itemCardapio.findMany({ where: { id_item_cardapio: { in: arrIdsItens } } });
+
+      const arrItensValidados = arrItens.map((dados) => {
+        const itemCardapio = arrItensCardapio.find((item) => item.id_item_cardapio === dados.id_item_cardapio);
+
+        if (!itemCardapio)
+          throw new NotFoundException(`Item ${dados.id_item_cardapio} não encontrado no cardápio!`);
+
+        if (!itemCardapio.disponivel)
+          throw new ConflictException(`${itemCardapio.nm_item} não está disponível!`);
+
+        return { dados, itemCardapio };
+      });
+
+      // Trava os insumos dos itens de revenda em ordem crescente de id, para evitar deadlock.
+      const arrIdsItensRevenda = [...new Set(
+        arrItensValidados
+          .filter(({ itemCardapio }) => itemCardapio.tipo_item === TipoItem.REVENDA)
+          .map(({ itemCardapio }) => itemCardapio.id_item_cardapio)
+      )];
+
+      if (arrIdsItensRevenda.length > 0)
+      {
+        const arrReceitas   = await transacao.receita.findMany({
+          where: { id_item_cardapio: { in: arrIdsItensRevenda } },
+          select: { id_insumo: true }
+        });
+        const arrIdsInsumos = [...new Set(arrReceitas.map((receita) => receita.id_insumo))].sort((nrA, nrB) => nrA - nrB);
+
+        await travarInsumos(transacao, arrIdsInsumos);
       }
-    },
-    include: INCLUIR_DETALHES,
-    orderBy: {
-      dt_pedido: 'desc'
-    }
-  });
-}
+
+      // Soma as quantidades quando o mesmo item preparado aparece mais de uma vez.
+      const mapQtPreparados = new Map<number, number>();
+
+      for (const { dados, itemCardapio } of arrItensValidados)
+      {
+        if (itemCardapio.tipo_item !== TipoItem.PREPARADO)
+          continue;
+
+        mapQtPreparados.set(itemCardapio.id_item_cardapio, (mapQtPreparados.get(itemCardapio.id_item_cardapio) ?? 0) + dados.qt_quantidade);
+      }
+
+      for (const [nrIdItem, qtQuantidade] of mapQtPreparados)
+        await this.movimentosEstoqueService.verificarDisponibilidade(transacao, nrIdItem, qtQuantidade);
+
+      const arrItensCriados = [];
+
+      for (const { dados, itemCardapio } of arrItensValidados)
+      {
+        const idPreparado = itemCardapio.tipo_item === TipoItem.PREPARADO;
+        const itemPedido  = await transacao.itemPedido.create({
+          data: {
+            id_comanda: comanda.id_comanda,
+            id_item_cardapio: itemCardapio.id_item_cardapio,
+            id_usuario: nrIdCliente,
+            id_origem: OrigemPedido.APP,
+            qt_quantidade: dados.qt_quantidade,
+            ds_observacao: dados.ds_observacao,
+            vl_unitario: itemCardapio.vl_unitario,
+            id_situacao: idPreparado ? SituacaoItemPedido.AGUARDANDO : SituacaoItemPedido.PRONTO,
+          },
+          include: INCLUIR_DETALHES,
+        });
+
+        // Revenda tem baixa imediata; os preparados baixam quando a cozinha inicia o preparo.
+        if (!idPreparado)
+          await this.movimentosEstoqueService.baixarEstoqueDoItem(transacao, itemPedido);
+
+        arrItensCriados.push(itemPedido);
+      }
+
+      return { ...comanda, itens: arrItensCriados };
+    });
+  }
+
+  listarItensDoCliente(nrIdCliente: number)
+  {
+    return this.prisma.itemPedido.findMany({
+      where: { comanda: { is: { id_cliente: nrIdCliente, id_mesa: null } } },
+      include: INCLUIR_DETALHES,
+      orderBy: { dt_pedido: 'desc' }
+    });
+  }
 
   listarItensPedido(listarItensPedidoQueryDto: ListarItensPedidoQueryDto)
   {

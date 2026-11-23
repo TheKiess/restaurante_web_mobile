@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../models/item_cardapio.dart';
 import '../services/carrinho_service.dart';
 import '../widgets/barra_superior.dart';
+import '../widgets/foto_produto.dart';
 
 class DetalhesProdutoScreen extends StatelessWidget {
   final ItemCardapio produto;
@@ -51,18 +52,12 @@ class DetalhesProdutoScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: double.infinity,
-              height: 220,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.restaurant,
-                size: 90,
-                color: vinho,
-              ),
+            FotoProduto(
+              imagem: produto.imagem,
+              largura: double.infinity,
+              altura: 220,
+              raio: 16,
+              tamanhoIcone: 90,
             ),
 
             const SizedBox(height: 24),

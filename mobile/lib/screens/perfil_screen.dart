@@ -392,7 +392,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
             if (erro != null)
               Text(
-                'Não foi possível atualizar os dados: $erro',
+                'Não foi possível atualizar os dados: '
+                '${erro.toString().replaceFirst('Exception: ', '')}',
                 style: const TextStyle(color: Colors.red),
               ),
           ],

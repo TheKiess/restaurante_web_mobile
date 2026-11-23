@@ -1,6 +1,7 @@
 
 import 'package:material_ui/material_ui.dart';
 import '../models/item_cardapio.dart';
+import 'foto_produto.dart';
 
 class ProdutoCard extends StatelessWidget {
   final ItemCardapio produto;
@@ -34,18 +35,10 @@ class ProdutoCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: creme,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.restaurant,
-                  size: 38,
-                  color: vinho,
-                ),
+              FotoProduto(
+                imagem: produto.imagem,
+                largura: 90,
+                altura: 90
               ),
               const SizedBox(width: 14),
               Expanded(

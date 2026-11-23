@@ -53,6 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
+      if (resultado.usuario.perfil != 'CLIENTE')
+      {
+        setState(() { erro = 'Este aplicativo é só para clientes. Funcionários usam o sistema do restaurante.'; });
+        return;
+      }
+
       SessaoService.iniciarSessao(resultado);
 
       Navigator.pop(context, resultado);

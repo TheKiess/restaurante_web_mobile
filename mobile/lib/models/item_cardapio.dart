@@ -7,6 +7,7 @@ class ItemCardapio {
   final String categoria;
   final String tipo;
   final bool disponivel;
+  final String? imagem;
 
   ItemCardapio({
     required this.id,
@@ -16,6 +17,7 @@ class ItemCardapio {
     required this.categoria,
     required this.tipo,
     required this.disponivel,
+    this.imagem
   });
 
   //CONVERTE JSON PARA DART
@@ -28,6 +30,7 @@ class ItemCardapio {
       categoria: json['categoria']['nm_categoria'],
       tipo: json['tipo_item'],
       disponivel: json['disponivel'],
+      imagem: json['ds_imagem']
     );
   }
 }

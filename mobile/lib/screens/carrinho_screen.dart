@@ -6,6 +6,7 @@ import '../models/item_carrinho.dart';
 import '../services/carrinho_service.dart';
 import '../services/sessao_service.dart';
 import '../widgets/barra_superior.dart';
+import '../widgets/foto_produto.dart';
 import 'login_screen.dart';
 import 'finalizacao_pedido_screen.dart';
 
@@ -259,9 +260,12 @@ class _ItemCarrinhoCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: _imagemPadrao(),
+            FotoProduto(
+              imagem: produto.imagem,
+              largura: 85,
+              altura: 85,
+              raio: 10,
+              tamanhoIcone: 35,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -327,19 +331,6 @@ class _ItemCarrinhoCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _imagemPadrao() {
-    return Container(
-      width: 85,
-      height: 85,
-      color: const Color(0xFFF0E9E3),
-      child: const Icon(
-        Icons.fastfood,
-        size: 35,
-        color: vinho,
       ),
     );
   }

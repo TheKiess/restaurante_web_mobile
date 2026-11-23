@@ -1,11 +1,12 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 import '../models/resultado_login.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = ApiConfig.baseUrl;
 
   Future<ResultadoLogin> entrar({
     required String login,

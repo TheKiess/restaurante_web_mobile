@@ -2,11 +2,14 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 import '../models/usuario.dart';
+import 'erro_api.dart';
 
-class UsuarioService {
-  static const String baseUrl = 'http://localhost:3000';
+class UsuarioService
+{
+  static const String baseUrl = ApiConfig.baseUrl;
 
   // Cadastrar um novo cliente
   Future<void> cadastrarUsuario({
@@ -17,8 +20,7 @@ class UsuarioService {
     required String apelido,
     required String senha,
   }) async {
-    final url = Uri.parse('$baseUrl/usuarios');
-
+    final url      = Uri.parse('$baseUrl/usuarios');
     final resposta = await http.post(
       url,
       headers: {
@@ -31,16 +33,13 @@ class UsuarioService {
         'ds_telefone': telefone,
         'ds_apelido': apelido,
         'ds_senha': senha,
-        'perfil': 'CLIENTE',
-      }),
+        'perfil': 'CLIENTE'
+      })
     );
 
-    if (resposta.statusCode != 201 &&
-        resposta.statusCode != 200) {
-      throw Exception(
-        'Erro ao cadastrar usuário: '
-        '${resposta.statusCode} - ${resposta.body}',
-      );
+    if (resposta.statusCode != 201 && resposta.statusCode != 200)
+    {
+      throw Exception(extrairMensagemErro(resposta, 'Não foi possível cadastrar o usuário.'));
     }
   }
 
@@ -65,10 +64,7 @@ class UsuarioService {
       return Usuario.fromJson(dados);
     }
 
-    throw Exception(
-      'Erro ao carregar perfil: '
-      '${resposta.statusCode} - ${resposta.body}',
-    );
+    throw Exception(extrairMensagemErro(resposta, 'Não foi possível carregar o perfil.'));
   }
 
   // Atualizar os dados do cliente autenticado
@@ -114,9 +110,6 @@ class UsuarioService {
       return Usuario.fromJson(resultado);
     }
 
-    throw Exception(
-      'Erro ao atualizar perfil: '
-      '${resposta.statusCode} - ${resposta.body}',
-    );
+    throw Exception(extrairMensagemErro(resposta, 'Não foi possível atualizar o perfil.'));
   }
 }

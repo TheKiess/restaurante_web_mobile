@@ -1,13 +1,16 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 import '../models/item_pedido.dart';
 import '../models/item_carrinho.dart';
 import '../models/comanda.dart';
+import 'erro_api.dart';
 
-class PedidoService {
-  static const String baseUrl = 'http://localhost:3000';
+class PedidoService
+{
+  static const String baseUrl = ApiConfig.baseUrl;
 
   // Finaliza o carrinho em uma única requisição.
   Future<int> finalizarPedido({
@@ -36,12 +39,9 @@ class PedidoService {
       }),
     );
 
-    if (resposta.statusCode != 201 &&
-        resposta.statusCode != 200) {
-      throw Exception(
-        'Erro ao finalizar pedido: '
-        '${resposta.statusCode} - ${resposta.body}',
-      );
+    if (resposta.statusCode != 201 && resposta.statusCode != 200)
+    {
+      throw Exception(extrairMensagemErro(resposta, 'Não foi possível finalizar o pedido.'));
     }
 
     final dados = jsonDecode(resposta.body);
@@ -65,17 +65,14 @@ class PedidoService {
       },
       body: jsonEncode({
         'id_comanda': idComanda,
-        'vl_pago': valorTotal,
-        'forma_pagamento': formaPagamento,
-      }),
+        'vl_pago': double.parse(valorTotal.toStringAsFixed(2)),
+        'forma_pagamento': formaPagamento
+      })
     );
 
-    if (resposta.statusCode != 201 &&
-        resposta.statusCode != 200) {
-      throw Exception(
-        'Erro ao registrar pagamento: '
-        '${resposta.statusCode} - ${resposta.body}',
-      );
+    if (resposta.statusCode != 201 && resposta.statusCode != 200)
+    {
+      throw Exception(extrairMensagemErro(resposta, 'Não foi possível registrar o pagamento.'));
     }
   }
 
@@ -83,8 +80,7 @@ class PedidoService {
   Future<List<ItemPedido>> listarMeusPedidos({
     required String token,
   }) async {
-    final url = Uri.parse('$baseUrl/itens-pedido/meus');
-
+    final url      = Uri.parse('$baseUrl/itens-pedido/meus');
     final resposta = await http.get(
       url,
       headers: {
@@ -101,10 +97,7 @@ class PedidoService {
           .toList();
     }
 
-    throw Exception(
-      'Erro ao carregar pedidos: '
-      '${resposta.statusCode} - ${resposta.body}',
-    );
+    throw Exception(extrairMensagemErro(resposta, 'Não foi possível carregar os pedidos.'));
   }
 
   // Agrupa os itens de pedido por comanda.
@@ -150,11 +143,9 @@ class PedidoService {
       }),
     );
 
-    if (resposta.statusCode != 200) {
-      throw Exception(
-        'Erro ao cancelar pedido: '
-        '${resposta.statusCode} - ${resposta.body}',
-      );
+    if (resposta.statusCode != 200)
+    {
+      throw Exception(extrairMensagemErro(resposta, 'Não foi possível cancelar o pedido.'));
     }
   }
 }

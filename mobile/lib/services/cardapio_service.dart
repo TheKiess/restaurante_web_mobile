@@ -1,12 +1,13 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 import '../models/item_cardapio.dart';
 
 class CardapioService {
   // Endereço do backend NestJS
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = ApiConfig.baseUrl;
 
   // Busca os produtos cadastrados no banco
   Future<List<ItemCardapio>> listarItens() async {

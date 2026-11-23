@@ -20,6 +20,8 @@ import {
   RefreshCw,
   CheckCircle2,
   Utensils,
+  UserRound,
+  ShoppingBag,
 } from "lucide-react";
 
 type SituacaoItem =
@@ -43,6 +45,11 @@ interface ItemPedido {
     id_comanda: number;
     mesa: {
       nr_mesa: number;
+    } | null;
+    cliente: {
+      pessoa: {
+        nm_pessoa: string;
+      };
     } | null;
   };
 }
@@ -179,12 +186,27 @@ export default function CozinhaPage()
             Recebido às {formatarHorario(item.dt_pedido)}
           </p>
 
-          <p className={estilos.linhaIcone}>
-            <Utensils size={16} aria-hidden="true" />
-            {item.comanda.mesa
-              ? `Mesa ${item.comanda.mesa.nr_mesa}`
-              : "Mesa não informada"}
-          </p>
+          {item.comanda.mesa ? (
+            <p className={estilos.linhaIcone}>
+              <Utensils size={16} aria-hidden="true" />
+              Mesa {item.comanda.mesa.nr_mesa}
+            </p>
+          ) : (
+            <>
+              <p className={estilos.linhaIcone}>
+                <ShoppingBag size={16} aria-hidden="true" />
+                Pedido para retirada
+              </p>
+
+              <p className={estilos.linhaIcone}>
+                <UserRound size={16} aria-hidden="true" />
+                Cliente: {
+                  item.comanda.cliente?.pessoa?.nm_pessoa ??
+                  "Nome não informado"
+                }
+              </p>
+            </>
+          )}
         </div>
 
         {item.ds_observacao && (

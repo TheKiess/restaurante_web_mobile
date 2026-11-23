@@ -267,7 +267,7 @@ export default function CategoriasPage()
                 }
                 className={estilos.entrada}
               >
-                <option value="">Nenhuma — categoria principal</option>
+                <option value="">Nenhuma categoria principal!</option>
                 {categorias
                   .filter((categoria) => {
                     if (categoria.id_categoria === idEditando) return false;
