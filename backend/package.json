@@ -9,6 +9,7 @@
   "scripts": {
     "build": "nest build",
     "seed": "nest build && node dist/seed.js",
+    "popular": "nest build && node dist/popular-banco.js",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
