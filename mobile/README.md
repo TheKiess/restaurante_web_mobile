@@ -5,7 +5,7 @@
 Para iniciar a versao web do app em `http://localhost:3003`:
 
 ```bash
-flutter run -d web-server --web-port 3003
+flutter run -d web-server --web-port 3003 --dart-define=API_URL=http://localhost:3000
 ```
 
 O backend continua em `http://localhost:3000`; para chamadas feitas pelo
