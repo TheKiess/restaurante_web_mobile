@@ -8,7 +8,7 @@
 | **Grupo** | Évelyn Marques Soletti e Frank Joanes Kiess Junior |
 | **Integrantes** | Évelyn Marques Soletti; Frank Joanes Kiess Junior |
 | **Repositório** | `https://github.com/TheKiess/restaurante_web_mobile.git` |
-| **Vídeo de apresentação** | _(inserir link após a entrega)_ |
+| **Vídeo de apresentação** | `https://drive.google.com/drive/folders/1UhPZOrO33YWHsWMjXBC7XZlpxhb0_PVA?usp=sharing` |
 
 ---
 
@@ -556,9 +556,9 @@ Atribuímos a nota 9/10 porque conseguimos desenvolver as principais funcionalid
 
 | Campo | Valor |
 |---|---|
-| **Link** | _(inserir link)_ |
-| **Duração** | _(preencher)_ |
-| **Quem fala em cada parte** | _(preencher)_ |
+| `https://drive.google.com/drive/folders/1UhPZOrO33YWHsWMjXBC7XZlpxhb0_PVA?usp=sharing` |
+| **Duração** | 14:28min |
+| **Quem fala em cada parte** |1ª parte Frank, 2ª parte Evelyn|
 
 ---
 
