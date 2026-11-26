@@ -1,433 +1,388 @@
-# Projeto integrador — Programação Web e Mobile
+//readme atualizado inteiramente com a ajuda de IA
+# Sistema de Gerenciamento de Restaurante — Web e Mobile
 
-Repositório-modelo do trabalho final: **um serviço e dois clientes**. Uma API REST concentra as regras de negócio e os dados; um cliente web e um aplicativo mobile a consomem.
+## 1. Sobre o projeto
 
-Este repositório traz a **estrutura**: as pastas, os templates de documentação e o passo a passo para inicializar os três projetos.
+O projeto consiste no desenvolvimento de um sistema de gerenciamento de restaurante, composto por uma aplicação Web, um aplicativo Mobile e uma API REST responsável pela comunicação entre as aplicações e o banco de dados.
 
-> **O enunciado completo do trabalho — temas disponíveis, escopo, etapas, prazos e critérios de avaliação — está na página da disciplina.** Este README não repete essas informações; ele cuida do repositório.
+A arquitetura utiliza um backend compartilhado pelas aplicações Web e Mobile, permitindo que ambas acessem as mesmas informações e regras de negócio.
 
----
+### Aplicações desenvolvidas
 
-## Estrutura
+- **Backend:** API REST responsável pelas regras de negócio, autenticação, autorização e comunicação com o banco de dados.
+- **Frontend Web:** aplicação desenvolvida para disponibilizar as funcionalidades de gerenciamento e operação do restaurante.
+- **Aplicativo Mobile:** aplicação desenvolvida para oferecer ao cliente uma interface para consultar o cardápio, realizar pedidos e acompanhar suas comandas.
 
-```
-/
-├── README.md                 ← este arquivo
-├── docker-compose.yml        ← PostgreSQL 18 local (opcional — veja as opções de banco)
-├── .gitignore
-├── docs/
-│   ├── visao.md              ← Documento de Visão        (Etapa 0)
-│   ├── prd.md                ← PRD                       (Etapa 1)
-│   ├── contrato-api.md       ← Contrato REST da API      (Etapa 1, sempre atualizado)
-│   ├── equipe.md             ← Composição e contribuições (Etapa 0, toda etapa)
-│   ├── relatorio.md          ← Diário técnico            (toda etapa)
-│   └── rfc-001.md            ← Mudança de requisito      (só se o professor publicar)
-├── backend/                  ← API NestJS      (criada na Etapa 1)
-├── web/                      ← Cliente Next.js (criado na Etapa 3)
-└── mobile/                   ← App Flutter     (criado na Etapa 4)
-```
+## 2. Tecnologias utilizadas
 
-As três pastas de código não existem ainda: cada uma nasce na etapa correspondente, seguindo o passo a passo abaixo. **Um único repositório para os três componentes** — não criem repositórios separados.
-
----
-
-## Criando o repositório do grupo
-
-Este repositório é um *template* do GitHub. No repositório do professor, use o botão **"Use this template" → "Create a new repository"**. Não use *fork*.
-
-O template dá ao grupo um histórico limpo, começando no primeiro commit de vocês, e permite repositório privado. Depois de criar, deem acesso ao professor.
-
-```bash
-git clone https://github.com/<seu-usuario>/<seu-repo>.git
-cd <seu-repo>
-```
-
----
-
-## Passo a passo — banco de dados
-
-O que o projeto exige é **um PostgreSQL 18 acessível**, com um banco e um usuário. Como ele chega até aí é escolha do grupo — **o Docker é opcional**.
-
-Qualquer uma das opções abaixo serve. O que importa é que, ao final, esta URL funcione:
-
-```
-postgresql://app:app@localhost:5432/appdb?schema=public
-```
-
-Se o grupo usar outro usuário, senha, porta ou nome de banco, tudo bem: basta ajustar o `DATABASE_URL` do backend de acordo. Registre a escolha em `docs/relatorio.md`, para que outra pessoa consiga reproduzir o ambiente.
-
-### Opção A — Docker Compose (mais rápido)
-
-O `docker-compose.yml` na raiz já vem configurado com banco `appdb`, usuário `app` e senha `app`.
-
-```bash
-docker compose up -d          # sobe o banco na porta 5432
-docker compose ps             # confere que está de pé
-docker compose logs -f db     # acompanha os logs, se precisar
-docker compose down           # derruba (os dados ficam no volume)
-```
-
-Vantagem: ninguém instala nada além do Docker, e todos no grupo têm exatamente a mesma versão do banco.
-
-### Opção B — PostgreSQL instalado na máquina
-
-Quem já tem PostgreSQL instalado, ou prefere não usar Docker, pode ir por aqui. **Apague o `docker-compose.yml`** do repositório nesse caso, para não deixar no projeto um arquivo que ninguém usa.
-
-**1. Instalar o PostgreSQL 18**, se ainda não tiver:
-
-| Sistema | Caminho usual |
+| Componente | Tecnologias |
 |---|---|
-| Windows | Instalador oficial em [postgresql.org/download](https://www.postgresql.org/download/) |
-| macOS | `brew install postgresql@18` e depois `brew services start postgresql@18` |
-| Ubuntu / Debian | Repositório PGDG, conforme as instruções em [postgresql.org/download](https://www.postgresql.org/download/) |
+| Backend | NestJS e TypeScript |
+| Frontend Web | Next.js, React, TypeScript e Tailwind CSS |
+| Aplicativo Mobile | Flutter e Dart |
+| Banco de dados | PostgreSQL 18 |
+| ORM | Prisma |
+| Ambiente do banco | Docker |
+| Autenticação | JWT |
+| Criptografia de senhas | bcrypt |
+| Comunicação | API REST e HTTP |
 
-**2. Criar o usuário e o banco.** Abra o `psql` com um usuário administrador e rode:
+### 2.1 Versões utilizadas
 
-```sql
-CREATE USER app WITH PASSWORD 'app';
-CREATE DATABASE appdb OWNER app;
+| Ferramenta | Versão |
+|---|---|
+| Node.js | 24.19 |
+| Next.js | 16.3.8 |
+| React | 19.2.8 |
+| TypeScript | 5 |
+| Flutter | 3.44.1 |
+| Dart | 3.12.1 |
+| PostgreSQL | 18 |
+| Prisma | 8.0.0-rc.15 |
+
+As versões das dependências podem ser consultadas nos arquivos `package.json`, `package-lock.json` e `pubspec.lock` de cada aplicação.
+
+## 3. Estrutura do repositório
+
+O projeto está organizado em três componentes principais:
+
+```text
+restaurante_web_mobile/
+│
+├── backend/
+│   ├── prisma/
+│   ├── src/
+│   ├── .env
+│   └── package.json
+│
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   ├── lib/
+│   ├── public/
+│   └── package.json
+│
+├── mobile/
+│   ├── lib/
+│   ├── pubspec.yaml
+│   └── ...
+│
+├── docker-compose.yml
+├── .gitignore
+└── README.md
 ```
 
-No Linux, o caminho costuma ser `sudo -u postgres psql`. No macOS com Homebrew, `psql postgres`. No Windows, use o pgAdmin ou o SQL Shell que vem com o instalador.
+### Descrição das pastas
 
-**3. Conferir a conexão:**
+- `backend/`: contém a API desenvolvida com NestJS, incluindo módulos, controllers, services, DTOs, configurações do Prisma e integração com o PostgreSQL.
+- `frontend/`: contém a aplicação Web desenvolvida com Next.js, incluindo páginas, componentes, estilos e serviços de comunicação com a API.
+- `mobile/`: contém o aplicativo desenvolvido com Flutter, incluindo telas, modelos e serviços responsáveis pela comunicação com o backend.
+- `docker-compose.yml`: configura o ambiente de desenvolvimento do banco de dados PostgreSQL.
+- `README.md`: documentação principal do projeto, com informações sobre tecnologias, configuração e execução.
 
-```bash
-psql "postgresql://app:app@localhost:5432/appdb" -c "SELECT version();"
+## 4. Funcionalidades do sistema
+
+O sistema possui diferentes perfis de acesso, com funcionalidades específicas para cada tipo de usuário.
+
+### 4.1 Cliente
+
+O cliente pode:
+
+- Criar uma conta e realizar login.
+- Consultar o cardápio.
+- Pesquisar produtos.
+- Visualizar detalhes dos produtos.
+- Adicionar produtos ao carrinho.
+- Alterar a quantidade dos itens.
+- Remover produtos do carrinho.
+- Conferir o resumo e o valor total do pedido.
+- Selecionar a forma de pagamento.
+- Finalizar pedidos.
+- Consultar pedidos e comandas.
+- Acompanhar a situação dos pedidos.
+- Consultar e atualizar informações do perfil.
+
+### 4.2 Gerente
+
+O gerente possui funcionalidades administrativas para acompanhar e gerenciar as operações do restaurante, incluindo:
+
+- Gerenciamento de usuários e funcionários.
+- Administração do cardápio.
+- Gerenciamento de categorias e itens.
+- Gerenciamento de mesas.
+- Gerenciamento de comandas e pedidos.
+- Acompanhamento de pagamentos.
+- Consulta de relatórios e indicadores de vendas.
+
+### 4.3 Cozinha
+
+O perfil da cozinha é destinado ao acompanhamento e à atualização dos pedidos encaminhados para preparo.
+
+Entre suas funcionalidades estão:
+
+- Visualizar os pedidos recebidos.
+- Acompanhar os itens que aguardam preparo.
+- Atualizar a situação dos itens para em produção.
+- Marcar os itens como prontos.
+- Cancelar itens quando permitido pelas regras do sistema.
+
+### 4.4 Garçom
+
+O garçom possui funcionalidades relacionadas ao atendimento e ao gerenciamento dos pedidos dos clientes.
+
+Entre suas funcionalidades estão:
+
+- Registrar pedidos.
+- Consultar mesas e comandas.
+- Encaminhar pedidos para a cozinha.
+- Acompanhar a situação dos pedidos.
+- Consultar itens em produção e prontos.
+- Realizar operações relacionadas ao atendimento das comandas, conforme suas permissões.
+
+## 5. Backend — API REST
+
+O backend foi desenvolvido utilizando NestJS e TypeScript, com Prisma para realizar a comunicação com o banco de dados PostgreSQL.
+
+A API centraliza as informações e as regras de negócio utilizadas pelas aplicações Web e Mobile, evitando que cada aplicação implemente suas próprias regras de processamento.
+
+Entre os módulos desenvolvidos estão:
+
+- Prisma;
+- Mesas;
+- Categorias;
+- Itens do cardápio;
+- Usuários;
+- Comandas;
+- Itens dos pedidos;
+- Pagamentos;
+- Autenticação.
+
+### 5.1 Autenticação e controle de acesso
+
+O sistema utiliza autenticação baseada em token JWT (*JSON Web Token*) e controle de acesso baseado em perfis, conhecido como RBAC (*Role-Based Access Control*).
+
+O controle de permissões é realizado no backend, considerando o perfil do usuário autenticado.
+
+Os perfis contemplados são:
+
+- `CLIENTE`
+- `GERENCIA`
+- `COZINHA`
+- `GARCOM`
+
+Dessa forma, cada usuário pode acessar somente as funcionalidades permitidas para seu perfil.
+
+### 5.2 Endereço da API
+
+Por padrão, o backend é executado na seguinte URL:
+
+```text
+http://localhost:3000
 ```
 
-Se a versão aparecer, o backend vai conectar.
+Exemplo de endpoint para consultar os itens do cardápio:
 
-> **Se a porta 5432 já estiver ocupada** por outra instalação de PostgreSQL, use outra porta (5433, por exemplo) e reflita isso no `DATABASE_URL`. É o problema mais comum de quem já tinha o banco instalado antes.
+```http
+GET http://localhost:3000/itens-cardapio
+```
 
-### Opção C — serviço gerenciado na nuvem
+## 6. Banco de dados
 
-Também é aceito usar um PostgreSQL hospedado, desde que seja **versão 18** e que a URL de conexão fique no `.env` de cada integrante, nunca no Git. Nesse caso não há nada para subir localmente: o `DATABASE_URL` aponta direto para o serviço.
+O sistema utiliza PostgreSQL 18 como banco de dados relacional.
 
----
+Para facilitar a configuração do ambiente de desenvolvimento, o projeto disponibiliza um arquivo `docker-compose.yml`, que permite iniciar o banco de dados por meio de um contêiner Docker.
 
-## Passo a passo — backend (NestJS + Prisma) · Etapa 1
+### 6.1 Configuração do PostgreSQL
 
-### 1. Criar o projeto
+O ambiente utiliza as seguintes configurações:
+
+| Configuração | Valor |
+|---|---|
+| SGBD | PostgreSQL 18 |
+| Imagem Docker | `postgres:18` |
+| Contêiner | `projeto-db` |
+| Host | `localhost` |
+| Usuário | `app` |
+| Senha | `app` |
+| Banco de dados | `appdb` |
+| Porta do computador | `5433` |
+| Porta interna do contêiner | `5432` |
+| Volume | `dados-postgres` |
+
+### 6.2 Credenciais de acesso
+
+As credenciais abaixo são destinadas exclusivamente ao ambiente de desenvolvimento local.
+
+```text
+Host: localhost
+Porta: 5433
+Banco de dados: appdb
+Usuário: app
+Senha: app
+```
+
+### 6.3 String de conexão
+
+No arquivo `backend/.env`, configure a variável `DATABASE_URL`:
+
+```env
+DATABASE_URL="postgresql://app:app@localhost:5433/appdb?schema=public"
+```
+
+Essa configuração considera que o backend está sendo executado diretamente na máquina do desenvolvedor e que o PostgreSQL está disponível pelo Docker na porta `5433`.
+
+### 6.4 Configuração no Docker
+
+O arquivo `docker-compose.yml` contém a seguinte configuração:
+
+```yaml
+services:
+  db:
+    image: postgres:18
+    container_name: projeto-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: appdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - dados-postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d appdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  dados-postgres:
+```
+
+### 6.5 Inicialização do banco
+
+Na raiz do repositório, execute:
 
 ```bash
-npm i -g @nestjs/cli
-nest new backend --package-manager npm --skip-git
+docker compose up -d
+```
+
+Para verificar se o contêiner está em execução:
+
+```bash
+docker compose ps
+```
+
+Para acompanhar os logs do banco:
+
+```bash
+docker compose logs -f db
+```
+
+Para interromper o contêiner:
+
+```bash
+docker compose down
+```
+
+Os dados são persistidos no volume Docker `dados-postgres`, permitindo manter as informações do banco após a interrupção do contêiner.
+
+O arquivo `docker-compose.yml` é opcional. Também é possível utilizar uma instalação local do PostgreSQL ou um serviço hospedado, desde que exista um banco acessível pela variável `DATABASE_URL`.
+
+**Observação:** não utilize essas credenciais em produção. Em ambientes reais, utilize uma senha forte e mantenha as credenciais protegidas em variáveis de ambiente que não sejam enviadas ao Git.
+
+## 7. Instalação e execução
+
+Para executar o projeto, é necessário ter instalado:
+
+- Node.js e npm.
+- Docker Desktop.
+- Flutter SDK e Dart.
+- Visual Studio com as ferramentas de desenvolvimento para Desktop em C++, para execução do Flutter no Windows.
+- Google Chrome, caso queira executar o aplicativo Flutter Web.
+
+### 7.1 Inicialização do banco de dados
+
+Na raiz do projeto, execute:
+
+```bash
+docker compose up -d
+```
+
+Verifique se o banco está em execução:
+
+```bash
+docker compose ps
+```
+
+### 7.2 Backend
+
+Abra um terminal na pasta do backend:
+
+```bash
 cd backend
 ```
 
-### 2. Instalar as dependências
+Instale as dependências:
 
 ```bash
-# validação de entrada e configuração
-npm i @nestjs/config class-validator class-transformer
-
-# autenticação (usada a partir da aula de JWT)
-npm i @nestjs/jwt @nestjs/passport passport passport-jwt
-npm i -D @types/passport-jwt
-
-# Prisma 7 — o adaptador de driver é obrigatório na versão 7
-npm i @prisma/client @prisma/adapter-pg pg dotenv
-npm i -D prisma @types/pg
+npm install
 ```
 
-### 3. Inicializar o Prisma
+Inicie a API em modo de desenvolvimento:
 
 ```bash
-npx prisma init --datasource-provider postgresql
+npm run start:dev
 ```
 
-Crie o arquivo `backend/.env` (ele **não** vai para o Git):
+O backend ficará disponível em:
 
-```env
-DATABASE_URL="postgresql://app:app@localhost:5432/appdb?schema=public"
-JWT_SECRET="troque-este-valor"
+```text
+http://localhost:3000
 ```
 
-E versione um `backend/.env.example` com as mesmas chaves e valores fictícios.
+### 7.3 Frontend Web
 
-### 4. Ajustar o `schema.prisma`
-
-Na versão 7 o gerador mudou de nome e passou a exigir um caminho de saída:
-
-```prisma
-generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
-}
-
-datasource db {
-  provider = "postgresql"
-}
-```
-
-### 5. Criar o `prisma.config.ts` na raiz do backend
-
-```ts
-import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
-
-export default defineConfig({
-  schema: 'prisma/schema.prisma',
-  migrations: { path: 'prisma/migrations' },
-  datasource: { url: env('DATABASE_URL') },
-})
-```
-
-### 6. Primeira migration
-
-Com o banco no ar, por qualquer uma das opções acima:
+Abra outro terminal:
 
 ```bash
-npx prisma migrate dev --name init
-npx prisma generate
+cd frontend
 ```
 
-### 7. O `PrismaService`
-
-Crie `backend/src/prisma/prisma.service.ts`. Repare em dois detalhes da versão 7: o `PrismaClient` vem do **caminho gerado**, não de `@prisma/client`, e o adaptador é passado ao `super()`.
-
-```ts
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '../../generated/prisma/client'
-
-@Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
-  constructor() {
-    super({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) })
-  }
-
-  async onModuleInit() {
-    await this.$connect()
-  }
-
-  async onModuleDestroy() {
-    await this.$disconnect()
-  }
-}
-```
-
-### 8. Subir e conferir
+Instale as dependências:
 
 ```bash
-npm run start:dev             # http://localhost:3000
+npm install
 ```
 
-### Comandos do dia a dia
-
-| Comando | Para quê |
-|---|---|
-| `npm run start:dev` | Sobe a API com recarga automática |
-| `npx prisma migrate dev --name <nome>` | Cria e aplica uma migration |
-| `npx prisma studio` | Abre o navegador de dados do Prisma |
-| `npx prisma generate` | Regenera o client depois de mudar o schema |
-| `nest g resource <recurso>` | Gera módulo, controller, service e DTOs de um recurso |
-
----
-
-## Passo a passo — cliente web (Next.js) · Etapa 3
-
-### 1. Criar o projeto
-
-Rode na **raiz do repositório**, não dentro de `backend/`:
-
-```bash
-npx create-next-app@latest web --typescript --eslint --app --src-dir --use-npm
-cd web
-```
-
-Responda **sim** ao App Router quando perguntado. O trabalho não usa Pages Router.
-
-### 2. Apontar para a API
-
-Crie `web/.env.local` (fora do Git) e o `web/.env.example` correspondente:
+Configure o arquivo `frontend/.env.local` com a URL da API:
 
 ```env
 NEXT_PUBLIC_API_URL="http://localhost:3000"
 ```
 
-### 3. Subir
+Inicie a aplicação:
 
 ```bash
-npm run dev                   # http://localhost:3001, se a API já ocupa a 3000
+npm run dev -- -p 3001
 ```
 
-Se a porta 3000 estiver ocupada pelo backend, use `npm run dev -- -p 3001`.
+O frontend ficará disponível em:
 
-### Estrutura sugerida
-
-```
-web/src/
-├── app/                      # rotas (App Router)
-│   ├── layout.tsx
-│   └── <recurso>/
-│       ├── page.tsx          # listagem
-│       └── [id]/page.tsx     # detalhe
-├── components/               # componentes reutilizáveis
-├── lib/
-│   ├── api.ts                # cliente HTTP único
-│   └── auth.ts               # sessão e token
-└── types/                    # tipos derivados do contrato da API
+```text
+http://localhost:3001
 ```
 
----
+### 7.4 Aplicativo Mobile
 
-## Passo a passo — app mobile (Flutter) · Etapa 4
-
-### 1. Conferir o ambiente
+Abra outro terminal:
 
 ```bash
-flutter doctor                # resolva o que aparecer em vermelho antes de seguir
-```
-
-### 2. Criar o projeto
-
-Na raiz do repositório:
-
-```bash
-flutter create mobile --org br.edu.<projeto> --platforms android,ios
 cd mobile
 ```
 
-### 3. Dependências mínimas
+Instale as dependências:
 
 ```bash
-flutter pub add http
-flutter pub add flutter_dotenv        # opcional, para a URL da API
+flutter
 ```
-
-### 4. Endereço da API
-
-`localhost` dentro do emulador Android aponta para o próprio emulador, não para a sua máquina. Guarde a URL em um único lugar do código:
-
-| Onde o app roda | URL da API |
-|---|---|
-| Emulador Android | `http://10.0.2.2:3000` |
-| Simulador iOS | `http://localhost:3000` |
-| Dispositivo físico | `http://<ip-da-sua-maquina>:3000` |
-
-No Android, requisições HTTP em texto puro são bloqueadas por padrão: para desenvolvimento, habilite `android:usesCleartextTraffic="true"` no `AndroidManifest.xml` de *debug*.
-
-### 5. Rodar
-
-```bash
-flutter devices               # lista emuladores e aparelhos conectados
-flutter run
-```
-
-### Estrutura sugerida
-
-```
-mobile/lib/
-├── main.dart
-├── models/                   # modelos derivados do contrato da API
-├── services/                 # cliente HTTP e autenticação
-├── screens/                  # uma pasta por tela
-└── widgets/                  # widgets reutilizáveis
-```
-
----
-
-## Rodando os três ao mesmo tempo
-
-Precisa de três terminais, com o banco já no ar:
-
-```bash
-docker compose up -d                       # banco, se o grupo usa Docker
-cd backend && npm run start:dev            # terminal 1 — API em :3000
-cd web     && npm run dev -- -p 3001       # terminal 2 — web em :3001
-cd mobile  && flutter run                  # terminal 3 — app no emulador
-```
-
-Se o banco estiver instalado na máquina ou hospedado, pule a primeira linha — basta que ele esteja no ar antes de subir a API.
-
-Ao final do projeto, o `docs/relatorio.md` precisa descrever exatamente esses passos, de forma que outra pessoa suba o sistema do zero.
-
----
-
-## Convenções de código
-
-**O substantivo do domínio é português; o nome do padrão, do papel ou do recurso do framework é inglês.**
-
-| Em português (domínio) | Em inglês (técnico) |
-|---|---|
-| `Chamado`, `Atendente`, `Ficha` | `Controller`, `Service`, `Module`, `Repository` |
-| campos: `titulo`, `dataAbertura`, `situacao` | `Dto`, `Guard`, `Pipe`, `Filter`, `Interceptor` |
-| rotas: `/chamados`, `/fichas` | `Page`, `Layout`, `Widget`, `Screen`, `Provider` |
-| `CriarChamadoDto`, `AtualizarChamadoDto` | `findAll`, `findOne`, `create`, `update`, `remove` |
-| arquivos: `chamados.controller.ts` | `id`, `createdAt`, `page`, `limit` |
-
-**Identificadores nunca levam acento ou cedilha:** `Emprestimo`, não `Empréstimo`; `situacao`, não `situação`. Vale para nome de arquivo, de pasta, de campo e de rota. O texto da documentação escreve a palavra acentuada normalmente — só o identificador perde o acento.
-
-Comentários, mensagens de commit, textos de interface e mensagens de erro voltadas ao usuário final: **português do Brasil**, com acentuação normal.
-
----
-
-## Documentação do grupo
-
-Os arquivos em `docs/` são templates para preencher. Cada um traz suas próprias instruções no topo.
-
-| Arquivo | Quando | Para quê |
-|---|---|---|
-| `docs/visao.md` | Etapa 0 | Problema, usuários e escopo de alto nível |
-| `docs/equipe.md` | Etapa 0, atualizado a cada etapa | Composição, papéis e registro de contribuições |
-| `docs/prd.md` | Etapa 1, revisado depois | Requisitos, modelo de dados, arquitetura e recorte web/mobile |
-| `docs/contrato-api.md` | Etapa 1, sempre atualizado | Endpoints: entrada, saída, status, erros, autenticação |
-| `docs/relatorio.md` | A cada etapa | Diário técnico: decisões, dificuldades e uso de IA |
-| `docs/rfc-001.md` | Só se publicado | Análise e implementação de uma mudança de requisito |
-
-> **O contrato da API é o documento que destrava o paralelismo.** Com ele fechado, quem cuida do web constrói telas antes de o endpoint existir, e quem cuida do mobile modela suas classes sem esperar a primeira migration. Regra prática: **o contrato muda antes do código, nunca depois.**
-
----
-
-## Regras do repositório
-
-### Obrigatório
-
-- Um repositório único do grupo, criado a partir do template e acessível ao professor.
-- Cada commit feito **pelo autor real do código**. Em programação em par, use `Co-authored-by:` na mensagem.
-- Nenhuma credencial versionada.
-
-### Recomendado
-
-Nada abaixo é obrigatório, mas tudo reduz retrabalho:
-
-- Manter a `main` sempre em estado funcional.
-- Commits frequentes ao longo da sprint, em vez de um pacote no último dia.
-- Mensagens no padrão `tipo(componente): descricao`:
-
-```
-feat(backend): adiciona endpoint POST /chamados com validacao de DTO
-feat(web): implementa listagem de chamados com paginacao
-feat(mobile): adiciona tela de detalhe do chamado
-fix(backend): corrige calculo de SLA para chamados reabertos
-docs: atualiza diario com decisoes da sprint 3
-refactor(web): extrai cliente HTTP para modulo compartilhado
-```
-
-- Branches por funcionalidade, integradas por Pull Request.
-- Revisão do PR por outro integrante antes do merge.
-
-### O que não versionar
-
-O `.gitignore` da raiz já cobre os três componentes:
-
-```
-node_modules/      .next/          build/
-dist/              generated/      .dart_tool/
-.env, .env.local   coverage/       android/key.properties
-```
-
-Cada componente versiona um `.env.example` com as chaves esperadas e valores fictícios — nunca o `.env` real.
-
----
-
-## Onde está o resto
-
-9. Comanda e pedidos em restaurante [Avançado]
-Negócios · Avançado
-O garçom lança pedidos pelo celular; a cozinha acompanha a fila de preparo em tela fixa. É o único tema em que dois clientes agem sobre o mesmo dado ao mesmo tempo.
-
-- Web — cozinha e gerência Fila de preparo, cardápio e preços, painel do salão, fechamento e relatórios.
-- Mobile — garçom Abrir comanda, lançar itens, ver o que já está pronto, pedir fechamento.
